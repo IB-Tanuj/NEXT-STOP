@@ -139,11 +139,14 @@ export const locationThemes = {
   },
 }
 
+//export const getSeasonTheme = () => {
+  //const month = new Date().getMonth() + 1
+  //if (month >= 3 && month <= 6) return themes.summer
+  //if (month >= 7 && month <= 9) return themes.monsoon
+  //if (month >= 10 && month <= 11) return themes.autumn
+  //if (month === 12 || month <= 2) return themes.winter
+  //return themes.spring
+//}
 export const getSeasonTheme = () => {
-  const month = new Date().getMonth() + 1
-  if (month >= 3 && month <= 6) return themes.summer
-  if (month >= 7 && month <= 9) return themes.monsoon
-  if (month >= 10 && month <= 11) return themes.autumn
-  if (month === 12 || month <= 2) return themes.winter
-  return themes.spring
+  return themes.summer // temporarily hardcoded for competition
 }

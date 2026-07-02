@@ -4,17 +4,24 @@ import { useTheme } from "./hooks/useTheme"
 import Navbar from "./components/Navbar"
 import Hero from "./components/Hero"
 import TripPage from "./components/TripPage"
+import SummerSection from "./components/SummerSection"
+import LocationSpotlight from "./components/LocationSpotlight"
+import { locationData } from "./components/TripPage"
 
 function App() {
   const { theme, setLocationTheme, resetToSeason } = useTheme()
   const [currentPage, setCurrentPage] = useState("home")
   const [selectedLocation, setSelectedLocation] = useState(null)
+  const [spotlightLocation, setSpotlightLocation] = useState(null)
 
   const handleThemeOnly = (location) => {
-    if (location.trim()) {
-      setLocationTheme(location)
+  if (location.trim()) {
+    setLocationTheme(location)
+    if (locationData[location.toLowerCase()]) {
+      setSpotlightLocation(location)
     }
   }
+}
 
   const handleExplore = (location) => {
     setSelectedLocation(location)
@@ -37,15 +44,27 @@ function App() {
       transition: "all 0.8s ease",
     }}>
       {currentPage === "home" && (
-        <>
-          <Navbar theme={theme} />
-          <Hero
-    theme={theme}
-    setLocationTheme={handleThemeOnly}
-    onExplore={handleExplore}
-  />
-        </>
-      )}
+  <>
+    <Navbar theme={theme} />
+    <Hero
+      theme={theme}
+      setLocationTheme={handleThemeOnly}
+      onExplore={handleExplore}
+    />
+    <SummerSection
+      theme={theme}
+      onLocationClick={(name) => {
+        handleThemeOnly(name)
+        setSpotlightLocation(name)
+      }}
+    />
+    <LocationSpotlight
+      theme={theme}
+      activeLocation={spotlightLocation}
+      locationData={locationData}
+    />
+  </>
+)}
       {currentPage === "trip" && (
         <TripPage
           location={selectedLocation}
