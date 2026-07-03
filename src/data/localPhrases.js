@@ -125,10 +125,10 @@ export const localPhrases = {
         label: "🗺️ Directions",
         phrases: [
           { english: "Where is Rohtang Pass?", local: "Rohtang kahan hai?", script: "रोहतांग कहाँ है?" },
-          { english: "How far?", local: "Kitni door hai?", script: "कितनी दूर है?" },
+          { english: "How far?", local: "Kitn duur?", script: "कितनी दूर है?" },
           { english: "Turn left", local: "Baaye mudo", script: "बाएँ मुड़ो" },
           { english: "Turn right", local: "Daaye mudo", script: "दाएँ मुड़ो" },
-          { english: "Go straight", local: "Seedha jao", script: "सीधा जाओ" },
+          { english: "Go straight", local: "Seedh jao", script: "सीधा जाओ" },
           { english: "I am lost", local: "Main kho gaya hoon", script: "मैं खो गया हूँ" },
           { english: "Where is the bus stand?", local: "Bus stand kahan hai?", script: "बस स्टैंड कहाँ है?" },
           { english: "Can you help me?", local: "Kya aap meri madad kar sakte ho?", script: "क्या आप मेरी मदद कर सकते हो?" },
