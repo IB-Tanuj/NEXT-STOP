@@ -34,34 +34,27 @@ Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. 
   ]
 }`
 
-
-
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 2000,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  })
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2000,
+        }
+      }),
+    }
+  )
 
   const data = await response.json()
-  console.log("API Response:", data) // ← add this line
-  console.log("Status:", response.status) // ← add this line
-  
-  if (!response.ok) {
-    console.error("API Error:", data)
-    throw new Error(`API Error: ${data.error?.message || response.status}`)
-  }
-  
-  const text = data.content?.[0]?.text || ""
-  console.log("Raw text:", text) // ← add this line
+  console.log("Gemini Response:", data)
+
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
+  console.log("Raw text:", text)
+
   const clean = text.replace(/```json|```/g, "").trim()
   return JSON.parse(clean)
 }
@@ -146,7 +139,7 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
       setAiLoading(true)
       setAiError("")
       try {
-        const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY
         const spots = preferences?.activities || []
         const data = await generateTripPlan(
           locationName,
