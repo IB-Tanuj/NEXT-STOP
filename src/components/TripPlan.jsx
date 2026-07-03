@@ -43,20 +43,33 @@ Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. 
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 2000,
+          maxOutputTokens: 800,
         }
       }),
     }
   )
 
-  const data = await response.json()
-  console.log("Gemini Response:", data)
+  console.log("Status:", response.status);
 
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
-  console.log("Raw text:", text)
+if (!response.ok) {
+  const errorText = await response.text();
+  console.error("Gemini Error Response:", errorText);
+  throw new Error(`HTTP ${response.status}`);
+}
 
-  const clean = text.replace(/```json|```/g, "").trim()
-  return JSON.parse(clean)
+const data = await response.json();
+console.log("Gemini Response:", data);
+
+const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+console.log("Raw text:", text);
+
+const clean = text.replace(/```json|```/g, "").trim();
+
+if (!clean) {
+  throw new Error("Gemini returned an empty response.");
+}
+
+return JSON.parse(clean);
 }
 
 const PhraseCategory = ({ category, theme }) => {
@@ -140,6 +153,9 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
       setAiError("")
       try {
         const apiKey = import.meta.env.VITE_GEMINI_API_KEY
+
+console.log("API Key loaded:", apiKey ? "Yes" : "No");
+console.log("First 8 characters:", apiKey?.substring(0, 8));
         const spots = preferences?.activities || []
         const data = await generateTripPlan(
           locationName,
