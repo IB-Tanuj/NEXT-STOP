@@ -1,16 +1,7 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 
-const Navbar = ({ theme }) => {
-  const [scrolled, setScrolled] = useState(false)
-  const [hoveredLink, setHoveredLink] = useState(null)
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40)
-    window.addEventListener("scroll", onScroll)
-    return () => window.removeEventListener("scroll", onScroll)
-  }, [])
-
-  const navLinks = ["Explore", "Plan Trip", "Budget", "About"]
+const Navbar = ({ theme, isMobile }) => {
+  const [menuOpen, setMenuOpen] = useState(false)
 
   return (
     <nav style={{
@@ -19,118 +10,152 @@ const Navbar = ({ theme }) => {
       left: 0,
       right: 0,
       zIndex: 100,
-      padding: scrolled ? "12px 40px" : "20px 40px",
+      padding: isMobile ? "16px 20px" : "20px 40px",
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      backdropFilter: "blur(20px) saturate(180%)",
-      WebkitBackdropFilter: "blur(20px) saturate(180%)",
-      borderBottom: `1px solid ${theme.primary}18`,
-      backgroundColor: `${theme.bg}bb`,
-      transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-      boxShadow: scrolled
-        ? `0 4px 30px ${theme.glowColor || 'rgba(0,0,0,0.3)'}`
-        : "none",
+      backdropFilter: "blur(10px)",
+      borderBottom: `1px solid ${theme.primary}22`,
+      backgroundColor: `${theme.bg}cc`,
     }}>
+
       {/* Logo */}
       <div style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "10px",
-        cursor: "pointer",
+        fontSize: isMobile ? "18px" : "24px",
+        fontWeight: "900",
+        letterSpacing: "3px",
+        color: theme.primary,
+        transition: "color 0.8s ease",
       }}>
-        <span style={{
-          fontSize: "22px",
-          transition: "transform 0.5s ease",
-          display: "inline-block",
-        }}
-          onMouseEnter={e => e.currentTarget.style.transform = "rotate(20deg) scale(1.1)"}
-          onMouseLeave={e => e.currentTarget.style.transform = "rotate(0deg) scale(1)"}
-        >
-          ✈️
-        </span>
-        <span style={{
-          fontFamily: "var(--heading)",
-          fontSize: "22px",
-          fontWeight: "700",
-          letterSpacing: "3px",
-          backgroundImage: theme.gradient,
-          WebkitBackgroundClip: "text",
-          backgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          color: "transparent",
-          transition: "all 0.8s ease",
-        }}>
-          NEXT STOP
-        </span>
+        NEXT STOP
       </div>
 
-      {/* Nav Links */}
-      <div style={{ display: "flex", gap: "32px", alignItems: "center" }}>
-        {navLinks.map((item) => (
-          <span
-            key={item}
-            style={{
-              position: "relative",
-              color: hoveredLink === item ? theme.primary : theme.subtext,
+      {/* Desktop Nav Links */}
+      {!isMobile && (
+        <div style={{ display: "flex", gap: "30px", alignItems: "center" }}>
+          {["Explore", "Plan Trip", "Budget", "About"].map((item) => (
+            <span key={item} style={{
+              color: theme.subtext,
               cursor: "pointer",
               fontSize: "14px",
-              letterSpacing: "0.5px",
+              letterSpacing: "1px",
               fontWeight: "500",
-              transition: "color 0.3s ease",
-              paddingBottom: "4px",
+              transition: "color 0.3s",
             }}
-            onMouseEnter={() => setHoveredLink(item)}
-            onMouseLeave={() => setHoveredLink(null)}
-          >
-            {item}
-            {/* Animated underline */}
-            <span style={{
-              position: "absolute",
-              bottom: 0,
-              left: "50%",
-              width: hoveredLink === item ? "100%" : "0%",
-              height: "2px",
-              backgroundImage: theme.gradient,
-              borderRadius: "1px",
-              transform: "translateX(-50%)",
-              transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            }} />
-          </span>
-        ))}
-
-        {/* CTA Button */}
-        <button
-          style={{
-            backgroundImage: theme.gradient,
+              onMouseEnter={e => e.target.style.color = theme.primary}
+              onMouseLeave={e => e.target.style.color = theme.subtext}
+            >
+              {item}
+            </span>
+          ))}
+          <button style={{
+            background: theme.primary,
             border: "none",
-            padding: "10px 26px",
+            padding: "10px 24px",
             borderRadius: "25px",
             color: "#fff",
-            fontFamily: "var(--sans)",
             fontWeight: "700",
-            fontSize: "13px",
+            fontSize: "14px",
             cursor: "pointer",
             letterSpacing: "1px",
-            transition: "all 0.3s ease",
-            boxShadow: `0 0 20px ${theme.glowColor || 'transparent'}`,
-            position: "relative",
-            overflow: "hidden",
+            transition: "opacity 0.3s",
           }}
-          onMouseEnter={e => {
-            e.currentTarget.style.transform = "translateY(-2px)"
-            e.currentTarget.style.boxShadow = `0 6px 30px ${theme.glowColor || 'transparent'}`
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.transform = "translateY(0)"
-            e.currentTarget.style.boxShadow = `0 0 20px ${theme.glowColor || 'transparent'}`
-          }}
-        >
-          START PLANNING
-        </button>
-      </div>
+            onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
+            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+          >
+            START PLANNING
+          </button>
+        </div>
+      )}
+
+      {/* Mobile Hamburger */}
+      {isMobile && (
+        <div
+          onClick={() => setMenuOpen(!menuOpen)}
+          style={{
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "column",
+            gap: "5px",
+            padding: "4px",
+          }}>
+          {[0, 1, 2].map(i => (
+            <div key={i} style={{
+              width: "24px",
+              height: "2px",
+              background: theme.primary,
+              borderRadius: "2px",
+              transition: "all 0.3s ease",
+              transform: menuOpen
+                ? i === 0 ? "rotate(45deg) translate(5px, 5px)"
+                  : i === 1 ? "opacity: 0"
+                    : "rotate(-45deg) translate(5px, -5px)"
+                : "none",
+              opacity: menuOpen && i === 1 ? 0 : 1,
+            }} />
+          ))}
+        </div>
+      )}
+
+      {/* Mobile Menu Dropdown */}
+      {isMobile && menuOpen && (
+        <div style={{
+          position: "absolute",
+          top: "100%",
+          left: 0,
+          right: 0,
+          background: `${theme.bg}ee`,
+          backdropFilter: "blur(20px)",
+          borderBottom: `1px solid ${theme.primary}22`,
+          padding: "20px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "16px",
+          animation: "fadeIn 0.2s ease",
+          zIndex: 100,
+        }}>
+          {["Explore", "Plan Trip", "Budget", "About"].map((item) => (
+            <span
+              key={item}
+              onClick={() => setMenuOpen(false)}
+              style={{
+                color: theme.subtext,
+                cursor: "pointer",
+                fontSize: "16px",
+                letterSpacing: "1px",
+                fontWeight: "600",
+                padding: "8px 0",
+                borderBottom: `1px solid ${theme.primary}22`,
+              }}>
+              {item}
+            </span>
+          ))}
+          <button style={{
+            background: theme.primary,
+            border: "none",
+            padding: "14px 24px",
+            borderRadius: "25px",
+            color: "#fff",
+            fontWeight: "700",
+            fontSize: "15px",
+            cursor: "pointer",
+            letterSpacing: "1px",
+            marginTop: "8px",
+          }}>
+            START PLANNING
+          </button>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </nav>
   )
 }
 
 export default Navbar
+
