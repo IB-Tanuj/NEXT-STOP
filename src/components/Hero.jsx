@@ -166,7 +166,7 @@ const MessageBubble = ({ msg, visible, side, theme }) => (
 
 /* ══════════════════════ HERO ══════════════════════ */
 
-const Hero = ({ theme, setLocationTheme, onExplore }) => {
+const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
   const [search, setSearch] = useState("")
   const [leftMsg, setLeftMsg] = useState("")
   const [rightMsg, setRightMsg] = useState("")
@@ -248,9 +248,13 @@ const Hero = ({ theme, setLocationTheme, onExplore }) => {
       <Particles color={theme.particleColor || theme.primary} />
       <GradientOrbs colors={theme.orbColors || [theme.primary, theme.accent, theme.secondary]} />
 
-      {/* ── Side Message Bubbles ── */}
-      <MessageBubble msg={leftMsg} visible={leftVisible} side="left" theme={theme} />
-      <MessageBubble msg={rightMsg} visible={rightVisible} side="right" theme={theme} />
+      {/* — Side Message Bubbles — */}
+{!isMobile && (
+  <>
+    <MessageBubble msg={leftMsg} visible={leftVisible} side="left" theme={theme} />
+    <MessageBubble msg={rightMsg} visible={rightVisible} side="right" theme={theme} />
+  </>
+)}
 
       {/* ── Main Content ── */}
       <div style={{

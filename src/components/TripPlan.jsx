@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { localPhrases } from "../data/localPhrases"
 
 const generateTripPlan = async (location, days, budget, stayType, transport, spots, apiKey) => {
   const prompt = `You are a travel planning expert for India. Generate a detailed trip plan for the following:
@@ -33,6 +34,8 @@ Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. 
   ]
 }`
 
+
+
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -61,6 +64,72 @@ Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. 
   console.log("Raw text:", text) // ← add this line
   const clean = text.replace(/```json|```/g, "").trim()
   return JSON.parse(clean)
+}
+
+const PhraseCategory = ({ category, theme }) => {
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <div style={{ borderBottom: `1px solid ${theme.primary}11` }}>
+      {/* Category Header */}
+      <div
+        onClick={() => setExpanded(!expanded)}
+        style={{
+          padding: "14px 24px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          cursor: "pointer",
+          transition: "background 0.2s ease",
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = `${theme.primary}11`}
+        onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+      >
+        <div style={{ color: theme.text, fontWeight: "700", fontSize: "14px" }}>
+          {category.label}
+        </div>
+        <div style={{
+          color: theme.subtext,
+          fontSize: "12px",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+        }}>
+          {category.phrases.length} phrases
+          <span style={{
+            transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.3s ease",
+            display: "inline-block",
+          }}>▼</span>
+        </div>
+      </div>
+
+      {/* Phrases List */}
+      {expanded && (
+        <div style={{ padding: "0 24px 16px" }}>
+          {category.phrases.map((phrase, i) => (
+            <div
+              key={i}
+              style={{
+                padding: "12px 0",
+                borderBottom: i < category.phrases.length - 1 ? `1px solid ${theme.primary}11` : "none",
+              }}
+            >
+              <div style={{ color: theme.subtext, fontSize: "12px", marginBottom: "4px" }}>
+                {phrase.english}
+              </div>
+              <div style={{ color: theme.primary, fontWeight: "700", fontSize: "15px", marginBottom: "2px" }}>
+                {phrase.local}
+              </div>
+              <div style={{ color: theme.text, fontSize: "13px", fontFamily: "serif" }}>
+                {phrase.script}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }) => {
@@ -411,6 +480,61 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
                 </div>
               ))}
             </>)}
+
+            {/* Local Phrases */}
+            {(() => {
+              const locationKey = locationName?.toLowerCase()
+              const phrases = localPhrases[locationKey]
+              if (!phrases) return null
+
+              return (
+                <div style={{
+                  background: theme.card,
+                  borderRadius: "16px",
+                  border: `1px solid ${theme.primary}33`,
+                  overflow: "hidden",
+                  marginBottom: "16px",
+                }}>
+                  {/* Header */}
+                  <div style={{
+                    padding: "20px 24px",
+                    borderBottom: `1px solid ${theme.primary}22`,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}>
+                    <div>
+                      <div style={{ color: theme.subtext, fontSize: "12px", letterSpacing: "2px", marginBottom: "4px" }}>
+                        🗣️ LOCAL PHRASES
+                      </div>
+                      <div style={{ color: theme.text, fontWeight: "700", fontSize: "15px" }}>
+                        Basic {phrases.language} for your trip
+                      </div>
+                    </div>
+                    <div style={{
+                      background: `${theme.primary}22`,
+                      border: `1px solid ${theme.primary}44`,
+                      borderRadius: "20px",
+                      padding: "6px 14px",
+                      color: theme.primary,
+                      fontSize: "12px",
+                      fontWeight: "700",
+                    }}>
+                      📸 Screenshot to save offline
+                    </div>
+                  </div>
+
+                  {/* Categories */}
+                  {Object.entries(phrases.categories).map(([catKey, category]) => (
+                    <PhraseCategory
+                      key={catKey}
+                      category={category}
+                      theme={theme}
+                    />
+                  ))}
+                </div>
+              )
+            })()}
 
             {/* Stay Recommendations */}
             {card(<>

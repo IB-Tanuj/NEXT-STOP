@@ -21,6 +21,7 @@ export const locationData = {
       { name: "Dudhsagar Falls", coords: [15.3144, 74.3144], emoji: "💧" },
       { name: "Old Goa Churches", coords: [15.5009, 73.9116], emoji: "⛪" },
       { name: "Anjuna Beach", coords: [15.5736, 73.7400], emoji: "🌊" },
+      
       { name: "Fort Aguada", coords: [15.4942, 73.7733], emoji: "🏰" },
       { name: "Palolem Beach", coords: [15.0100, 74.0232], emoji: "🌴" },
       { name: "Calangute Beach", coords: [15.5438, 73.7554], emoji: "🏖️" },
