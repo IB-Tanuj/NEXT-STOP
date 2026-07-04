@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
 import "leaflet/dist/leaflet.css"
 import L from "leaflet"
 import PlanningPage from "./PlanningPage"
+import { bestTimeData } from "../data/bestTime"
+
 
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -198,15 +200,17 @@ const TripPage = ({ location, theme, onBack }) => {
   const [selectedChoice, setSelectedChoice] = useState(null)
   const [activeSpot, setActiveSpot] = useState(null)
   const [planningVisible, setPlanningVisible] = useState(false)
+  const [showBestTime, setShowBestTime] = useState(false)
 
   const loc = locationData[location?.toLowerCase()] || locationData.goa
+  const locationKey = location?.toLowerCase()
 
   const handleContinue = () => {
-    setMapVisible(false)
-    setTimeout(() => {
-      setQuestionsVisible(true)
-    }, 600)
-  }
+  setMapVisible(false)
+  setTimeout(() => {
+    setShowBestTime(true)
+  }, 600)
+}
 
   return (
     <div style={{
@@ -421,6 +425,210 @@ const TripPage = ({ location, theme, onBack }) => {
           </div>
         </div>
       )}
+      {/* BEST TIME SECTION */}
+      {showBestTime && !questionsVisible && (() => {
+        const data = bestTimeData[locationKey]
+        const currentMonth = new Date().toLocaleString("default", { month: "short" })
+        const ratingColors = {
+          5: "#4CAF50",
+          4: "#8BC34A",
+          3: "#FFC107",
+          2: "#FF9800",
+          1: "#f44336",
+        }
+
+        return (
+          <div style={{
+            minHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "40px 20px",
+            animation: "fadeIn 0.8s ease",
+          }}>
+
+            {/* Back to map */}
+            <div
+              onClick={() => { setShowBestTime(false); setMapVisible(true) }}
+              style={{
+                position: "absolute",
+                top: "30px",
+                left: "40px",
+                color: theme.subtext,
+                cursor: "pointer",
+                fontSize: "14px",
+                fontWeight: "600",
+              }}>
+              ← Back to Map
+            </div>
+
+            <div style={{ width: "100%", maxWidth: "620px" }}>
+
+              {/* Header */}
+              <div style={{ color: theme.primary, fontSize: "13px", letterSpacing: "4px", fontWeight: "700", marginBottom: "8px", textAlign: "center" }}>
+                📅 BEST TIME TO VISIT
+              </div>
+              <h2 style={{ color: theme.text, fontSize: "clamp(22px, 4vw, 32px)", fontWeight: "900", marginBottom: "8px", textAlign: "center" }}>
+                {loc.name}
+              </h2>
+
+              {data ? (
+                <>
+                  {/* Summary Card */}
+                  <div style={{
+                    background: theme.card,
+                    borderRadius: "16px",
+                    padding: "20px 24px",
+                    border: `1px solid ${theme.primary}33`,
+                    marginBottom: "16px",
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
+                      <div>
+                        <div style={{ color: theme.subtext, fontSize: "12px", marginBottom: "4px" }}>✅ Best time</div>
+                        <div style={{ color: "#4CAF50", fontWeight: "800", fontSize: "15px" }}>{data.best}</div>
+                      </div>
+                      <div>
+                        <div style={{ color: theme.subtext, fontSize: "12px", marginBottom: "4px" }}>❌ Avoid</div>
+                        <div style={{ color: "#f44336", fontWeight: "800", fontSize: "15px" }}>{data.avoid}</div>
+                      </div>
+                    </div>
+                    <div style={{ color: theme.subtext, fontSize: "13px", lineHeight: "1.6" }}>
+                      {data.summary}
+                    </div>
+                  </div>
+
+                  {/* Month Grid */}
+                  <div style={{
+                    background: theme.card,
+                    borderRadius: "16px",
+                    padding: "20px 24px",
+                    border: `1px solid ${theme.primary}33`,
+                    marginBottom: "16px",
+                  }}>
+                    <div style={{ color: theme.subtext, fontSize: "12px", letterSpacing: "2px", marginBottom: "16px" }}>
+                      MONTH BY MONTH
+                    </div>
+                    <div style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(4, 1fr)",
+                      gap: "8px",
+                    }}>
+                      {data.months.map((m) => {
+                        const isCurrentMonth = m.month === currentMonth
+                        return (
+                          <div
+                            key={m.month}
+                            style={{
+                              padding: "10px 6px",
+                              borderRadius: "10px",
+                              border: `2px solid ${isCurrentMonth ? theme.primary : ratingColors[m.rating] + "44"}`,
+                              background: isCurrentMonth ? `${theme.primary}22` : `${ratingColors[m.rating]}11`,
+                              textAlign: "center",
+                              position: "relative",
+                            }}
+                          >
+                            {isCurrentMonth && (
+                              <div style={{
+                                position: "absolute",
+                                top: "-8px",
+                                left: "50%",
+                                transform: "translateX(-50%)",
+                                background: theme.primary,
+                                color: "#fff",
+                                fontSize: "8px",
+                                fontWeight: "800",
+                                padding: "2px 6px",
+                                borderRadius: "4px",
+                                whiteSpace: "nowrap",
+                              }}>
+                                NOW
+                              </div>
+                            )}
+                            <div style={{ color: theme.text, fontWeight: "700", fontSize: "13px", marginBottom: "4px" }}>
+                              {m.month}
+                            </div>
+                            <div style={{ color: ratingColors[m.rating], fontSize: "11px", fontWeight: "600" }}>
+                              {m.label}
+                            </div>
+                            <div style={{ marginTop: "4px" }}>
+                              {[...Array(5)].map((_, i) => (
+                                <span key={i} style={{
+                                  color: i < m.rating ? ratingColors[m.rating] : theme.primary + "22",
+                                  fontSize: "8px",
+                                }}>●</span>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Tips */}
+                  <div style={{
+                    background: theme.card,
+                    borderRadius: "16px",
+                    padding: "20px 24px",
+                    border: `1px solid ${theme.primary}33`,
+                    marginBottom: "24px",
+                  }}>
+                    <div style={{ color: theme.subtext, fontSize: "12px", letterSpacing: "2px", marginBottom: "14px" }}>
+                      💡 TRAVEL TIPS
+                    </div>
+                    {data.tips.map((tip, i) => (
+                      <div key={i} style={{
+                        color: theme.text,
+                        fontSize: "13px",
+                        padding: "8px 0",
+                        borderBottom: i < data.tips.length - 1 ? `1px solid ${theme.primary}11` : "none",
+                        lineHeight: "1.5",
+                      }}>
+                        {tip}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div style={{
+                  background: theme.card,
+                  borderRadius: "16px",
+                  padding: "40px",
+                  border: `1px solid ${theme.primary}33`,
+                  textAlign: "center",
+                  marginBottom: "24px",
+                }}>
+                  <div style={{ fontSize: "32px", marginBottom: "12px" }}>🔜</div>
+                  <div style={{ color: theme.text, fontWeight: "700" }}>Best time data coming soon!</div>
+                </div>
+              )}
+
+              {/* Continue Button */}
+              <button
+                onClick={() => {
+                  setShowBestTime(false)
+                  setQuestionsVisible(true)
+                }}
+                style={{
+                  width: "100%",
+                  background: theme.primary,
+                  border: "none",
+                  padding: "16px",
+                  borderRadius: "50px",
+                  color: "#fff",
+                  fontWeight: "800",
+                  fontSize: "16px",
+                  cursor: "pointer",
+                  letterSpacing: "2px",
+                  boxShadow: `0 8px 32px ${theme.primary}66`,
+                }}>
+                CONTINUE TO PLANNING →
+              </button>
+
+            </div>
+          </div>
+        )
+      })()}
 
       {/* QUESTIONS SECTION */}
       {questionsVisible && (
