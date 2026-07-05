@@ -203,7 +203,7 @@ const AboutPage = ({ theme, onClose }) => {
           ))}
         </div>
 
-        {/* Why We Built This */}
+        {/* Why I Built This */}
         <div style={{
           background: theme.card,
           borderRadius: "24px",
@@ -218,7 +218,7 @@ const AboutPage = ({ theme, onClose }) => {
             fontWeight: "700",
             marginBottom: "16px",
           }}>
-            ❤️ WHY WE BUILT THIS
+            ❤️ WHY I BUILT THIS
           </div>
           <p style={{
             color: theme.subtext,
@@ -241,7 +241,7 @@ const AboutPage = ({ theme, onClose }) => {
             fontSize: "15px",
             lineHeight: "1.8",
           }}>
-            We built NEXT STOP for every Indian who has ever wanted to travel but didn't know where to start, how much to spend, or who to ask. This is for the first-time traveler, the budget backpacker, the college student, and the family planning their first holiday together.
+            I built NEXT STOP for every Indian who has ever wanted to travel but didn't know where to start, how much to spend, or who to ask. This is for the first-time traveler, the budget backpacker, the college student, and the family planning their first holiday together.
           </p>
         </div>
 
