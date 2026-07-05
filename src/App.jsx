@@ -9,6 +9,7 @@ import LocationSpotlight from "./components/LocationSpotlight"
 import { locationData } from "./components/TripPage"
 import useScreenSize from "./hooks/useScreenSize"
 import AboutPage from "./components/AboutPage"
+import ExploreSidebar from "./components/ExploreSidebar"
 
 function App() {
   const { theme, setLocationTheme, resetToSeason } = useTheme()
@@ -17,6 +18,7 @@ function App() {
   const [spotlightLocation, setSpotlightLocation] = useState(null)
   const { isMobile, isTablet } = useScreenSize()
   const [showAbout, setShowAbout] = useState(false)
+  const [showExplore, setShowExplore] = useState(false)
 
   const handleThemeOnly = (location) => {
   if (location.trim()) {
@@ -87,6 +89,7 @@ function App() {
     onClose={() => setShowAbout(false)}
   />
 )}
+
     </div>
   )
 }
