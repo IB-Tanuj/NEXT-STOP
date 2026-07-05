@@ -53,6 +53,7 @@ function App() {
   <>
     <Navbar theme={theme} isMobile={isMobile} 
     onAbout={() => setShowAbout(true)}
+    onExplore={() => setShowExplore(true)}
     />
     <Hero
       theme={theme}
@@ -89,7 +90,15 @@ function App() {
     onClose={() => setShowAbout(false)}
   />
 )}
-
+<ExploreSidebar
+  theme={theme}
+  isOpen={showExplore}
+  onClose={() => setShowExplore(false)}
+  onLocationSelect={(locationKey) => {
+    handleThemeOnly(locationKey)
+    handleExplore(locationKey)
+  }}
+/>
     </div>
   )
 }
