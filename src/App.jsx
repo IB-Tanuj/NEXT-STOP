@@ -49,7 +49,9 @@ function App() {
     }}>
       {currentPage === "home" && (
   <>
-    <Navbar theme={theme} isMobile={isMobile} />
+    <Navbar theme={theme} isMobile={isMobile} 
+    onAbout={() => setShowAbout(true)}
+    />
     <Hero
       theme={theme}
       setLocationTheme={handleThemeOnly}
@@ -79,6 +81,12 @@ function App() {
           onBack={handleBack}
         />
       )}
+      {showAbout && (
+  <AboutPage
+    theme={theme}
+    onClose={() => setShowAbout(false)}
+  />
+)}
     </div>
   )
 }
