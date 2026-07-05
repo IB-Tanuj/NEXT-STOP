@@ -1,6 +1,6 @@
 import { useState } from "react"
 
-const Navbar = ({ theme, isMobile, onAbout }) => {
+const Navbar = ({ theme, isMobile, onAbout, onExplore }) => {
   const [menuOpen, setMenuOpen] = useState(false)
   
 
@@ -36,7 +36,10 @@ const Navbar = ({ theme, isMobile, onAbout }) => {
         <div style={{ display: "flex", gap: "30px", alignItems: "center" }}>
           {["Explore", "Plan Trip", "Budget", "About"].map((item) => (
             <span key={item}
-            onClick={() => item === "About" && onAbout()}
+            onClick={() => {
+  if (item === "About") onAbout()
+  if (item === "Explore") onExplore()
+}}
              style={{
               color: theme.subtext,
               cursor: "pointer",
@@ -120,7 +123,10 @@ const Navbar = ({ theme, isMobile, onAbout }) => {
           {["Explore", "Plan Trip", "Budget", "About"].map((item) => (
             <span
               key={item}
-              onClick={() => item === "About" && onAbout()}
+              onClick={() => {
+  if (item === "About") onAbout()
+  if (item === "Explore") onExplore()
+}}
               style={{
                 color: theme.subtext,
                 cursor: "pointer",
