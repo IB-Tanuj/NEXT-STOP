@@ -8,6 +8,7 @@ import SummerSection from "./components/SummerSection"
 import LocationSpotlight from "./components/LocationSpotlight"
 import { locationData } from "./components/TripPage"
 import useScreenSize from "./hooks/useScreenSize"
+import AboutPage from "./components/AboutPage"
 
 function App() {
   const { theme, setLocationTheme, resetToSeason } = useTheme()
@@ -15,6 +16,7 @@ function App() {
   const [selectedLocation, setSelectedLocation] = useState(null)
   const [spotlightLocation, setSpotlightLocation] = useState(null)
   const { isMobile, isTablet } = useScreenSize()
+  const [showAbout, setShowAbout] = useState(false)
 
   const handleThemeOnly = (location) => {
   if (location.trim()) {
