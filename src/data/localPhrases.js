@@ -154,15 +154,15 @@ export const localPhrases = {
       food: {
         label: "🍽️ Food",
         phrases: [
-          { english: "I am hungry", local: "Mujhe bhook lagi hai", script: "मुझे भूख लगी है" },
+          { english: "I am hungry", local: "Mhake bhook laghi che", script: "मुझे भूख लगी है" },
           { english: "What is this?", local: "Ye kya hai?", script: "ये क्या है?" },
           { english: "Is it spicy?", local: "Ye teekha hai?", script: "ये तीखा है?" },
-          { english: "Without spice", local: "Bina mirchi ke", script: "बिना मिर्ची के" },
+          { english: "Without spice", local: "Bieed mirdch ke", script: "बिना मिर्ची के" },
           { english: "Very tasty!", local: "Bahut swaadisht!", script: "बहुत स्वादिष्ट!" },
           { english: "Water please", local: "Paani dena", script: "पानी देना" },
           { english: "Bill please", local: "Bill lao", script: "बिल लाओ" },
           { english: "I am vegetarian", local: "Main vegetarian hoon", script: "मैं वेजिटेरियन हूँ" },
-          { english: "Local specialty?", local: "Yahan ka khaas khaana?", script: "यहाँ का खास खाना?" },
+          { english: "Local specialty?", local: "eet khe khaas khaana chu ?", script: "यहाँ का खास खाना?" },
           { english: "One more please", local: "Ek aur dena", script: "एक और देना" },
         ]
       }
