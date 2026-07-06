@@ -53,7 +53,7 @@ Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. 
       }
     ],
     temperature: 0.7,
-    max_tokens: 4000,
+    max_tokens: 3300,
   }),
 });
 
