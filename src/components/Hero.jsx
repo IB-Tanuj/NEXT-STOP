@@ -362,6 +362,7 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
         >
           <input
             ref={inputRef}
+            id="hero-search"
             type="text"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setLocationTheme(e.target.value) }}

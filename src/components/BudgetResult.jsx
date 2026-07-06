@@ -302,7 +302,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
               "", null,
               selectedStation === key,
               () => setSelectedStation(key)
-            ,i )
+            ,) 
           })}
 
           {/* Step 2 — Select Train Class */}
