@@ -11,6 +11,7 @@ import useScreenSize from "./hooks/useScreenSize"
 import AboutPage from "./components/AboutPage"
 import ExploreSidebar from "./components/ExploreSidebar"
 import BudgetPage from "./components/BudgetPage"
+import PlanTripPage from "./components/PlanTripPage"
 
 function App() {
   const { theme, setLocationTheme, resetToSeason } = useTheme()
@@ -21,6 +22,7 @@ function App() {
   const [showAbout, setShowAbout] = useState(false)
   const [showExplore, setShowExplore] = useState(false)
   const [showBudget, setShowBudget] = useState(false)
+  const [showPlanTrip, setShowPlanTrip] = useState(false)
 
   const handleThemeOnly = (location) => {
   if (location.trim()) {
@@ -57,6 +59,7 @@ function App() {
     onAbout={() => setShowAbout(true)}
     onExplore={() => setShowExplore(true)}
     onBudget={() => setShowBudget(true)}
+    onPlanTrip={() => setShowPlanTrip(true)}
     />
     <Hero
       theme={theme}
@@ -111,6 +114,20 @@ function App() {
       setShowBudget(false)
       handleThemeOnly(locationKey)
       handleExplore(locationKey)
+    }}
+  />
+)}
+
+{showPlanTrip && (
+  <PlanTripPage
+    theme={theme}
+    onClose={() => setShowPlanTrip(false)}
+    onStartPlanning={() => {
+      const searchBar = document.getElementById("hero-search")
+      if (searchBar) {
+        searchBar.scrollIntoView({ behavior: "smooth", block: "center" })
+        setTimeout(() => searchBar.focus(), 600)
+      }
     }}
   />
 )}
