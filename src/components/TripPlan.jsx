@@ -34,39 +34,47 @@ Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. 
   ]
 }`
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 800,
-        }
-      }),
-    }
-  )
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${apiKey}`,
+  },
+  body: JSON.stringify({
+    model: "llama-3.3-70b-versatile", // You can change this to another Groq-supported model
+    messages: [
+      {
+        role: "system",
+        content: "Return ONLY valid JSON. Do not include markdown or explanations."
+      },
+      {
+        role: "user",
+        content: prompt
+      }
+    ],
+    temperature: 0.7,
+    max_tokens: 4000,
+  }),
+});
 
-  console.log("Status:", response.status);
+console.log("Status:", response.status);
 
 if (!response.ok) {
   const errorText = await response.text();
-  console.error("Gemini Error Response:", errorText);
+  console.error("Groq Error Response:", errorText);
   throw new Error(`HTTP ${response.status}`);
 }
 
 const data = await response.json();
-console.log("Gemini Response:", data);
+console.log("Groq Response:", data);
 
-const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+const text = data.choices?.[0]?.message?.content || "";
 console.log("Raw text:", text);
 
 const clean = text.replace(/```json|```/g, "").trim();
 
 if (!clean) {
-  throw new Error("Gemini returned an empty response.");
+  throw new Error("Groq returned an empty response.");
 }
 
 return JSON.parse(clean);
@@ -152,7 +160,7 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
       setAiLoading(true)
       setAiError("")
       try {
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY
+        const apiKey = import.meta.env.VITE_GROQ_API_KEY
 
 console.log("API Key loaded:", apiKey ? "Yes" : "No");
 console.log("First 8 characters:", apiKey?.substring(0, 8));
