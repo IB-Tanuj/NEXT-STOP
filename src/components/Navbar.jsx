@@ -55,7 +55,15 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget }) => {
               {item}
             </span>
           ))}
-          <button style={{
+          <button 
+          onClick={() => {
+    const searchBar = document.getElementById("hero-search")
+    if (searchBar) {
+      searchBar.scrollIntoView({ behavior: "smooth", block: "center" })
+      setTimeout(() => searchBar.focus(), 600)
+    }
+  }}
+          style={{
             background: theme.primary,
             border: "none",
             padding: "10px 24px",
@@ -141,7 +149,15 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget }) => {
               {item}
             </span>
           ))}
-          <button style={{
+          <button
+          onClick={() => {
+    const searchBar = document.getElementById("hero-search")
+    if (searchBar) {
+      searchBar.scrollIntoView({ behavior: "smooth", block: "center" })
+      setTimeout(() => searchBar.focus(), 600)
+    }
+  }}
+           style={{
             background: theme.primary,
             border: "none",
             padding: "14px 24px",
