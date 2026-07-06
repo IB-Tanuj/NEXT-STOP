@@ -1,6 +1,6 @@
 import { useState } from "react"
 
-const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget }) => {
+const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip }) => {
   const [menuOpen, setMenuOpen] = useState(false)
   
 
@@ -40,6 +40,8 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget }) => {
   if (item === "About") onAbout()
   if (item === "Explore") onExplore()
     if (item === "Budget") onBudget()
+      if (item === "Plan Trip") onPlanTrip()
+
 }}
              style={{
               color: theme.subtext,
@@ -136,6 +138,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget }) => {
   if (item === "About") onAbout()
   if (item === "Explore") onExplore()
     if (item === "Budget") onBudget()
+    if (item === "Plan Trip") onPlanTrip()
 }}
               style={{
                 color: theme.subtext,
