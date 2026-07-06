@@ -10,6 +10,7 @@ import { locationData } from "./components/TripPage"
 import useScreenSize from "./hooks/useScreenSize"
 import AboutPage from "./components/AboutPage"
 import ExploreSidebar from "./components/ExploreSidebar"
+import BudgetPage from "./components/BudgetPage"
 
 function App() {
   const { theme, setLocationTheme, resetToSeason } = useTheme()
@@ -19,6 +20,7 @@ function App() {
   const { isMobile, isTablet } = useScreenSize()
   const [showAbout, setShowAbout] = useState(false)
   const [showExplore, setShowExplore] = useState(false)
+  const [showBudget, setShowBudget] = useState(false)
 
   const handleThemeOnly = (location) => {
   if (location.trim()) {
@@ -54,6 +56,7 @@ function App() {
     <Navbar theme={theme} isMobile={isMobile} 
     onAbout={() => setShowAbout(true)}
     onExplore={() => setShowExplore(true)}
+    onBudget={() => setShowBudget(true)}
     />
     <Hero
       theme={theme}
@@ -98,7 +101,19 @@ function App() {
     handleThemeOnly(locationKey)
     handleExplore(locationKey)
   }}
+  
 />
+{showBudget && (
+  <BudgetPage
+    theme={theme}
+    onClose={() => setShowBudget(false)}
+    onLocationSelect={(locationKey) => {
+      setShowBudget(false)
+      handleThemeOnly(locationKey)
+      handleExplore(locationKey)
+    }}
+  />
+)}
     </div>
   )
 }

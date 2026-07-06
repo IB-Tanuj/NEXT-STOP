@@ -1,6 +1,6 @@
 import { useState } from "react"
 
-const Navbar = ({ theme, isMobile, onAbout, onExplore }) => {
+const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget }) => {
   const [menuOpen, setMenuOpen] = useState(false)
   
 
@@ -39,6 +39,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore }) => {
             onClick={() => {
   if (item === "About") onAbout()
   if (item === "Explore") onExplore()
+    if (item === "Budget") onBudget()
 }}
              style={{
               color: theme.subtext,
@@ -126,6 +127,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore }) => {
               onClick={() => {
   if (item === "About") onAbout()
   if (item === "Explore") onExplore()
+    if (item === "Budget") onBudget()
 }}
               style={{
                 color: theme.subtext,
