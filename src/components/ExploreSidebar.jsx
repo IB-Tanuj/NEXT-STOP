@@ -54,11 +54,13 @@ const ExploreSidebar = ({ theme, isOpen, onClose, onLocationSelect }) => {
         transition: "transform 0.4s ease, width 0.3s ease",
         display: "flex",
         overflowY: "hidden",
+        overflowX: "auto", // ← add this
       }}>
 
         {/* Left Panel — Category List */}
         <div style={{
-          width: "320px",
+          width: "280px",
+          minWidth: "280px", // ← add this
           flexShrink: 0,
           overflowY: "auto",
           borderRight: selectedCategory ? `1px solid ${theme.primary}22` : "none",
@@ -157,7 +159,8 @@ const ExploreSidebar = ({ theme, isOpen, onClose, onLocationSelect }) => {
         {/* Right Panel — Locations */}
         {selectedCategory && (
           <div style={{
-            flex: 1,
+            minWidth: "280px", // ← add this
+            width: "360px",    // ← add this
             overflowY: "auto",
             padding: "24px 20px",
             animation: "slideIn 0.3s ease",
