@@ -265,7 +265,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
                 `₹${opt.cost.toLocaleString("en-IN")}`, null,
                 roomOption === opt.id,
                 () => setRoomOption(opt.id)
-              ,i))}
+              ,))}
             </div>
           )}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
