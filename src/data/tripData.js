@@ -101,7 +101,7 @@ export const transportCosts = {
               { type: "Luxury/High-Comfort Coach", min: 2000, max: 5000, duration: "7-8hr" },
             ],
             taxi: [
-              { type: "Taxi", min: 4400, max: 5400, duration: "6-7hr" },
+              { type: "Taxi", min: 4400, max: 5300, duration: "6-7hr" },
             ],
           }
         },
