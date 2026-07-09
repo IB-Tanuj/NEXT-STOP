@@ -1,6 +1,10 @@
 import axios from 'axios';
 import { destinationStations } from '../utils/destinationStations.js';
 
+// Simple in-memory cache
+const cache = {};
+const CACHE_DURATION = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
+
 // ── Existing: Get train info by train number ────
 export const getTrainStatus = async (req, res) => {
     try {
@@ -49,6 +53,14 @@ export const searchTrains = async (req, res) => {
             });
         }
 
+        const cacheKey = `${from}-${toCode}`;
+        const now = Date.now();
+
+        if (cache[cacheKey] && (now - cache[cacheKey].timestamp < CACHE_DURATION)) {
+            console.log(`🚂 Serving from cache: ${from} → ${toCode}`);
+            return res.json(cache[cacheKey].data);
+        }
+
         console.log(`🚂 Searching trains: ${from} → ${toCode}`);
 
         const options = {
@@ -63,13 +75,21 @@ export const searchTrains = async (req, res) => {
 
         const response = await axios.request(options);
 
-        // Return the response along with our query context
-        res.json({
+        const responseData = {
             from: from,
             to: toCode,
             apiData: response.data,
             timestamp: new Date().toISOString()
-        });
+        };
+
+        // Save to cache
+        cache[cacheKey] = {
+            timestamp: now,
+            data: responseData
+        };
+
+        // Return the response along with our query context
+        res.json(responseData);
 
     } catch (error) {
         console.error("Error searching trains:", error.response?.data || error.message);
