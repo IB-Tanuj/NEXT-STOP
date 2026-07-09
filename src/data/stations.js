@@ -265,7 +265,7 @@ export const searchStations = (query) => {
 }
 
 // ─── HELPER: Find nearest station to coordinates ─
-const haversineDistance = (lat1, lng1, lat2, lng2) => {
+export const haversineDistance = (lat1, lng1, lat2, lng2) => {
   const R = 6371 // Earth radius in km
   const dLat = (lat2 - lat1) * Math.PI / 180
   const dLng = (lng2 - lng1) * Math.PI / 180
@@ -293,4 +293,12 @@ export const findNearestStation = (lat, lng) => {
 // ─── HELPER: Get all stations for a state ───────
 export const getStationsByState = (stateName) => {
   return stations.filter(s => s.state.toLowerCase() === stateName.toLowerCase())
+}
+
+// ─── HELPER: Get distance between two station codes
+export const getDistanceBetweenStations = (code1, code2) => {
+  const st1 = stations.find(s => s.code === code1)
+  const st2 = stations.find(s => s.code === code2)
+  if (!st1 || !st2) return null
+  return haversineDistance(st1.lat, st1.lng, st2.lat, st2.lng)
 }

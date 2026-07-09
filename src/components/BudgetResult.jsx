@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { transportCosts, stayCosts, entryCosts } from "../data/tripData"
+import { getDistanceBetweenStations } from "../data/stations"
 import TripPlan from "./TripPlan"
 
 // Destination station codes for our 4 locations
@@ -48,7 +49,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     if (fromStation && preferences.transport === "train") {
       setTrainLoading(true)
       setTrainError(null)
-      fetch(`http://localhost:5000/api/trains/search?from=${fromStation}&to=${toStation}`)
+      fetch(`/api/trains/search?from=${fromStation}&to=${toStation}`)
         .then(res => res.json())
         .then(data => {
           if (data.error) throw new Error(data.error)
@@ -91,7 +92,67 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   // ── Transport Detection ────────────────────────────────
   const routeData = transportCosts[routeKey]
   const transportMedium = preferences.transport
-  const mediumData = routeData?.[transportMedium]
+  let mediumData = routeData?.[transportMedium]
+
+  // ── Dynamic Distance Scaling (Fallback for API) ─────────
+  if (mediumData && fromStation && toStation) {
+    const baseDistance = getDistanceBetweenStations("NDLS", toStation) || 1500
+    const newDistance = getDistanceBetweenStations(fromStation, toStation) || baseDistance
+    
+    // Scale factor (capped between 0.2x and 3x)
+    let scale = newDistance / baseDistance
+    if (scale < 0.2) scale = 0.2
+    if (scale > 3) scale = 3
+
+    // Deep copy mediumData to safely mutate
+    mediumData = JSON.parse(JSON.stringify(mediumData))
+
+    if (mediumData.options) {
+      mediumData.options = mediumData.options.map(opt => {
+        const scaledMin = Math.round((opt.min * scale) / 50) * 50
+        const scaledMax = Math.round((opt.max * scale) / 50) * 50
+        let scaledDuration = opt.duration
+        
+        // Scale duration string like "36-40hr"
+        if (opt.duration) {
+          const hoursMatch = opt.duration.match(/(\d+)-(\d+)hr/)
+          if (hoursMatch) {
+            const hMin = Math.round(parseInt(hoursMatch[1]) * scale)
+            const hMax = Math.round(parseInt(hoursMatch[2]) * scale)
+            scaledDuration = `${Math.max(1, hMin)}-${Math.max(2, hMax)}hr`
+          } else {
+            const singleMatch = opt.duration.match(/(\d+)hr/)
+            if (singleMatch) {
+              const h = Math.round(parseInt(singleMatch[1]) * scale)
+              scaledDuration = `${Math.max(1, h)}hr`
+            }
+          }
+        }
+        
+        return {
+          ...opt,
+          min: scaledMin,
+          max: scaledMax,
+          duration: scaledDuration
+        }
+      })
+    }
+    
+    // Scale multi-leg options
+    if (mediumData.stations) {
+      Object.keys(mediumData.stations).forEach(stKey => {
+        const st = mediumData.stations[stKey]
+        if (st.options) {
+          st.options = st.options.map(opt => {
+            const scaledMin = Math.round((opt.min * scale) / 50) * 50
+            const scaledMax = Math.round((opt.max * scale) / 50) * 50
+            return { ...opt, min: scaledMin, max: scaledMax }
+          })
+        }
+      })
+    }
+  }
+
   const isMultiLeg = mediumData?.stations !== undefined
   const isDirect = mediumData?.options !== undefined
 
@@ -480,7 +541,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
 
         {/* Transport Card — Direct */}
         {isDirect && transportMedium !== "personal" && !isFlightMultiLeg && card(<>
-          {sectionLabel(`🚌 SELECT ${transportMedium.toUpperCase()} CLASS`)}
+          {sectionLabel(`🚌 SELECT ${transportMedium.toUpperCase()} CLASS (${planData.selectedStationName || "Origin"} → ${location?.name})`)}
           <div style={{ color: theme.subtext, fontSize: "12px", marginBottom: "16px" }}>
             Tap to see real-time food buffer update
           </div>
