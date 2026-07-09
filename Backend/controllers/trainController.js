@@ -8,7 +8,11 @@ export const getTrainStatus = async (req, res) => {
         // You may need to adjust the URL depending on which specific IRCTC API you subscribe to.
         const options = {
             method: 'GET',
-            url: `https://${process.env.RAPIDAPI_HOST}/v1/trains/${trainNo}`,
+            url: `https://${process.env.RAPIDAPI_HOST}/api/trains-search/v1/train/${trainNo}`,
+            params: {
+                isH5: 'true',
+                client: 'web'
+            },
             headers: {
                 'x-rapidapi-key': process.env.RAPIDAPI_KEY,
                 'x-rapidapi-host': process.env.RAPIDAPI_HOST
