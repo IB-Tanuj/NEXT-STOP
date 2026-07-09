@@ -1,9 +1,12 @@
 import { useState } from "react"
 import TripPreferences from "./TripPreferences"
+import { searchStations, findNearestStation } from "../data/stations"
 
 const PlanningPage = ({ location, theme, choice, onBack }) => {
   const [leavingFrom, setLeavingFrom] = useState("")
   const [leavingCoords, setLeavingCoords] = useState(null)
+  const [selectedStationCode, setSelectedStationCode] = useState(null)
+  const [selectedStationName, setSelectedStationName] = useState("")
   const [locationLoading, setLocationLoading] = useState(false)
   const [locationError, setLocationError] = useState("")
   const [budgetType, setBudgetType] = useState(null)
@@ -18,9 +21,7 @@ const [planData, setPlanData] = useState(null)
 const [showBudget, setShowBudget] = useState(false)
 
   const isValid = () => {
-    if (!leavingFrom.trim()) return false
-    // Allow if coordinates detected OR if user typed a long enough address
-    if (!leavingCoords && leavingFrom.trim().length < 5) return false
+    if (!selectedStationCode) return false
     if (!budgetType) return false
     if (!budget.trim()) return false
     if (budgetType === "group" && !groupSize.trim()) return false
@@ -36,49 +37,35 @@ const [showBudget, setShowBudget] = useState(false)
       return
     }
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
+      (position) => {
         const { latitude, longitude } = position.coords
         setLeavingCoords({ lat: latitude, lng: longitude })
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
-          )
-          const data = await res.json()
-          const address = data.display_name?.split(",").slice(0, 3).join(", ")
-          setLeavingFrom(address || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`)
-        } catch {
+        // Find nearest railway station from our curated list
+        const nearest = findNearestStation(latitude, longitude)
+        if (nearest) {
+          setLeavingFrom(`${nearest.name} (${nearest.code})`)
+          setSelectedStationCode(nearest.code)
+          setSelectedStationName(nearest.name)
+        } else {
           setLeavingFrom(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`)
         }
         setLocationLoading(false)
       },
       (error) => {
-        setLocationError("Could not get location. Please type your address manually.")
+        setLocationError("Could not get location. Please search for your station manually.")
         setLocationLoading(false)
       }
     )
   }
 
-  const handleAddressSearch = async (value) => {
+  const handleStationSearch = (value) => {
     setLeavingFrom(value)
+    setSelectedStationCode(null)
+    setSelectedStationName("")
     setLeavingCoords(null)
-    if (value.length > 2) {
-      try {
-        //const res = await fetch(
-          //`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(value)},India&format=json&limit=6&addressdetails=1`
-        //)
-        const res = await fetch(
-  `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(value)},India&format=json&limit=8&addressdetails=1&featuretype=city&featuretype=state`
-)
-        const data = await res.json()
-        setSuggestions(data)
-        setShowSuggestions(true)
-      } catch {
-        setSuggestions([])
-      }
-    } else {
-      setSuggestions([])
-      setShowSuggestions(false)
-    }
+    const results = searchStations(value)
+    setSuggestions(results)
+    setShowSuggestions(results.length > 0)
   }
 
   const filteredSpots = location?.spots?.filter(spot =>
@@ -204,13 +191,13 @@ const [showBudget, setShowBudget] = useState(false)
             value={leavingFrom}
             onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-            onChange={(e) => handleAddressSearch(e.target.value)}
-            placeholder="e.g. Connaught Place, New Delhi..."
+            onChange={(e) => handleStationSearch(e.target.value)}
+            placeholder="e.g. New Delhi, Mumbai Central, NDLS..."
             style={{
               width: "100%",
               padding: "14px 18px",
               borderRadius: "12px",
-              border: `2px solid ${leavingFrom ? theme.primary : theme.primary + "33"}`,
+              border: `2px solid ${selectedStationCode ? theme.primary : theme.primary + "33"}`,
               background: theme.bg,
               color: theme.text,
               fontSize: "15px",
@@ -219,7 +206,7 @@ const [showBudget, setShowBudget] = useState(false)
               boxSizing: "border-box",
             }}
           />
-           {/* Suggestions Dropdown */}
+           {/* Station Suggestions Dropdown */}
           {showSuggestions && suggestions.length > 0 && (
             <div style={{
               background: theme.card,
@@ -228,16 +215,17 @@ const [showBudget, setShowBudget] = useState(false)
               marginTop: "8px",
               overflow: "hidden",
               animation: "fadeIn 0.2s ease",
+              maxHeight: "280px",
+              overflowY: "auto",
             }}>
-              {suggestions.map((s, i) => {
-                const name = s.display_name.split(",").slice(0, 2).join(",")
-                const type = s.type || s.class || ""
-                return (
+              {suggestions.map((s, i) => (
                   <div
-                    key={i}
+                    key={s.code}
                     onMouseDown={() => {
-                      setLeavingFrom(name)
-                      setLeavingCoords({ lat: s.lat, lng: s.lon })
+                      setLeavingFrom(`${s.name} (${s.code})`)
+                      setSelectedStationCode(s.code)
+                      setSelectedStationName(s.name)
+                      setLeavingCoords({ lat: s.lat, lng: s.lng })
                       setShowSuggestions(false)
                       setSuggestions([])
                     }}
@@ -253,47 +241,59 @@ const [showBudget, setShowBudget] = useState(false)
                     onMouseEnter={e => e.currentTarget.style.background = `${theme.primary}22`}
                     onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                   >
-                    <span style={{ fontSize: "18px" }}>📍</span>
-                    <div>
+                    <span style={{ fontSize: "18px" }}>🚉</span>
+                    <div style={{ flex: 1 }}>
                       <div style={{
                         color: theme.text,
                         fontWeight: "600",
                         fontSize: "14px",
                       }}>
-                        {name}
+                        {s.name}
                       </div>
                       <div style={{
                         color: theme.subtext,
                         fontSize: "12px",
-                        textTransform: "capitalize",
                       }}>
-                        {type.replace(/_/g, " ")}
+                        {s.city}, {s.state}
                       </div>
                     </div>
+                    <div style={{
+                      background: `${theme.primary}22`,
+                      color: theme.primary,
+                      padding: "4px 10px",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                      fontWeight: "800",
+                      letterSpacing: "1px",
+                    }}>
+                      {s.code}
+                    </div>
                   </div>
-                )
-              })}
+              ))}
             </div>
           )}
 
-          {leavingFrom && !leavingCoords && !locationLoading && leavingFrom.length >= 5 && (
+          {leavingFrom && !selectedStationCode && !locationLoading && leavingFrom.length >= 2 && (
             <div style={{
               color: "#FFB347",
               fontSize: "12px",
               marginTop: "8px",
             }}>
-              ⚠️ Location not verified — distance calculation may be approximate. For best results select from suggestions or use current location!
+              ⚠️ Please select a station from the dropdown to continue!
             </div>
           )}
 
-          {leavingCoords && (
+          {selectedStationCode && (
             <div style={{
               color: theme.subtext,
               fontSize: "12px",
               marginTop: "8px",
               lineHeight: "1.6",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
             }}>
-              📌 Location detected — if this looks wrong, correct it manually in the box above!
+              ✅ Station selected: <span style={{ color: theme.primary, fontWeight: "700" }}>{selectedStationName} ({selectedStationCode})</span>
             </div>
           )}
         </div>
@@ -567,7 +567,7 @@ const [showBudget, setShowBudget] = useState(false)
           <TripPreferences
             location={location}
             theme={theme}
-            planData={{ leavingFrom, leavingCoords, budget, budgetType, groupSize }}
+            planData={{ leavingFrom, leavingCoords, selectedStationCode, selectedStationName, budget, budgetType, groupSize }}
             onBack={() => setShowPreferences(false)}
             onNext={(prefs) => {
               setPlanData(prefs)

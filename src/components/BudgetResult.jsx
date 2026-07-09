@@ -2,6 +2,14 @@ import { useState, useEffect } from "react"
 import { transportCosts, stayCosts, entryCosts } from "../data/tripData"
 import TripPlan from "./TripPlan"
 
+// Destination station codes for our 4 locations
+const DESTINATION_STATIONS = {
+  goa: "MAO",
+  manali: "CDG",
+  kerala: "ERS",
+  rajasthan: "JP",
+}
+
 // ── Smart Split ────────────────────────────────────────
 const calculateSmartSplit = (remaining, days, locationKey, groupSize, transport) => {
   let transportPercent = 40
@@ -22,11 +30,37 @@ const calculateSmartSplit = (remaining, days, locationKey, groupSize, transport)
 const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const [showTripPlan, setShowTripPlan] = useState(false)
   const locationKey = location?.name?.toLowerCase()
-  const routeKey = `delhi-${locationKey}`
+  const routeKey = `delhi-${locationKey}` // fallback key for static data
   const isGroup = planData.budgetType === "group"
   const groupSize = Number(planData.groupSize) || 1
   const totalBudget = Number(planData.budget)
   const perPersonBudget = isGroup ? Math.round(totalBudget / groupSize) : totalBudget
+
+  // ── Live train data from API ────────────────────────
+  const [liveTrainData, setLiveTrainData] = useState(null)
+  const [trainLoading, setTrainLoading] = useState(false)
+  const [trainError, setTrainError] = useState(null)
+
+  const fromStation = planData.selectedStationCode
+  const toStation = DESTINATION_STATIONS[locationKey] || "MAO"
+
+  useEffect(() => {
+    if (fromStation && preferences.transport === "train") {
+      setTrainLoading(true)
+      setTrainError(null)
+      fetch(`http://localhost:5000/api/trains/search?from=${fromStation}&to=${toStation}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) throw new Error(data.error)
+          setLiveTrainData(data)
+        })
+        .catch(err => {
+          console.warn("Train API failed, using fallback data:", err.message)
+          setTrainError(err.message)
+        })
+        .finally(() => setTrainLoading(false))
+    }
+  }, [fromStation, toStation, preferences.transport])
 
   // ── Stay ───────────────────────────────────────────────
   const stayData = stayCosts[locationKey]?.[preferences.stayType]
@@ -227,6 +261,9 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
         {isGroup ? `👥 Group of ${groupSize}` : "👤 Solo"} &nbsp;|&nbsp;
         Total: ₹{totalBudget.toLocaleString("en-IN")}
         {isGroup && <span> · ₹{perPersonBudget.toLocaleString("en-IN")}/person</span>}
+        {planData.selectedStationCode && (
+          <span> &nbsp;|&nbsp; 🚉 From: {planData.selectedStationName || planData.selectedStationCode} → {location?.name}</span>
+        )}
       </div>
 
       <div style={{ width: "100%", maxWidth: "620px", display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -308,8 +345,8 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
           {/* Step 2 — Select Train Class */}
           {selectedStation && (
             <>
-              <div style={{ color: theme.text, fontWeight: "700", fontSize: "15px", margin: "16px 0 10px" }}>
-                Step 2 — Select train class (Delhi → {mediumData.stations[selectedStation]?.label}):
+          <div style={{ color: theme.text, fontWeight: "700", fontSize: "15px", margin: "16px 0 10px" }}>
+                Step 2 — Select train class ({planData.selectedStationName || "Origin"} → {mediumData.stations[selectedStation]?.label}):
               </div>
               {mediumData.stations[selectedStation]?.options?.map((opt, i) => {
                 const avg = Math.round((opt.min + opt.max) / 2)
