@@ -1,18 +1,60 @@
 import axios from 'axios';
+import { destinationStations } from '../utils/destinationStations.js';
 
+// ── Existing: Get train info by train number ────
 export const getTrainStatus = async (req, res) => {
     try {
         const { trainNo } = req.params;
-
-        // This is a generic example for a RapidAPI endpoint.
-        // You may need to adjust the URL depending on which specific IRCTC API you subscribe to.
         const options = {
             method: 'GET',
             url: `https://${process.env.RAPIDAPI_HOST}/api/trains-search/v1/train/${trainNo}`,
-            params: {
-                isH5: 'true',
-                client: 'web'
-            },
+            params: { isH5: 'true', client: 'web' },
+            headers: {
+                'x-rapidapi-key': process.env.RAPIDAPI_KEY,
+                'x-rapidapi-host': process.env.RAPIDAPI_HOST
+            }
+        };
+        const response = await axios.request(options);
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error fetching train status:", error.response?.data || error.message);
+        res.status(error.response?.status || 500).json({
+            error: "Failed to fetch train data.",
+            details: error.response?.data || error.message
+        });
+    }
+};
+
+// ── NEW: Search trains between two stations ─────
+export const searchTrains = async (req, res) => {
+    try {
+        const { from, to, destination } = req.query;
+
+        // If 'to' is not a station code but a destination name (e.g., "goa"),
+        // look up the station code from our mapping
+        let toCode = to;
+        if (!to && destination) {
+            const dest = destinationStations[destination.toLowerCase()];
+            if (!dest) {
+                return res.status(400).json({
+                    error: `Unknown destination: ${destination}. Supported: ${Object.keys(destinationStations).join(', ')}`
+                });
+            }
+            toCode = dest.code;
+        }
+
+        if (!from || !toCode) {
+            return res.status(400).json({
+                error: "Missing required parameters. Use: ?from=NDLS&to=MAO or ?from=NDLS&destination=goa"
+            });
+        }
+
+        console.log(`🚂 Searching trains: ${from} → ${toCode}`);
+
+        const options = {
+            method: 'GET',
+            url: `https://${process.env.RAPIDAPI_HOST}/api/trains-search/v1/train/${from}`,
+            params: { isH5: 'true', client: 'web' },
             headers: {
                 'x-rapidapi-key': process.env.RAPIDAPI_KEY,
                 'x-rapidapi-host': process.env.RAPIDAPI_HOST
@@ -20,11 +62,19 @@ export const getTrainStatus = async (req, res) => {
         };
 
         const response = await axios.request(options);
-        res.json(response.data);
+
+        // Return the response along with our query context
+        res.json({
+            from: from,
+            to: toCode,
+            apiData: response.data,
+            timestamp: new Date().toISOString()
+        });
+
     } catch (error) {
-        console.error("Error fetching train status:", error.response?.data || error.message);
+        console.error("Error searching trains:", error.response?.data || error.message);
         res.status(error.response?.status || 500).json({
-            error: "Failed to fetch train data.",
+            error: "Failed to search trains.",
             details: error.response?.data || error.message
         });
     }

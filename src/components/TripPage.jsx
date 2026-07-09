@@ -16,7 +16,6 @@ L.Icon.Default.mergeOptions({
 export const locationData = {
   goa: {
     name: "Goa",
-    trainNo: "12742",
     coords: [15.4989, 73.8278],
     zoom: 11,
     spots: [
@@ -41,7 +40,6 @@ export const locationData = {
   },
   manali: {
     name: "Manali",
-    trainNo: "12011",
     coords: [32.2432, 77.1892],
     zoom: 13,
     customBoundary: [
@@ -84,7 +82,6 @@ export const locationData = {
   },
   kerala: {
     name: "Kerala",
-    trainNo: "12626",
     coords: [10.8505, 76.2711],
     zoom: 8,
     spots: [
@@ -116,7 +113,6 @@ export const locationData = {
   },
   rajasthan: {
     name: "Rajasthan",
-    trainNo: "12956",
     coords: [27.0238, 74.2179],
     zoom: 7,
     spots: [
@@ -205,27 +201,9 @@ const TripPage = ({ location, theme, onBack }) => {
   const [activeSpot, setActiveSpot] = useState(null)
   const [planningVisible, setPlanningVisible] = useState(false)
   const [showBestTime, setShowBestTime] = useState(false)
-  const [trainData, setTrainData] = useState(null)
-  const [isTrainLoading, setIsTrainLoading] = useState(false)
-  const [trainError, setTrainError] = useState(null)
 
   const loc = locationData[location?.toLowerCase()] || locationData.goa
   const locationKey = location?.toLowerCase()
-
-  useEffect(() => {
-    if (showBestTime && loc.trainNo) {
-      setIsTrainLoading(true);
-      setTrainError(null);
-      fetch(`http://localhost:5000/api/trains/status/${loc.trainNo}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.error) throw new Error(data.error);
-          setTrainData(data);
-        })
-        .catch(err => setTrainError(err.message))
-        .finally(() => setIsTrainLoading(false));
-    }
-  }, [showBestTime, loc.trainNo]);
 
   const handleContinue = () => {
   setMapVisible(false)
@@ -585,46 +563,6 @@ const TripPage = ({ location, theme, onBack }) => {
                         )
                       })}
                     </div>
-                  </div>
-
-                  {/* Train Info Card */}
-                  <div style={{
-                    background: theme.card,
-                    borderRadius: "16px",
-                    padding: "20px 24px",
-                    border: `1px solid ${theme.primary}33`,
-                    marginBottom: "16px",
-                  }}>
-                    <div style={{ color: theme.subtext, fontSize: "12px", letterSpacing: "2px", marginBottom: "16px" }}>
-                      🚆 TRAIN INFO (Train No: {loc.trainNo})
-                    </div>
-                    {isTrainLoading && (
-                      <div style={{ color: theme.text, fontSize: "14px", fontWeight: "600", textAlign: "center", padding: "10px" }}>
-                        Fetching live train data...
-                      </div>
-                    )}
-                    {trainError && (
-                      <div style={{ color: "#f44336", fontSize: "13px", fontWeight: "600", textAlign: "center", padding: "10px" }}>
-                        ⚠️ {trainError}
-                      </div>
-                    )}
-                    {trainData && !isTrainLoading && !trainError && (
-                      <div>
-                        <div style={{ color: theme.text, fontSize: "18px", fontWeight: "800", marginBottom: "8px" }}>
-                          {trainData?.body?.trainName || "Express Train"}
-                        </div>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                          <div style={{ background: `${theme.primary}11`, padding: "10px", borderRadius: "8px" }}>
-                            <div style={{ color: theme.subtext, fontSize: "11px" }}>Source</div>
-                            <div style={{ color: theme.text, fontWeight: "700", fontSize: "14px" }}>{trainData?.body?.source || "N/A"}</div>
-                          </div>
-                          <div style={{ background: `${theme.primary}11`, padding: "10px", borderRadius: "8px" }}>
-                            <div style={{ color: theme.subtext, fontSize: "11px" }}>Destination</div>
-                            <div style={{ color: theme.text, fontWeight: "700", fontSize: "14px" }}>{trainData?.body?.destination || "N/A"}</div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {/* Tips */}
