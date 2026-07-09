@@ -63,9 +63,12 @@ const [showBudget, setShowBudget] = useState(false)
     setLeavingCoords(null)
     if (value.length > 2) {
       try {
+        //const res = await fetch(
+          //`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(value)},India&format=json&limit=6&addressdetails=1`
+        //)
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(value)},India&format=json&limit=6&addressdetails=1`
-        )
+  `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(value)},India&format=json&limit=8&addressdetails=1&featuretype=city&featuretype=state`
+)
         const data = await res.json()
         setSuggestions(data)
         setShowSuggestions(true)
