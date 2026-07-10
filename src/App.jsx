@@ -25,13 +25,11 @@ function App() {
   const [showPlanTrip, setShowPlanTrip] = useState(false)
 
   const handleThemeOnly = (location) => {
-  if (location.trim()) {
     setLocationTheme(location)
-    if (locationData[location.toLowerCase()]) {
-      setSpotlightLocation(location)
+    if (location.trim() && locationData[location.trim().toLowerCase()]) {
+      setSpotlightLocation(location.trim().toLowerCase())
     }
   }
-}
 
   const handleExplore = (location) => {
     setSelectedLocation(location)
