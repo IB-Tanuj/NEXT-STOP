@@ -228,7 +228,7 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
     }
   }
 
-  const suggestions = ["Goa", "Manali", "Kerala", "Rajasthan"]
+  const suggestions = ["Goa", "Manali", "Jaipur", "Kerala", "Varanasi", "Udaipur", "Rishikesh", "Mumbai"]
 
   return (
     <div style={{

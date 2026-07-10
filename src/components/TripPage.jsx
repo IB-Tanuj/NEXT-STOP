@@ -4,7 +4,9 @@ import "leaflet/dist/leaflet.css"
 import L from "leaflet"
 import PlanningPage from "./PlanningPage"
 import { bestTimeData } from "../data/bestTime"
+import { locationData } from "../data/locationData"
 
+export { locationData }
 
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -12,137 +14,6 @@ L.Icon.Default.mergeOptions({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 })
-
-export const locationData = {
-  goa: {
-    name: "Goa",
-    coords: [15.4989, 73.8278],
-    zoom: 11,
-    spots: [
-      { name: "Baga Beach", coords: [15.5564, 73.7515], emoji: "🏖️" },
-      { name: "Dudhsagar Falls", coords: [15.3144, 74.3144], emoji: "💧" },
-      { name: "Old Goa Churches", coords: [15.5009, 73.9116], emoji: "⛪" },
-      { name: "Anjuna Beach", coords: [15.5736, 73.7400], emoji: "🌊" },
-      
-      { name: "Fort Aguada", coords: [15.4942, 73.7733], emoji: "🏰" },
-      { name: "Palolem Beach", coords: [15.0100, 74.0232], emoji: "🌴" },
-      { name: "Calangute Beach", coords: [15.5438, 73.7554], emoji: "🏖️" },
-    ],
-    suggestions: [
-      { name: "Baga Beach", emoji: "🏖️" },
-      { name: "Dudhsagar Falls", emoji: "💧" },
-      { name: "Old Goa Churches", emoji: "⛪" },
-      { name: "Anjuna Beach", emoji: "🌊" },
-      { name: "Fort Aguada", emoji: "🏰" },
-      { name: "Palolem Beach", emoji: "🌴" },
-      { name: "Calangute Beach", emoji: "🏖️" },
-    ]
-  },
-  manali: {
-    name: "Manali",
-    coords: [32.2432, 77.1892],
-    zoom: 13,
-    customBoundary: [
-      [32.3900, 77.1200],
-      [32.3750, 77.1500],
-      [32.3717, 77.2367],
-      [32.3500, 77.2800],
-      [32.3200, 77.3000],
-      [32.2900, 77.2900],
-      [32.2600, 77.2700],
-      [32.2396, 77.1735],
-      [32.2200, 77.1500],
-      [32.1900, 77.1400],
-      [32.1800, 77.1200],
-      [32.2000, 77.0900],
-      [32.2400, 77.0700],
-      [32.2800, 77.0800],
-      [32.3200, 77.0900],
-      [32.3600, 77.1000],
-      [32.3900, 77.1200],
-    ],
-    spots: [
-      { name: "Rohtang Pass", coords: [32.3717, 77.2367], emoji: "🏔️" },
-      { name: "Solang Valley", coords: [32.3189, 77.1458], emoji: "⛷️" },
-      { name: "Hadimba Temple", coords: [32.2396, 77.1735], emoji: "🛕" },
-      { name: "Beas River", coords: [32.2318, 77.1924], emoji: "🌊" },
-      { name: "Mall Road", coords: [32.2396, 77.1892], emoji: "🛍️" },
-      { name: "Naggar Castle", coords: [32.1033, 77.1692], emoji: "🏯" },
-      { name: "Jogini Falls", coords: [32.2598, 77.1805], emoji: "💧" },
-    ],
-    suggestions: [
-      { name: "Rohtang Pass", emoji: "🏔️" },
-      { name: "Solang Valley", emoji: "⛷️" },
-      { name: "Hadimba Temple", emoji: "🛕" },
-      { name: "Beas River", emoji: "🌊" },
-      { name: "Mall Road", emoji: "🛍️" },
-      { name: "Naggar Castle", emoji: "🏯" },
-      { name: "Jogini Falls", emoji: "💧" },
-    ]
-  },
-  kerala: {
-    name: "Kerala",
-    coords: [10.8505, 76.2711],
-    zoom: 8,
-    spots: [
-      { name: "Alleppey Backwaters", coords: [9.4981, 76.3388], emoji: "🚢" },
-      { name: "Munnar Tea Gardens", coords: [10.0889, 77.0595], emoji: "🍵" },
-      { name: "Kovalam Beach", coords: [8.4004, 76.9787], emoji: "🏖️" },
-      { name: "Wayanad Wildlife", coords: [11.6854, 76.1320], emoji: "🐘" },
-      { name: "Thekkady Periyar", coords: [9.5992, 77.1693], emoji: "🌿" },
-      { name: "Varkala Beach", coords: [8.7378, 76.7164], emoji: "🌊" },
-      { name: "Thrissur Pooram", coords: [10.5276, 76.2144], emoji: "🎭" },
-      { name: "Bekal Fort", coords: [12.3908, 75.0353], emoji: "🏰" },
-      { name: "Athirappilly Falls", coords: [10.2834, 76.5694], emoji: "💧" },
-      { name: "Kannur Beach", coords: [11.8745, 75.3704], emoji: "🏖️" },
-      { name: "Padmanabhaswamy Temple", coords: [8.4821, 76.9453], emoji: "🛕" },
-    ],
-    suggestions: [
-      { name: "Alleppey Backwaters", emoji: "🚢" },
-      { name: "Munnar Tea Gardens", emoji: "🍵" },
-      { name: "Kovalam Beach", emoji: "🏖️" },
-      { name: "Wayanad Wildlife", emoji: "🐘" },
-      { name: "Thekkady Periyar", emoji: "🌿" },
-      { name: "Varkala Beach", emoji: "🌊" },
-      { name: "Thrissur Pooram", emoji: "🎭" },
-      { name: "Bekal Fort", emoji: "🏰" },
-      { name: "Athirappilly Falls", emoji: "💧" },
-      { name: "Kannur Beach", emoji: "🏖️" },
-      { name: "Padmanabhaswamy Temple", emoji: "🛕" },
-    ]
-  },
-  rajasthan: {
-    name: "Rajasthan",
-    coords: [27.0238, 74.2179],
-    zoom: 7,
-    spots: [
-      { name: "Jaipur City Palace", coords: [26.9255, 75.8236], emoji: "🏯" },
-      { name: "Jaisalmer Fort", coords: [26.9157, 70.9083], emoji: "🏰" },
-      { name: "Udaipur Lake Palace", coords: [24.5754, 73.6830], emoji: "🌊" },
-      { name: "Sam Sand Dunes", coords: [26.8753, 70.5383], emoji: "🐪" },
-      { name: "Mehrangarh Fort", coords: [26.2980, 73.0188], emoji: "🏯" },
-      { name: "Pushkar Lake", coords: [26.4898, 74.5511], emoji: "🛕" },
-      { name: "Amber Fort", coords: [26.9855, 75.8513], emoji: "🏰" },
-      { name: "Ranthambore Tiger Reserve", coords: [26.0173, 76.5026], emoji: "🐯" },
-      { name: "Hawa Mahal", coords: [26.9239, 75.8267], emoji: "🏛️" },
-      { name: "Mount Abu", coords: [24.5926, 72.7156], emoji: "⛰️" },
-      { name: "Chittorgarh Fort", coords: [24.8887, 74.6269], emoji: "🏰" },
-    ],
-    suggestions: [
-      { name: "Jaipur City Palace", emoji: "🏯" },
-      { name: "Jaisalmer Fort", emoji: "🏰" },
-      { name: "Udaipur Lake Palace", emoji: "🌊" },
-      { name: "Sam Sand Dunes", emoji: "🐪" },
-      { name: "Mehrangarh Fort", emoji: "🏯" },
-      { name: "Pushkar Lake", emoji: "🛕" },
-      { name: "Amber Fort", emoji: "🏰" },
-      { name: "Ranthambore Tiger Reserve", emoji: "🐯" },
-      { name: "Hawa Mahal", emoji: "🏛️" },
-      { name: "Mount Abu", emoji: "⛰️" },
-      { name: "Chittorgarh Fort", emoji: "🏰" },
-    ]
-  },
-}
 const LocationBoundary = ({ coords, zoom, theme, locationName, customBoundary }) => {
   const map = useMap()
 
