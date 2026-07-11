@@ -1,83 +1,33 @@
 import { useState, useEffect } from "react"
 import { localPhrases } from "../data/localPhrases"
 
-const generateTripPlan = async (location, days, budget, stayType, transport, spots, apiKey) => {
-  const prompt = `You are a travel planning expert for India. Generate a detailed trip plan for the following:
+const generateTripPlan = async (location, days, budget, stayType, transport, spots) => {
+  const response = await fetch("/api/trip/generate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      location,
+      days,
+      budget,
+      stayType,
+      transport,
+      spots,
+    }),
+  });
 
-Location: ${location}
-Duration: ${days} days
-Budget remaining for food & activities: ₹${budget}
-Stay type: ${stayType}
-Transport: ${transport}
-Selected spots: ${spots?.join(", ") || "none specified"}
+  console.log("Status:", response.status);
 
-Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. Just raw JSON like this:
-{
-  "activities": [
-    {"id": "1", "name": "Activity name", "cost": 500, "duration": "2 hours", "description": "Brief description", "bestTime": "Morning"}
-  ],
-  "festivals": [
-    {"id": "1", "name": "Festival name", "cost": 0, "date": "Month/Season", "description": "Brief description"}
-  ],
-  "itinerary": [
-    {"day": 1, "title": "Day title", "morning": "Morning plan", "afternoon": "Afternoon plan", "evening": "Evening plan", "estimatedCost": 500}
-  ],
-  "stayRecommendations": [
-    {"name": "Place name", "type": "hostel/hotel", "pricePerNight": 500, "rating": 4.2, "highlight": "Key feature"}
-  ],
-  "foodRecommendations": [
-    {"name": "Dish or restaurant name", "type": "local/restaurant/cafe", "avgCost": 200, "mustTry": true, "description": "Brief description"}
-  ],
-  "localEmergency": [
-    {"label": "Local Police", "number": "0832-2224111"},
-    {"label": "District Hospital", "number": "0832-2458725"}
-  ]
-}`
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Backend Error Response:", errorText);
+    throw new Error(`HTTP ${response.status}`);
+  }
 
-  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${apiKey}`,
-  },
-  body: JSON.stringify({
-    model: "llama-3.3-70b-versatile", // You can change this to another Groq-supported model
-    messages: [
-      {
-        role: "system",
-        content: "Return ONLY valid JSON. Do not include markdown or explanations."
-      },
-      {
-        role: "user",
-        content: prompt
-      }
-    ],
-    temperature: 0.7,
-    max_tokens: 3300,
-  }),
-});
-
-console.log("Status:", response.status);
-
-if (!response.ok) {
-  const errorText = await response.text();
-  console.error("Groq Error Response:", errorText);
-  throw new Error(`HTTP ${response.status}`);
-}
-
-const data = await response.json();
-console.log("Groq Response:", data);
-
-const text = data.choices?.[0]?.message?.content || "";
-console.log("Raw text:", text);
-
-const clean = text.replace(/```json|```/g, "").trim();
-
-if (!clean) {
-  throw new Error("Groq returned an empty response.");
-}
-
-return JSON.parse(clean);
+  const data = await response.json();
+  console.log("Backend Response:", data);
+  return data;
 }
 
 const PhraseCategory = ({ category, theme }) => {
@@ -169,10 +119,6 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
       setAiLoading(true)
       setAiError("")
       try {
-        const apiKey = import.meta.env.VITE_GROQ_API_KEY
-
-console.log("API Key loaded:", apiKey ? "Yes" : "No");
-console.log("First 8 characters:", apiKey?.substring(0, 8));
         const spots = preferences?.activities || []
         const data = await generateTripPlan(
           locationName,
@@ -180,8 +126,7 @@ console.log("First 8 characters:", apiKey?.substring(0, 8));
           foodBuffer,
           stayType,
           transport,
-          spots,
-          apiKey
+          spots
         )
         if (!cancelled) setAiData(data)
       } catch (err) {
@@ -388,19 +333,19 @@ console.log("First 8 characters:", apiKey?.substring(0, 8));
 
       {/* Warnings */}
       {aiError && (
-            <div style={{
-              background: "#FFB34722",
-              border: "1px solid #FFB347",
-              borderRadius: "12px",
-              padding: "12px 24px",
-              marginBottom: "16px",
-              textAlign: "center",
-              width: "100%",
-              maxWidth: "620px",
-            }}>
-              <div style={{ color: "#FFB347", fontSize: "13px" }}>⚠️ {aiError}</div>
-            </div>
-          )}
+        <div style={{
+          background: "#FFB34722",
+          border: "1px solid #FFB347",
+          borderRadius: "12px",
+          padding: "12px 24px",
+          marginBottom: "16px",
+          textAlign: "center",
+          width: "100%",
+          maxWidth: "620px",
+        }}>
+          <div style={{ color: "#FFB347", fontSize: "13px" }}>⚠️ {aiError}</div>
+        </div>
+      )}
       {remainingBuffer <= 0 && (
         <div style={{
           background: "#ff6b6b22",
