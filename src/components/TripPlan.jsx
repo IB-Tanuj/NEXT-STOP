@@ -154,6 +154,15 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState("")
 
+  const foodBuffer = budgetData?.foodBuffer || 0
+  const [remainingBuffer, setRemainingBuffer] = useState(foodBuffer)
+
+  const isGroup = planData?.budgetType === "group"
+  const groupSize = Number(planData?.groupSize) || 1
+  const stayType = preferences?.stayType
+  const transport = preferences?.transport
+  const locationName = location?.name || ""
+
   useEffect(() => {
     let cancelled = false
     const fetchAiPlan = async () => {
@@ -184,15 +193,6 @@ console.log("First 8 characters:", apiKey?.substring(0, 8));
     }
     fetchAiPlan()
   }, [])
-
-  const foodBuffer = budgetData?.foodBuffer || 0
-  const [remainingBuffer, setRemainingBuffer] = useState(foodBuffer)
-
-  const isGroup = planData?.budgetType === "group"
-  const groupSize = Number(planData?.groupSize) || 1
-  const stayType = preferences?.stayType
-  const transport = preferences?.transport
-  const locationName = location?.name || ""
 
   const handleActivityToggle = (item) => {
     const isSelected = selectedActivities.find(a => a.id === item.id)

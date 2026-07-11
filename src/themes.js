@@ -161,7 +161,7 @@ export const locationThemes = {
   // ══════════════════════════════════════════════════════════
   // RAJASTHAN CITIES (Desert golds, sandstone oranges, royal blues)
   // ══════════════════════════════════════════════════════════
-  jaipur: t("jaipur", "#0a0502", "#e85d04", "#faa307", "#dc2f02", "#1a0f05"), // Pinkish orange
+  jaipur: t("jaipur", "#0a0502", "#ed2f94ff", "#e334aceb", "#fa49f5ff", "#1a0f05"), // Pinkish orange
   udaipur: t("udaipur", "#020610", "#0284c7", "#38bdf8", "#0369a1", "#0a1220"), // Lake blue
   jodhpur: t("jodhpur", "#02040a", "#2563eb", "#60a5fa", "#1d4ed8", "#081020"), // Royal blue
   jaisalmer: t("jaisalmer", "#0a0800", "#d97706", "#fbbf24", "#b45309", "#1a1605"), // Desert gold
