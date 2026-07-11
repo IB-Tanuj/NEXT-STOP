@@ -14,6 +14,7 @@ L.Icon.Default.mergeOptions({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 })
+
 const LocationBoundary = ({ coords, zoom, theme, locationName, customBoundary }) => {
   const map = useMap()
 
@@ -22,48 +23,77 @@ const LocationBoundary = ({ coords, zoom, theme, locationName, customBoundary })
     map.setMinZoom(zoom - 1)
     map.setMaxZoom(16)
 
-    // Use custom boundary if provided
-    if (customBoundary) {
-      const polygon = L.polygon(customBoundary, {
-        color: theme.primary,
-        weight: 3,
-        fillColor: theme.primary,
-        fillOpacity: 0.15,
-      })
-      polygon.addTo(map)
-      map.fitBounds(polygon.getBounds(), { padding: [40, 40] })
-      return
+    const layerGroup = L.layerGroup().addTo(map)
+
+    const boundaryStyle = {
+      color: theme.primary,
+      weight: 3,
+      fillColor: theme.primary,
+      fillOpacity: 0.15,
     }
 
-    // Otherwise fetch from Nominatim
+    // Try to find a polygon result from a Nominatim response array
+    const findPolygonResult = (data) =>
+      data.find(d => d.geojson && (d.geojson.type === 'Polygon' || d.geojson.type === 'MultiPolygon'))
+
+    // Add GeoJSON boundary to map
+    const addGeoJSON = (geojson) => {
+      const geoLayer = L.geoJSON(geojson, { style: boundaryStyle })
+      layerGroup.addLayer(geoLayer)
+      const bounds = geoLayer.getBounds()
+      map.fitBounds(bounds.pad(1.0))
+    }
+
+    // Use custom boundary if provided (like Manali)
+    if (customBoundary) {
+      const polygon = L.polygon(customBoundary, boundaryStyle)
+      layerGroup.addLayer(polygon)
+      const bounds = polygon.getBounds()
+      map.fitBounds(bounds.pad(1.0))
+      return () => { layerGroup.remove() }
+    }
+
+    // Fetch boundary from Nominatim with smart fallbacks
     const fetchBoundary = async () => {
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${locationName},India&polygon_geojson=1&format=json&limit=1`
-        )
-        const data = await res.json()
-        if (data.length > 0 && data[0].geojson) {
-          const geoLayer = L.geoJSON(data[0].geojson, {
-            style: {
-              color: theme.primary,
-              weight: 3,
-              fillColor: theme.primary,
-              fillOpacity: 0.15,
-            }
-          })
-          geoLayer.addTo(map)
-          map.fitBounds(geoLayer.getBounds(), { padding: [40, 40] })
+      const encodedName = encodeURIComponent(locationName)
+
+      // Query strategies — stop at first one that returns a polygon
+      const queries = [
+        // 1. Standard search with limit=5 to find polygon among results
+        `https://nominatim.openstreetmap.org/search?q=${encodedName},India&polygon_geojson=1&format=json&limit=5`,
+        // 2. Try district search (works for cities like Mumbai, Chennai)
+        `https://nominatim.openstreetmap.org/search?q=${encodedName}+district,India&polygon_geojson=1&format=json&limit=3`,
+        // 3. Try municipal corporation (works for Mumbai, Jaipur etc)
+        `https://nominatim.openstreetmap.org/search?q=${encodedName}+Municipal+Corporation&polygon_geojson=1&format=json&limit=3`,
+      ]
+
+      for (const url of queries) {
+        try {
+          const res = await fetch(url)
+          const data = await res.json()
+          const match = findPolygonResult(data)
+          if (match) {
+            addGeoJSON(match.geojson)
+            return
+          }
+        } catch (err) {
+          console.log("Nominatim query failed:", err)
         }
-      } catch (err) {
-        console.log("Boundary fetch failed", err)
+        // Small delay to respect Nominatim rate limits (1 req/sec)
+        await new Promise(r => setTimeout(r, 1100))
       }
+
+      console.log(`No Nominatim polygon found for "${locationName}"`)
     }
 
     fetchBoundary()
+
+    return () => { layerGroup.remove() }
   }, [locationName])
 
   return null
 }
+
 
 const TripPage = ({ location, theme, onBack }) => {
   const [mapVisible, setMapVisible] = useState(true)
@@ -73,15 +103,21 @@ const TripPage = ({ location, theme, onBack }) => {
   const [planningVisible, setPlanningVisible] = useState(false)
   const [showBestTime, setShowBestTime] = useState(false)
 
-  const loc = locationData[location?.toLowerCase()] || locationData.goa
+  const loc = locationData[location?.toLowerCase()] || {
+    name: location,
+    coords: [20.5937, 78.9629], // Center of India
+    zoom: 5,
+    spots: [],
+    customBoundary: null
+  }
   const locationKey = location?.toLowerCase()
 
   const handleContinue = () => {
-  setMapVisible(false)
-  setTimeout(() => {
-    setShowBestTime(true)
-  }, 600)
-}
+    setMapVisible(false)
+    setTimeout(() => {
+      setShowBestTime(true)
+    }, 600)
+  }
 
   return (
     <div style={{
@@ -127,7 +163,7 @@ const TripPage = ({ location, theme, onBack }) => {
             }}>
               📍 {loc.name}
             </div>
-           <button
+            <button
               onClick={onBack}
               style={{
                 background: "transparent",
@@ -152,23 +188,23 @@ const TripPage = ({ location, theme, onBack }) => {
             zoomControl={true}
           >
             <TileLayer
-  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-  attribution="© OpenStreetMap © CARTO"
-/>
-            <LocationBoundary 
-  coords={loc.coords} 
-  zoom={loc.zoom} 
-  theme={theme} 
-  locationName={loc.name}
-  customBoundary={loc.customBoundary || null}
-/>
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              attribution="© OpenStreetMap © CARTO"
+            />
+            <LocationBoundary
+              coords={loc.coords}
+              zoom={loc.zoom}
+              theme={theme}
+              locationName={loc.name}
+              customBoundary={loc.customBoundary || null}
+            />
             {loc.spots.map((spot) => (
-  <Marker
-    key={spot.name}
-    position={spot.coords}
-    icon={L.divIcon({
-      className: "",
-      html: `
+              <Marker
+                key={spot.name}
+                position={spot.coords}
+                icon={L.divIcon({
+                  className: "",
+                  html: `
   <div class="spot-marker" style="position: relative;">
     <div style="
       width: 12px;
@@ -197,18 +233,18 @@ const TripPage = ({ location, theme, onBack }) => {
     ">${spot.name}</div>
   </div>
 `,
-      iconAnchor: [6, 6],
-    })}
-    eventHandlers={{
-      click: () => {
-        setActiveSpot(activeSpot?.name === spot.name ? null : spot)
-      }
-    }}
-  >
-  </Marker>
-))}
-              
-            
+                  iconAnchor: [6, 6],
+                })}
+                eventHandlers={{
+                  click: () => {
+                    setActiveSpot(activeSpot?.name === spot.name ? null : spot)
+                  }
+                }}
+              >
+              </Marker>
+            ))}
+
+
           </MapContainer>
           {/* Image Popup Overlay */}
           {activeSpot && (
@@ -691,5 +727,5 @@ const TripPage = ({ location, theme, onBack }) => {
     </div>
   )
 }
- 
+
 export default TripPage
