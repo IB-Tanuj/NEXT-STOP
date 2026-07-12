@@ -13,6 +13,8 @@ import ExploreSidebar from "./components/ExploreSidebar"
 import BudgetPage from "./components/BudgetPage"
 import PlanTripPage from "./components/PlanTripPage"
 
+import { allIndiaLocations } from "./data/allLocations"
+
 function App() {
   const { theme, setLocationTheme, resetToSeason } = useTheme()
   const [currentPage, setCurrentPage] = useState("home")
@@ -32,8 +34,84 @@ function App() {
   }
 
   const handleExplore = (location) => {
-    setSelectedLocation(location)
-    setLocationTheme(location)
+    let resolvedKey = location;
+    
+    if (location && typeof location === "string") {
+      const clean = location.trim().toLowerCase();
+      
+      // 1. Direct match on locationKey
+      let match = allIndiaLocations.find(l => l.locationKey === clean);
+      if (match) {
+        resolvedKey = match.locationKey;
+      } else {
+        // 2. Exact match on name
+        match = allIndiaLocations.find(l => l.name.toLowerCase() === clean);
+        if (match) {
+          resolvedKey = match.locationKey;
+        } else {
+          // 3. Exact match on state (map to its main built city/entry)
+          const stateMatches = allIndiaLocations.filter(l => l.state.toLowerCase() === clean);
+          if (stateMatches.length > 0) {
+            const exactStateMatch = stateMatches.find(l => l.name.toLowerCase() === clean);
+            resolvedKey = exactStateMatch ? exactStateMatch.locationKey : stateMatches[0].locationKey;
+          } else {
+            // 4. StartsWith match on name or state (minimum length 3)
+            if (clean.length >= 3) {
+              const startsWithMatch = allIndiaLocations.find(l => 
+                l.name.toLowerCase().startsWith(clean) || l.state.toLowerCase().startsWith(clean)
+              );
+              if (startsWithMatch) {
+                resolvedKey = startsWithMatch.locationKey;
+              } else {
+                // 5. Includes / substring match on name or state
+                const includesMatch = allIndiaLocations.find(l => 
+                  l.name.toLowerCase().includes(clean) || l.state.toLowerCase().includes(clean)
+                );
+                if (includesMatch) {
+                  resolvedKey = includesMatch.locationKey;
+                } else {
+                  // 6. Common misspellings fallback (e.g. "maharastra" -> "mumbai")
+                  const misspellings = {
+                    maharastra: "mumbai",
+                    maharashtra: "mumbai",
+                    "west bengal": "kolkata",
+                    westbengal: "kolkata",
+                    up: "varanasi",
+                    "uttar pradesh": "varanasi",
+                    uttarpradesh: "varanasi",
+                    mp: "indore",
+                    "madhya pradesh": "indore",
+                    madhyapradesh: "indore",
+                    ap: "vizag",
+                    "andhra pradesh": "vizag",
+                    andhrapradesh: "vizag",
+                    hp: "shimla",
+                    himachal: "shimla",
+                    "himachal pradesh": "shimla",
+                    himachalpradesh: "shimla",
+                    uk: "rishikesh",
+                    uttarakhand: "rishikesh",
+                    "j&k": "srinagar",
+                    kashmir: "srinagar",
+                    jammu: "srinagar",
+                    "jammu & kashmir": "srinagar",
+                    tn: "chennai",
+                    tamilnadu: "chennai",
+                    "tamil nadu": "chennai",
+                  };
+                  if (misspellings[clean]) {
+                    resolvedKey = misspellings[clean];
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    setSelectedLocation(resolvedKey)
+    setLocationTheme(resolvedKey)
     setCurrentPage("trip")
   }
 
