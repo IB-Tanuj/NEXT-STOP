@@ -2,6 +2,9 @@
 // Phase 2: Every state + famous tourist cities
 // No transport/stay costs for new locations yet
 
+import { locationData } from "./locationData.js"
+import { getDistanceBetweenStations, findNearestStation } from "./stations.js"
+
 export const allIndiaLocations = [
   // ══════════════════════════════════════════════════════════
   // EXISTING 4 BUILT LOCATIONS (preserved)
@@ -219,16 +222,41 @@ export const getRecommendations = (budget, groupSize = 1, days = 3) => {
   const perPersonBudget = budget / groupSize
 
   return allIndiaLocations.map(loc => {
-    const transportTotal = (loc.minTransport || 0) * 2 * groupSize // round trip
-    const stayTotal = (loc.minStayPerNight || 0) * days * (groupSize > 2 ? Math.ceil(groupSize / 2) : 1)
+    let minTransport = loc.minTransport
+    let minStayPerNight = loc.minStayPerNight
+
+    // If costs are not defined, estimate them dynamically based on distance from Delhi (NDLS)
+    if (minTransport === undefined || minStayPerNight === undefined) {
+      const locationKey = loc.locationKey
+      const lData = locationData[locationKey]
+      let dist = 1000 // default fallback distance in km
+
+      if (lData && lData.coords && lData.coords.length === 2) {
+        const nearest = findNearestStation(lData.coords[0], lData.coords[1])
+        if (nearest) {
+          dist = getDistanceBetweenStations("NDLS", nearest.code) || dist
+        }
+      }
+
+      if (minTransport === undefined) {
+        // Sleeper train ticket cost estimate
+        minTransport = Math.max(120, Math.round(dist * 0.45))
+      }
+      if (minStayPerNight === undefined) {
+        // Standard backpack hostel price estimate
+        minStayPerNight = 450
+      }
+    }
+
+    const transportTotal = minTransport * 2 * groupSize // round trip
+    const stayTotal = minStayPerNight * days * (groupSize > 2 ? Math.ceil(groupSize / 2) : 1)
     const minTotal = transportTotal + stayTotal
     const remaining = budget - minTotal
     const remainingPerPerson = remaining / groupSize
     const percentUsed = minTotal > 0 ? (minTotal / budget) * 100 : 0
 
     let status = "recommended"
-    if (minTotal === 0) status = "recommended" // no cost data yet
-    else if (percentUsed > 100) status = "outofreach"
+    if (percentUsed > 100) status = "outofreach"
     else if (percentUsed > 75) status = "stretch"
     else status = "recommended"
 
