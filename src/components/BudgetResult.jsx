@@ -340,20 +340,34 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const [selectedFlightTransfer, setSelectedFlightTransfer] = useState("")
 
   useEffect(() => {
-    if (isMultiLeg && selectedStation) {
+    if (isMultiLeg && selectedStation && mediumData?.stations) {
       const st = mediumData.stations[selectedStation]
-      if (st?.options?.length > 0) setSelectedTrainClass(st.options[0].type)
-      if (st?.transfer?.bus?.length > 0) setSelectedTransferClass(st.transfer.bus[0].type)
+      if (st?.options?.length > 0 && !st.options.some(o => o.type === selectedTrainClass)) {
+        setSelectedTrainClass(st.options[0].type)
+      }
+      if (st?.transfer?.bus?.length > 0 && !st.transfer.bus.some(o => o.type === selectedTransferClass)) {
+        setSelectedTransferClass(st.transfer.bus[0].type)
+      }
     }
     if (isDirect && mediumData?.options?.length > 0) {
-      setSelectedDirectClass(mediumData.options[0].type)
+      if (!mediumData.options.some(o => o.type === selectedDirectClass)) {
+        setSelectedDirectClass(mediumData.options[0].type)
+      }
     }
-    if (isFlightMultiLeg) {
-      if (mediumData?.options?.length > 0) setSelectedFlightClass(mediumData.options[0].type)
+    if (isFlightMultiLeg && mediumData) {
+      if (mediumData?.options?.length > 0 && !mediumData.options.some(o => o.type === selectedFlightClass)) {
+        setSelectedFlightClass(mediumData.options[0].type)
+      }
       const transferKeys = Object.keys(mediumData.transfer || {})
-      if (transferKeys.length > 0) setSelectedFlightTransfer(transferKeys[0])
+      if (transferKeys.length > 0 && !transferKeys.includes(selectedFlightTransfer)) {
+        setSelectedFlightTransfer(transferKeys[0])
+      }
     }
-  }, [selectedStation, isMultiLeg, isDirect, isFlightMultiLeg, mediumData])
+  }, [
+    selectedStation, isMultiLeg, isDirect, isFlightMultiLeg, mediumData,
+    selectedTrainClass, selectedTransferClass, selectedDirectClass,
+    selectedFlightClass, selectedFlightTransfer
+  ])
 
   // ── Transport Cost Calculation ─────────────────────────
   const getTransportCost = () => {
