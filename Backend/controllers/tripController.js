@@ -113,16 +113,21 @@ Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. 
   ]
 }`;
 
-        const apiKey = process.env.GROQ_API_KEY;
+        const apiKey = process.env.TINYFISH_API_KEY || process.env.GROQ_API_KEY;
         if (!apiKey) {
-            console.error("GROQ_API_KEY is not defined in backend environment variables.");
-            return res.status(500).json({ error: "Backend configuration error: GROQ API key missing" });
+            console.error("API key is not defined in backend environment variables.");
+            return res.status(500).json({ error: "Backend configuration error: API key missing" });
         }
 
+        // Using Tinyfish API if the key exists, falling back to Groq otherwise
+        const apiUrl = process.env.TINYFISH_API_KEY 
+            ? "https://api.tinyfish.ai/v1/chat/completions" // Update this if Tinyfish uses a different URL
+            : "https://api.groq.com/openai/v1/chat/completions";
+
         const response = await axios.post(
-            "https://api.groq.com/openai/v1/chat/completions",
+            apiUrl,
             {
-                model: "llama-3.3-70b-versatile",
+                model: process.env.TINYFISH_API_KEY ? "gpt-4o-mini" : "llama-3.3-70b-versatile", // Or whatever model tinyfish requires
                 messages: [
                     {
                         role: "system",
