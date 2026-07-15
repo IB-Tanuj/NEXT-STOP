@@ -8,32 +8,21 @@ export const generateTripPlan = async (req, res) => {
             return res.status(400).json({ error: "Location is required" });
         }
 
-        const prompt = `You are a travel planning expert for India. Generate a concise trip plan for:
+        const prompt = `Generate a JSON trip plan for:
+Location: ${location} | ${days || 3} days | Budget: ₹${budget || 0} | Stay: ${stayType || 'budget'} | Transport: ${transport || 'train'} | Spots: ${spots?.join(", ") || "none"}
 
-Location: ${location}
-Duration: ${days || 3} days
-Budget remaining for food & activities: ₹${budget || 0}
-Stay type: ${stayType || 'budget'}
-Transport: ${transport || 'train'}
-Selected spots: ${spots?.join(", ") || "none specified"}
+RULES:
+1. Return ONLY raw JSON. No markdown formatting (\`\`\`). No text before or after.
+2. STRICT ITEM LIMITS: Exactly 4 activities, 2 festivals, 3 stays, 4 foods, 2 emergency numbers. DO NOT EXCEED THIS.
+3. STRICT LENGTH LIMITS: All "description" and "highlight" fields MUST be under 5 words. Be extremely brief.
 
-Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. Do NOT include a day-by-day itinerary. Follow this exact JSON structure and limit item counts:
+JSON SCHEMA:
 {
-  "activities": [
-    {"id": "1", "name": "Activity name", "cost": 500, "duration": "2 hours", "description": "Brief description (max 10 words)", "bestTime": "Morning"}
-  ], // Max 5 activities
-  "festivals": [
-    {"id": "1", "name": "Festival name", "cost": 0, "date": "Month/Season", "description": "Brief description (max 10 words)"}
-  ], // Max 2 festivals
-  "stayRecommendations": [
-    {"name": "Place name", "type": "hostel/hotel", "pricePerNight": 500, "rating": 4.2, "highlight": "Key feature"}
-  ], // Max 3 places
-  "foodRecommendations": [
-    {"name": "Dish or restaurant name", "type": "local/restaurant/cafe", "avgCost": 200, "mustTry": true, "description": "Brief description (max 10 words)"}
-  ], // Max 4 items
-  "localEmergency": [
-    {"label": "Local Police", "number": "0832-2224111"}
-  ] // Max 3 numbers
+  "activities": [{"id": "1", "name": "", "cost": 0, "duration": "", "description": "", "bestTime": ""}],
+  "festivals": [{"id": "1", "name": "", "cost": 0, "date": "", "description": ""}],
+  "stayRecommendations": [{"name": "", "type": "", "pricePerNight": 0, "rating": 4.5, "highlight": ""}],
+  "foodRecommendations": [{"name": "", "type": "", "avgCost": 0, "mustTry": true, "description": ""}],
+  "localEmergency": [{"label": "", "number": ""}]
 }`;
 
         const apiKey = process.env.GROQ_API_KEY;
@@ -113,9 +102,9 @@ Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. 
   ]
 }`;
 
-        const apiKey = process.env.GROQ_API_KEY;
+        const apiKey = process.env.GROQ_ITINERARY_API_KEY || process.env.GROQ_API_KEY;
         if (!apiKey) {
-            console.error("GROQ_API_KEY is not defined in backend environment variables.");
+            console.error("GROQ API key is not defined in backend environment variables.");
             return res.status(500).json({ error: "Backend configuration error: GROQ API key missing" });
         }
 
