@@ -3,12 +3,9 @@ import { transportCosts, stayCosts, entryCosts } from "../data/tripData"
 import { getDistanceBetweenStations, findNearestStation, haversineDistance } from "../data/stations"
 import TripPlan from "./TripPlan"
 
-// Destination station codes for our 4 locations
 const DESTINATION_STATIONS = {
   goa: "MAO",
   manali: "CDG",
-  kerala: "ERS",
-  rajasthan: "JP",
 }
 
 // Default cost fallback data for stay and food

@@ -11,8 +11,7 @@ export const allIndiaLocations = [
   // ══════════════════════════════════════════════════════════
   { name: "Goa", state: "Goa", emoji: "🏖️", tags: ["Beach", "Nightlife", "Food"], built: true, locationKey: "goa", description: "India's party capital with beaches, seafood and Portuguese charm" },
   { name: "Manali", state: "Himachal Pradesh", emoji: "🏔️", tags: ["Mountains", "Adventure", "Snow"], built: true, locationKey: "manali", description: "Snow-capped Himalayan valley with adventure sports and scenic beauty" },
-  { name: "Kerala", state: "Kerala", emoji: "🌿", tags: ["Backwaters", "Nature", "Food"], built: true, locationKey: "kerala", description: "God's own country — backwaters, tea gardens and beaches" },
-  { name: "Rajasthan", state: "Rajasthan", emoji: "🏯", tags: ["Heritage", "Desert", "Culture"], built: true, locationKey: "rajasthan", description: "Royal forts, desert dunes and vibrant culture" },
+
 
   // ══════════════════════════════════════════════════════════
   // RAJASTHAN CITIES
