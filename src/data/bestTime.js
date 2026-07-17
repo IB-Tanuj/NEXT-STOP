@@ -269,7 +269,7 @@ export const bestTimeData = {
             "rating": 1,
             "label": "Avoid",
             "note": "Hottest month" },
-      { "month": "Jul",
+      { "month": "July",
             "rating": 2,
             "label": "Monsoon",
             "note": "Some rain, still hot" },
@@ -297,13 +297,13 @@ export const bestTimeData = {
     tips: [
       "🌡️ May-June: Temperatures can reach 48°C",
       "🏰 Winter nights can be very cold — carry warm clothes",
-      "🐪 Best time for desert safaris is November to February"
+      "🐪 Best time for desert safaris is October to February"
 ]
   },
   udaipur: {
     best: "October — March",
     avoid: "April — June (Extreme Heat)",
-    summary: "Best visited in winter when the desert is cool and comfortable. Summer temperatures can exceed 45°C making sightseeing very difficult.",
+    summary: "Best for visiting in winter when the desert is cool and comfortable. Summer temperatures can exceed 45°C making sightseeing very difficult.",
     months: [
       { "month": "Jan",
             "rating": 5,
@@ -363,7 +363,7 @@ export const bestTimeData = {
   jodhpur: {
     best: "October — March",
     avoid: "April — June (Extreme Heat)",
-    summary: "Best visited in winter when the desert is cool and comfortable. Summer temperatures can exceed 45°C making sightseeing very difficult.",
+    summary: "Best for visiting in winter when the desert is cool and comfortable. Summer temperatures can exceed 45°C making sightseeing very difficult.",
     months: [
       { "month": "Jan",
             "rating": 5,
@@ -475,7 +475,7 @@ export const bestTimeData = {
             "note": "Peak season, cool nights" }
 ],
     tips: [
-      "🌡️ May-June: Temperatures can reach 48°C",
+      "🌡️ May-June: Temperatures can reach 48°C to 49°C",
       "🏰 Winter nights can be very cold — carry warm clothes",
       "🐪 Best time for desert safaris is November to February"
 ]
@@ -535,7 +535,7 @@ export const bestTimeData = {
             "note": "Peak season, cool nights" }
 ],
     tips: [
-      "🌡️ May-June: Temperatures can reach 48°C",
+      "🌡️ May-June: Temperatures can reach 48°C to 49°C",
       "🏰 Winter nights can be very cold — carry warm clothes",
       "🐪 Best time for desert safaris is November to February"
 ]
@@ -576,11 +576,11 @@ export const bestTimeData = {
       { "month": "Aug",
             "rating": 2,
             "label": "Poor",
-            "note": "Still heavy rains" },
+            "note": "Still heavy rain" },
       { "month": "Sep",
             "rating": 4,
             "label": "Good",
-            "note": "Rains reducing, very green" },
+            "note": "Rain reducing, very green" },
       { "month": "Oct",
             "rating": 4,
             "label": "Good",
