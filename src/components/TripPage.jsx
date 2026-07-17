@@ -466,6 +466,9 @@ const TripPage = ({ location, theme, onBack }) => {
                                 }}>●</span>
                               ))}
                             </div>
+                            <div style={{ color: theme.subtext, fontSize: "10px", marginTop: "8px", lineHeight: "1.2" }}>
+                              {m.note}
+                            </div>
                           </div>
                         )
                       })}
