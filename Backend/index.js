@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import supabase from "./config/supabase.js";
 import trainRoutes from "./routes/trainRoutes.js";
 import tripRoutes from "./routes/tripRoutes.js";
+import liveDataRoutes from "./routes/liveDataRoutes.js";
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 
 app.use("/api/trains", trainRoutes);
 app.use("/api/trip", tripRoutes);
+app.use("/api/live", liveDataRoutes);
 
 app.get("/", (req, res) => {
   res.json({
