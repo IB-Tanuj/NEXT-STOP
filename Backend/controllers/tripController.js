@@ -13,14 +13,14 @@ Location: ${location} | ${days || 3} days | Budget: ₹${budget || 0} | Stay: ${
 
 RULES:
 1. Return ONLY raw JSON. No markdown formatting (\`\`\`). No text before or after.
-2. STRICT ITEM LIMITS: Exactly 4 activities, 2 festivals, 4 foods, 2 emergency numbers. DO NOT EXCEED THIS.
+2. STRICT ITEM LIMITS: Exactly 4 activities, 2 festivals, 6 foods, 2 emergency numbers. DO NOT EXCEED THIS.
 3. STRICT LENGTH LIMITS: All "description" fields MUST be under 5 words. Be extremely brief.
 
 JSON SCHEMA:
 {
-  "activities": [{"id": "1", "name": "", "cost": 0, "duration": "", "description": "", "bestTime": ""}],
-  "festivals": [{"id": "1", "name": "", "cost": 0, "date": "", "description": ""}],
-  "foodRecommendations": [{"name": "", "type": "", "avgCost": 0, "mustTry": true, "description": ""}],
+  "activities": [{"id": "1", "name": "", "description": "", "bestTime": ""}],
+  "festivals": [{"id": "1", "name": "", "date": "", "description": ""}],
+  "foodRecommendations": [{"name": "", "type": "", "mustTry": true, "description": ""}],
   "localEmergency": [{"label": "", "number": ""}]
 }`;
 

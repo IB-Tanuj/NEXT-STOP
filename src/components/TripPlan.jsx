@@ -277,8 +277,6 @@ const PhraseCategory = ({ category, theme }) => {
 
 const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }) => {
   const [activeTab, setActiveTab] = useState("overview")
-  const [selectedActivities, setSelectedActivities] = useState([])
-  const [selectedFestivals, setSelectedFestivals] = useState([])
   const [aiData, setAiData] = useState(null)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState("")
@@ -380,7 +378,6 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
   }
 
   const foodBuffer = budgetData?.foodBuffer || 0
-  const [remainingBuffer, setRemainingBuffer] = useState(foodBuffer)
 
   const isGroup = planData?.budgetType === "group"
   const groupSize = Number(planData?.groupSize) || 1
@@ -414,27 +411,7 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
     fetchAiPlan()
   }, [])
 
-  const handleActivityToggle = (item) => {
-    const isSelected = selectedActivities.find(a => a.id === item.id)
-    if (isSelected) {
-      setSelectedActivities(prev => prev.filter(a => a.id !== item.id))
-      setRemainingBuffer(prev => prev + item.cost)
-    } else {
-      setSelectedActivities(prev => [...prev, item])
-      setRemainingBuffer(prev => prev - item.cost)
-    }
-  }
 
-  const handleFestivalToggle = (item) => {
-    const isSelected = selectedFestivals.find(f => f.id === item.id)
-    if (isSelected) {
-      setSelectedFestivals(prev => prev.filter(f => f.id !== item.id))
-      setRemainingBuffer(prev => prev + item.cost)
-    } else {
-      setSelectedFestivals(prev => [...prev, item])
-      setRemainingBuffer(prev => prev - item.cost)
-    }
-  }
 
   // ── Book Now Links based on selections ────────────────
   const getTransportLinks = () => {
@@ -570,8 +547,8 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
         budget={foodBuffer}
         stayType={stayType}
         transport={transport}
-        selectedActivities={selectedActivities}
-        selectedFestivals={selectedFestivals}
+        selectedActivities={aiData?.activities || []}
+        selectedFestivals={aiData?.festivals || []}
         onBack={() => setShowItinerary(false)}
       />
     )
@@ -616,21 +593,21 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
       }}>
         {/* Budget Buffer */}
         <div style={{
-          background: remainingBuffer >= 0 ? `${theme.primary}22` : "#ff6b6b22",
-          border: `1px solid ${remainingBuffer >= 0 ? theme.primary : "#ff6b6b"}`,
+          background: foodBuffer >= 0 ? `${theme.primary}22` : "#ff6b6b22",
+          border: `1px solid ${foodBuffer >= 0 ? theme.primary : "#ff6b6b"}`,
           borderRadius: "12px",
           padding: "12px 24px",
           textAlign: "center",
           flex: "1 1 auto",
           minWidth: "250px",
         }}>
-          <span style={{ color: theme.subtext, fontSize: "13px" }}>💰 Food & Activities Buffer: </span>
+          <span style={{ color: theme.subtext, fontSize: "13px" }}>💰 Food, Activities & Festivals: </span>
           <span style={{
-            color: remainingBuffer >= 0 ? "#A8E6CF" : "#ff6b6b",
+            color: foodBuffer >= 0 ? "#A8E6CF" : "#ff6b6b",
             fontWeight: "900", fontSize: "18px",
           }}>
-            ₹{Math.abs(remainingBuffer).toLocaleString("en-IN")}
-            {remainingBuffer < 0 ? " (over!)" : ""}
+            ₹{Math.abs(foodBuffer).toLocaleString("en-IN")}
+            {foodBuffer < 0 ? " (over!)" : ""}
           </span>
         </div>
 
@@ -687,7 +664,7 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
           <div style={{ color: "#FFB347", fontSize: "13px" }}>⚠️ {aiError}</div>
         </div>
       )}
-      {remainingBuffer <= 0 && (
+      {foodBuffer <= 0 && (
         <div style={{
           background: "#ff6b6b22",
           border: "2px solid #ff6b6b",
@@ -853,21 +830,12 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
                     borderRadius: "12px",
                     marginBottom: "8px",
                     border: `1px solid ${theme.primary}33`,
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
                   }}>
-                    <div>
-                      <div style={{ color: theme.text, fontWeight: "700", fontSize: "14px" }}>
-                        {food.mustTry && "🌟 "}{food.name}
-                      </div>
-                      <div style={{ color: theme.subtext, fontSize: "12px" }}>{food.description}</div>
-                      <div style={{ color: theme.subtext, fontSize: "11px", textTransform: "capitalize" }}>{food.type}</div>
-                      <LiveButton type="restaurant" name={food.name} />
+                    <div style={{ color: theme.text, fontWeight: "700", fontSize: "14px" }}>
+                      {food.mustTry && "🌟 "}{food.name}
                     </div>
-                    <div style={{ color: theme.primary, fontWeight: "800", fontSize: "14px" }}>
-                      ~₹{food.avgCost}
-                    </div>
+                    <div style={{ color: theme.subtext, fontSize: "12px" }}>{food.description}</div>
+                    <div style={{ color: theme.subtext, fontSize: "11px", textTransform: "capitalize" }}>{food.type}</div>
                   </div>
                 ))
               ) : comingSoon(`Food recommendations for ${locationName}`)}
@@ -891,90 +859,64 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
             {card(<>
               {sectionLabel(`🎯 ACTIVITIES IN ${locationName.toUpperCase()}`)}
               <div style={{ color: theme.subtext, fontSize: "13px", marginBottom: "16px" }}>
-                Select activities — cost deducted from buffer in real time
+                Popular activities — tap "Get Live Price" for real pricing
               </div>
               {aiLoading ? (
                 <div style={{ color: theme.subtext, textAlign: "center", padding: "20px" }}>
                   🤖 AI is finding activities...
                 </div>
               ) : aiData?.activities?.length > 0 ? (
-                aiData.activities.map((activity, i) => {
-                  const isSelected = selectedActivities.find(a => a.id === activity.id)
-                  return (
-                    <div
-                      key={i}
-                      onClick={() => handleActivityToggle(activity)}
-                      style={{
-                        padding: "14px 16px",
-                        borderRadius: "12px",
-                        marginBottom: "8px",
-                        border: `2px solid ${isSelected ? theme.primary : theme.primary + "33"}`,
-                        background: isSelected ? `${theme.primary}22` : "transparent",
-                        cursor: "pointer",
-                        transition: "all 0.3s ease",
-                      }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                        <div style={{ color: isSelected ? theme.primary : theme.text, fontWeight: "700", fontSize: "14px" }}>
-                          {isSelected ? "✅ " : ""}{activity.name}
-                        </div>
-                        <div style={{ color: activity.cost === 0 ? "#A8E6CF" : theme.primary, fontWeight: "800" }}>
-                          {activity.cost === 0 ? "FREE" : `₹${activity.cost}`}
-                        </div>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <div style={{ color: theme.subtext, fontSize: "12px" }}>{activity.description}</div>
-                        <div style={{ color: theme.subtext, fontSize: "11px" }}>⏱️ {activity.duration}</div>
-                      </div>
-                      {activity.bestTime && (
-                        <div style={{ color: theme.subtext, fontSize: "11px", marginTop: "4px" }}>
-                          Best time: {activity.bestTime}
-                        </div>
-                      )}
-                      <LiveButton type="activity" name={activity.name} />
+                aiData.activities.map((activity, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: "14px 16px",
+                      borderRadius: "12px",
+                      marginBottom: "8px",
+                      border: `1px solid ${theme.primary}33`,
+                    }}>
+                    <div style={{ color: theme.text, fontWeight: "700", fontSize: "14px" }}>
+                      {activity.name}
                     </div>
-                  )
-                })
+                    <div style={{ color: theme.subtext, fontSize: "12px" }}>{activity.description}</div>
+                    {activity.bestTime && (
+                      <div style={{ color: theme.subtext, fontSize: "11px", marginTop: "4px" }}>
+                        Best time: {activity.bestTime}
+                      </div>
+                    )}
+                    <LiveButton type="activity" name={activity.name} />
+                  </div>
+                ))
               ) : comingSoon(`Activities for ${locationName}`)}
             </>)}
 
             {card(<>
               {sectionLabel(`🎉 FESTIVALS & EVENTS IN ${locationName.toUpperCase()}`)}
               <div style={{ color: theme.subtext, fontSize: "13px", marginBottom: "16px" }}>
-                Upcoming festivals — select to include in budget
+                Upcoming festivals — tap "Get Live Data" for details
               </div>
               {aiLoading ? (
                 <div style={{ color: theme.subtext, textAlign: "center", padding: "20px" }}>
                   🤖 AI is finding festivals...
                 </div>
               ) : aiData?.festivals?.length > 0 ? (
-                aiData.festivals.map((festival, i) => {
-                  const isSelected = selectedFestivals.find(f => f.id === festival.id)
-                  return (
-                    <div
-                      key={i}
-                      onClick={() => handleFestivalToggle(festival)}
-                      style={{
-                        padding: "14px 16px",
-                        borderRadius: "12px",
-                        marginBottom: "8px",
-                        border: `2px solid ${isSelected ? theme.primary : theme.primary + "33"}`,
-                        background: isSelected ? `${theme.primary}22` : "transparent",
-                        cursor: "pointer",
-                        transition: "all 0.3s ease",
-                      }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                        <div style={{ color: isSelected ? theme.primary : theme.text, fontWeight: "700", fontSize: "14px" }}>
-                          {isSelected ? "✅ " : ""}{festival.name}
-                        </div>
-                        <div style={{ color: festival.cost === 0 ? "#A8E6CF" : theme.primary, fontWeight: "800" }}>
-                          {festival.cost === 0 ? "FREE" : `₹${festival.cost}`}
-                        </div>
-                      </div>
-                      <div style={{ color: theme.subtext, fontSize: "12px", marginBottom: "2px" }}>{festival.description}</div>
-                      <div style={{ color: theme.subtext, fontSize: "11px" }}>📅 {festival.date}</div>
+                aiData.festivals.map((festival, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: "14px 16px",
+                      borderRadius: "12px",
+                      marginBottom: "8px",
+                      border: `1px solid ${theme.primary}33`,
+                    }}>
+                    <div style={{ color: theme.text, fontWeight: "700", fontSize: "14px" }}>
+                      {festival.name}
                     </div>
-                  )
-                })
+                    <div style={{ color: theme.subtext, fontSize: "12px", marginBottom: "2px" }}>{festival.description}</div>
+                    <div style={{ color: theme.subtext, fontSize: "11px" }}>📅 {festival.date}</div>
+                    <LiveButton type="activity" name={festival.name} />
+                  </div>
+                ))
               ) : comingSoon(`Festivals for ${locationName}`)}
             </>)}
 
