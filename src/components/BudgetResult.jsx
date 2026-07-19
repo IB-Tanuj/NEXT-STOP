@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { transportCosts, stayCosts, entryCosts } from "../data/tripData"
+import { transportCosts, entryCosts } from "../data/tripData"
 import { getDistanceBetweenStations, findNearestStation, haversineDistance } from "../data/stations"
 import TripPlan from "./TripPlan"
 
@@ -8,14 +8,7 @@ const DESTINATION_STATIONS = {
   manali: "CDG",
 }
 
-// Default cost fallback data for stay and food
-const DEFAULT_STAY_COSTS = {
-  hostel: { min: 300, max: 650, avg: 450 },
-  budget: { min: 800, max: 1600, avg: 1100 },
-  mid: { min: 1800, max: 4000, avg: 2600 },
-  premium: { min: 4000, max: 7000, avg: 5200 },
-  luxury: { min: 7000, max: 13000, avg: 9500 },
-}
+
 
 const DEFAULT_FOOD_COSTS = {
   local: { min: 100, max: 200, avg: 150 },
@@ -211,10 +204,44 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     }
   }, [fromStation, toStation, preferences.transport])
 
-  // ── Stay ───────────────────────────────────────────────
-  const stayData = stayCosts[locationKey]?.[preferences.stayType] || DEFAULT_STAY_COSTS[preferences.stayType]
-  const pricePerNight = stayData?.avg || 0
+  // ── Stay (TinyFish-powered live search) ─────────────────
+  const [stayOptions, setStayOptions] = useState([])
+  const [stayLoading, setStayLoading] = useState(false)
+  const [stayError, setStayError] = useState(null)
+  const [selectedStayIndex, setSelectedStayIndex] = useState(0)
+  const [manualPrice, setManualPrice] = useState("")
   const [roomOption, setRoomOption] = useState("separate")
+
+  useEffect(() => {
+    if (!locationKey || !preferences.stayType) return
+    setStayLoading(true)
+    setStayError(null)
+    fetch('/api/live/search-stays', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ location: location?.name, stayType: preferences.stayType }),
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      })
+      .then(data => {
+        if (data.stays?.length > 0) {
+          setStayOptions(data.stays)
+          setSelectedStayIndex(0)
+        } else {
+          throw new Error("No stay options found")
+        }
+      })
+      .catch(err => {
+        console.warn("Stay search failed:", err.message)
+        setStayError(err.message)
+      })
+      .finally(() => setStayLoading(false))
+  }, [locationKey, preferences.stayType])
+
+  const selectedStay = stayOptions[selectedStayIndex]
+  const pricePerNight = selectedStay?.pricePerNight || (manualPrice ? Number(manualPrice) : 0)
 
   const getStayCost = (option) => {
     if (!isGroup) return pricePerNight * preferences.days
@@ -525,11 +552,84 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
           </div>
         </div>
 
-        {/* Stay Card */}
+        {/* Stay Card — Live TinyFish Search */}
         {card(<>
-          {sectionLabel("🏨 STAY")}
-          {isGroup && (
-            <div style={{ marginBottom: "16px" }}>
+          {sectionLabel(`🏨 SELECT YOUR STAY IN ${location?.name?.toUpperCase()}`)}
+          <div style={{ color: theme.subtext, fontSize: "12px", marginBottom: "16px" }}>
+            Showing real {preferences.stayType} options — tap to select
+          </div>
+
+          {stayLoading ? (
+            <div style={{ color: theme.subtext, textAlign: "center", padding: "20px" }}>
+              <div style={{ fontSize: "24px", marginBottom: "8px", animation: "pulse 1.5s infinite" }}>🔍</div>
+              Searching for {preferences.stayType} stays in {location?.name}...
+            </div>
+          ) : stayError ? (
+            <div>
+              <div style={{
+                background: "#ff6b6b22", border: "1px solid #ff6b6b",
+                borderRadius: "12px", padding: "16px", marginBottom: "16px", textAlign: "center",
+              }}>
+                <div style={{ color: "#ff6b6b", fontWeight: "700", fontSize: "14px", marginBottom: "6px" }}>
+                  ⚠️ Could not fetch live stay options
+                </div>
+                <div style={{ color: theme.subtext, fontSize: "12px" }}>
+                  Enter your expected price per night manually:
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "12px" }}>
+                <span style={{ color: theme.text, fontWeight: "700", fontSize: "16px" }}>₹</span>
+                <input
+                  type="number"
+                  value={manualPrice}
+                  onChange={e => setManualPrice(e.target.value)}
+                  placeholder="e.g. 800"
+                  style={{
+                    flex: 1, padding: "12px 16px", borderRadius: "12px",
+                    border: `2px solid ${theme.primary}44`, background: "transparent",
+                    color: theme.text, fontSize: "16px", fontWeight: "700",
+                    outline: "none",
+                  }}
+                />
+                <span style={{ color: theme.subtext, fontSize: "13px" }}>/night</span>
+              </div>
+            </div>
+          ) : stayOptions.length > 0 ? (
+            stayOptions.map((stay, i) => {
+              const isSelected = selectedStayIndex === i
+              const thisCost = stay.pricePerNight * preferences.days * (isGroup ? (roomOption === "one" ? 1 : roomOption === "two" ? 2 : groupSize) : 1)
+              const thisBuffer = totalBudget - totalEntryCost - transportCost - thisCost
+              return (
+                <div
+                  key={i}
+                  onClick={() => setSelectedStayIndex(i)}
+                  style={{
+                    padding: "14px 16px", borderRadius: "12px", marginBottom: "8px",
+                    border: `2px solid ${isSelected ? theme.primary : theme.primary + "22"}`,
+                    background: isSelected ? `${theme.primary}22` : "transparent",
+                    cursor: "pointer", transition: "all 0.3s ease",
+                  }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                    <div style={{ color: isSelected ? theme.primary : theme.text, fontWeight: isSelected ? "800" : "600", fontSize: "14px" }}>
+                      {isSelected ? "⭐ " : ""}{stay.name}
+                    </div>
+                    <div style={{ color: theme.primary, fontWeight: "800" }}>₹{stay.pricePerNight}/night</div>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <div style={{ color: theme.subtext, fontSize: "11px" }}>
+                      ⭐ {stay.rating} · 👥 {stay.maxCapacity} people · {stay.highlight}
+                    </div>
+                    <div style={{ color: thisBuffer >= 0 ? theme.subtext : "#ff6b6b", fontSize: "11px" }}>
+                      {thisBuffer >= 0 ? `₹${thisBuffer.toLocaleString("en-IN")} left` : `₹${Math.abs(thisBuffer).toLocaleString("en-IN")} over`}
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          ) : null}
+
+          {isGroup && stayOptions.length > 0 && !stayLoading && (
+            <div style={{ marginTop: "12px", marginBottom: "12px" }}>
               <div style={{ color: theme.subtext, fontSize: "13px", marginBottom: "10px" }}>
                 Room sharing for {groupSize} people:
               </div>
@@ -545,19 +645,26 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
               ,))}
             </div>
           )}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <div style={{ color: theme.text, fontWeight: "600", fontSize: "14px" }}>
-                {preferences.stayType} · {preferences.days} nights
+
+          {pricePerNight > 0 && (
+            <div style={{
+              marginTop: "12px", padding: "14px 16px", borderRadius: "12px",
+              background: `${theme.primary}11`, border: `1px solid ${theme.primary}33`,
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+            }}>
+              <div>
+                <div style={{ color: theme.text, fontWeight: "600", fontSize: "14px" }}>
+                  {selectedStay?.name || preferences.stayType} · {preferences.days} nights
+                </div>
+                <div style={{ color: theme.subtext, fontSize: "12px" }}>
+                  ₹{pricePerNight}/night × {isGroup ? `${roomOption === "separate" ? groupSize : roomOption === "two" ? 2 : 1} room(s) × ` : ""}{preferences.days} nights
+                </div>
               </div>
-              <div style={{ color: theme.subtext, fontSize: "12px" }}>
-                ₹{pricePerNight}/night × {isGroup ? `${roomOption === "separate" ? groupSize : roomOption === "two" ? 2 : 1} room(s) × ` : ""}{preferences.days} nights
+              <div style={{ color: "#4ECDC4", fontWeight: "800", fontSize: "20px" }}>
+                ₹{getStayCost(roomOption).toLocaleString("en-IN")}
               </div>
             </div>
-            <div style={{ color: "#4ECDC4", fontWeight: "800", fontSize: "20px" }}>
-              ₹{getStayCost(roomOption).toLocaleString("en-IN")}
-            </div>
-          </div>
+          )}
         </>)}
 
         {/* Transport Card — Multi-leg (Train) */}
@@ -880,6 +987,10 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
         }
       `}</style>
     </div>

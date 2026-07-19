@@ -156,3 +156,61 @@ export const getStayPrice = async (req, res) => {
         });
     }
 };
+
+/**
+ * POST /api/live/search-stays
+ * Searches for 5 real stay options at a location using TinyFish pipeline
+ */
+export const searchStays = async (req, res) => {
+    try {
+        const { location, stayType } = req.body;
+
+        if (!location || !stayType) {
+            return res.status(400).json({ error: "location and stayType are required" });
+        }
+
+        // Step 1: Groq generates the search query
+        const searchQuery = await generateSearchQuery({
+            type: `top rated ${stayType} options with price per night`,
+            name: stayType,
+            location,
+        });
+
+        // Steps 2 & 3: TinyFish searches and fetches
+        const { text } = await searchAndFetch(searchQuery);
+
+        // Step 4: Groq cleans the data into 5 structured stay options
+        const schema = {
+            stays: [
+                { name: "", pricePerNight: 0, rating: "", maxCapacity: 0, highlight: "" }
+            ]
+        };
+
+        const result = await cleanWebData(
+            text,
+            schema,
+            `Extract exactly 5 ${stayType} accommodation options in ${location}, India. For each, provide the name, price per night in INR (number only), rating out of 5, maximum room capacity (number of people), and a 3-word highlight. If exact data is unavailable, use reasonable estimates for ${stayType} in ${location} and mark price with (estimated). Return prices as numbers, not strings.`
+        );
+
+        // Ensure we have an array of stays
+        const stays = Array.isArray(result?.stays) ? result.stays.slice(0, 5) : [];
+
+        // Ensure pricePerNight is always a number
+        const cleanedStays = stays.map(stay => ({
+            ...stay,
+            pricePerNight: typeof stay.pricePerNight === 'number' ? stay.pricePerNight : parseInt(String(stay.pricePerNight).replace(/[^0-9]/g, '')) || 0,
+            maxCapacity: typeof stay.maxCapacity === 'number' ? stay.maxCapacity : parseInt(String(stay.maxCapacity).replace(/[^0-9]/g, '')) || 2,
+        }));
+
+        res.json({
+            stays: cleanedStays,
+            fetchedAt: new Date().toISOString(),
+        });
+    } catch (error) {
+        console.error("Error searching stays:", error.message);
+        res.status(500).json({
+            error: "Failed to search for stays.",
+            details: error.message,
+        });
+    }
+};
