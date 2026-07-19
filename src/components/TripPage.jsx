@@ -36,12 +36,13 @@ const LocationBoundary = ({ coords, zoom, theme, locationName, customBoundary })
     const findPolygonResult = (data) =>
       data.find(d => d.geojson && (d.geojson.type === 'Polygon' || d.geojson.type === 'MultiPolygon'))
 
-    // Add GeoJSON boundary to map
     const addGeoJSON = (geojson) => {
       const geoLayer = L.geoJSON(geojson, { style: boundaryStyle })
       layerGroup.addLayer(geoLayer)
       const bounds = geoLayer.getBounds()
-      map.fitBounds(bounds.pad(1.0))
+      if (bounds && bounds.isValid()) {
+        map.fitBounds(bounds.pad(0.2))
+      }
     }
 
     // Use custom boundary if provided (like Manali)
@@ -49,7 +50,9 @@ const LocationBoundary = ({ coords, zoom, theme, locationName, customBoundary })
       const polygon = L.polygon(customBoundary, boundaryStyle)
       layerGroup.addLayer(polygon)
       const bounds = polygon.getBounds()
-      map.fitBounds(bounds.pad(1.0))
+      if (bounds && bounds.isValid()) {
+        map.fitBounds(bounds.pad(0.2))
+      }
       return () => { layerGroup.remove() }
     }
 

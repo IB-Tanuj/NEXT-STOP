@@ -685,7 +685,7 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
         </div>
       )}
 
-      {remainingBuffer > 0 && remainingBuffer < 500 && (
+      {foodBuffer > 0 && foodBuffer < 500 && (
         <div style={{
           background: "#FFB34722",
           border: "2px solid #FFB347",
