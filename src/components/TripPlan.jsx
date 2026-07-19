@@ -839,36 +839,6 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
               )
             })()}
 
-            {/* Stay Recommendations */}
-            {card(<>
-              {sectionLabel(`🏨 RECOMMENDED ${stayType?.toUpperCase()} IN ${locationName.toUpperCase()}`)}
-              {aiLoading ? (
-                <div style={{ color: theme.subtext, textAlign: "center", padding: "20px" }}>
-                  🤖 AI is generating recommendations...
-                </div>
-              ) : aiData?.stayRecommendations?.length > 0 ? (
-                aiData.stayRecommendations.map((stay, i) => (
-                  <div key={i} style={{
-                    padding: "14px 16px",
-                    borderRadius: "12px",
-                    marginBottom: "8px",
-                    border: `1px solid ${theme.primary}33`,
-                    background: "transparent",
-                  }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                      <div style={{ color: theme.text, fontWeight: "700", fontSize: "14px" }}>{stay.name}</div>
-                      <div style={{ color: theme.primary, fontWeight: "800" }}>₹{stay.pricePerNight}/night</div>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <div style={{ color: theme.subtext, fontSize: "12px" }}>{stay.highlight}</div>
-                      <div style={{ color: "#FFE66D", fontSize: "12px" }}>⭐ {stay.rating}</div>
-                    </div>
-                    <LiveButton type="stay" name={stay.name} extraBody={{ stayType }} />
-                  </div>
-                ))
-              ) : comingSoon(`${stayType} recommendations for ${locationName}`)}
-            </>)}
-
             {/* Food Recommendations */}
             {card(<>
               {sectionLabel(`🍽️ POPULAR FOOD IN ${locationName.toUpperCase()}`)}

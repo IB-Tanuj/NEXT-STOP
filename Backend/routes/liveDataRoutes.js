@@ -1,5 +1,5 @@
 import express from 'express';
-import { getActivityPrice, verifyRestaurant, getStayPrice } from '../controllers/liveDataController.js';
+import { getActivityPrice, verifyRestaurant, getStayPrice, searchStays } from '../controllers/liveDataController.js';
 
 const router = express.Router();
 
@@ -11,5 +11,8 @@ router.post('/verify-restaurant', verifyRestaurant);
 
 // POST /api/live/stay-price — Get current room rates for a stay
 router.post('/stay-price', getStayPrice);
+
+// POST /api/live/search-stays — Search for 5 real stay options at a location
+router.post('/search-stays', searchStays);
 
 export default router;
