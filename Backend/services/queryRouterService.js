@@ -67,8 +67,8 @@ export async function cleanWebDataWithKey(rawText, outputSchema, extractionGoal,
         throw new Error("Groq API key is not defined for cleaning.");
     }
 
-    // Truncate raw text to 8000 chars to give cleaner more data while staying fast (Llama 3.3 handles this easily)
-    const truncated = rawText.substring(0, 8000);
+    // Truncate raw text to 5000 chars to save tokens (approx 1000-1500 tokens) while keeping enough data for top 5 hotels
+    const truncated = rawText.substring(0, 5000);
 
     const prompt = `${extractionGoal}
 
@@ -94,7 +94,7 @@ ${truncated}`;
                 { role: "user", content: prompt }
             ],
             temperature: 0.2,
-            max_tokens: 400,
+            max_tokens: 800,
         },
         {
             headers: {
@@ -105,6 +105,16 @@ ${truncated}`;
     );
 
     const text = response.data.choices[0].message.content.trim();
+    // Remove markdown code blocks if present
     const clean = text.replace(/```json|```/g, "").trim();
-    return JSON.parse(clean);
+    
+    try {
+        return JSON.parse(clean);
+    } catch (err) {
+        console.error("❌ Groq returned invalid JSON:");
+        console.error("--- RAW TEXT ---");
+        console.error(text);
+        console.error("----------------");
+        throw new Error("Groq returned invalid JSON. Try searching again.");
+    }
 }
