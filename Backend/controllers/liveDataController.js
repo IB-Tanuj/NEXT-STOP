@@ -1,5 +1,10 @@
-import { searchAndFetch } from '../services/tinyfishService.js';
-import { generateSearchQuery, cleanWebData } from '../services/queryRouterService.js';
+import { searchAndFetch, searchAndFetchMultiple } from '../services/tinyfishService.js';
+import { generateSearchQuery, generateStaySearchQuery, cleanWebData, cleanWebDataWithKey } from '../services/queryRouterService.js';
+
+// In-memory cache for stay searches
+// Key: "location_stayType", Value: { data, timestamp }
+const stayCache = new Map();
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 /**
  * POST /api/live/activity-price
@@ -159,7 +164,7 @@ export const getStayPrice = async (req, res) => {
 
 /**
  * POST /api/live/search-stays
- * Searches for 5 real stay options at a location using TinyFish pipeline
+ * Searches for up to 5 real stay options at a location using TinyFish pipeline + custom key
  */
 export const searchStays = async (req, res) => {
     try {
@@ -169,31 +174,45 @@ export const searchStays = async (req, res) => {
             return res.status(400).json({ error: "location and stayType are required" });
         }
 
-        // Step 1: Groq generates the search query
-        const searchQuery = await generateSearchQuery({
-            type: `top rated ${stayType} options with price per night`,
-            name: stayType,
-            location,
-        });
+        const cacheKey = `${location.toLowerCase()}_${stayType.toLowerCase()}`;
+        
+        // Check cache first
+        const cached = stayCache.get(cacheKey);
+        if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+            console.log(`[Cache Hit] Stays for ${cacheKey}`);
+            return res.json(cached.data);
+        }
 
-        // Steps 2 & 3: TinyFish searches and fetches
-        const { text } = await searchAndFetch(searchQuery);
+        console.log(`[Cache Miss] Fetching live stays for ${cacheKey}`);
 
-        // Step 4: Groq cleans the data into 5 structured stay options
+        // Step 1: Hardcoded search query template (no Groq tokens used here)
+        const searchQuery = generateStaySearchQuery(location, stayType);
+
+        // Steps 2 & 3: TinyFish searches and fetches TOP 2 results in parallel
+        const { text } = await searchAndFetchMultiple(searchQuery);
+
+        // Step 4: Groq cleans the data into up to 5 structured stay options
         const schema = {
             stays: [
                 { name: "", pricePerNight: 0, rating: "", maxCapacity: 0, highlight: "" }
             ]
         };
 
-        const result = await cleanWebData(
+        // Use the new dedicated API key for cleaning, or fallback to main key if it's missing
+        const apiKey = process.env.GROQ_PROMPT_CLEANING_KEY || process.env.GROQ_API_KEY;
+        const result = await cleanWebDataWithKey(
             text,
             schema,
-            `Extract exactly 5 ${stayType} accommodation options in ${location}, India. For each, provide the name, price per night in INR (number only), rating out of 5, maximum room capacity (number of people), and a 3-word highlight. If exact data is unavailable, use reasonable estimates for ${stayType} in ${location} and mark price with (estimated). Return prices as numbers, not strings.`
+            `Extract up to 5 actual ${stayType} accommodation options in ${location}, India from the text. For each, provide the name, price per night in INR (number only), rating out of 5, maximum room capacity (number of people), and a 3-word highlight. Extract ONLY real hotel names. If a real hotel is found but its price is missing in the text, you MAY estimate a realistic price based on its star rating and location.`,
+            apiKey
         );
 
         // Ensure we have an array of stays
         const stays = Array.isArray(result?.stays) ? result.stays.slice(0, 5) : [];
+
+        if (stays.length === 0) {
+            throw new Error("No real stay options could be extracted from the search results.");
+        }
 
         // Ensure pricePerNight is always a number
         const cleanedStays = stays.map(stay => ({
@@ -202,10 +221,18 @@ export const searchStays = async (req, res) => {
             maxCapacity: typeof stay.maxCapacity === 'number' ? stay.maxCapacity : parseInt(String(stay.maxCapacity).replace(/[^0-9]/g, '')) || 2,
         }));
 
-        res.json({
+        const responseData = {
             stays: cleanedStays,
             fetchedAt: new Date().toISOString(),
+        };
+
+        // Save to cache
+        stayCache.set(cacheKey, {
+            data: responseData,
+            timestamp: Date.now()
         });
+
+        res.json(responseData);
     } catch (error) {
         console.error("Error searching stays:", error.message);
         res.status(500).json({

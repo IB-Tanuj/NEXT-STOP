@@ -214,12 +214,17 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
 
   useEffect(() => {
     if (!locationKey || !preferences.stayType) return
+    const controller = new AbortController()
+
     setStayLoading(true)
     setStayError(null)
+    setStayOptions([]) // Clear old options
+    
     fetch('/api/live/search-stays', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ location: location?.name, stayType: preferences.stayType }),
+      signal: controller.signal
     })
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -230,16 +235,26 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
           setStayOptions(data.stays)
           setSelectedStayIndex(0)
         } else {
-          throw new Error("No stay options found")
+          throw new Error("No real stay options could be extracted")
         }
       })
       .catch(err => {
+        if (err.name === "AbortError") return // Ignore abort errors
         console.warn("Stay search failed:", err.message)
         setStayError(err.message)
+        setStayOptions([]) // Ensure options are clear on error
+        setSelectedStayIndex(-1) // Remove any selection
       })
-      .finally(() => setStayLoading(false))
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setStayLoading(false)
+        }
+      })
+
+    return () => controller.abort()
   }, [locationKey, preferences.stayType])
 
+  // If there's an error, selectedStay is undefined, so it gracefully falls back to manualPrice
   const selectedStay = stayOptions[selectedStayIndex]
   const pricePerNight = selectedStay?.pricePerNight || (manualPrice ? Number(manualPrice) : 0)
 

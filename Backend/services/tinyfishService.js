@@ -55,8 +55,9 @@ export async function fetchUrl(url) {
     }
     if (data?.content) return data.content;
     if (data?.markdown) return data.markdown;
+    if (data?.text) return data.text;
     if (data?.results && Array.isArray(data.results)) {
-        return data.results[0]?.content || data.results[0]?.markdown || JSON.stringify(data.results[0]);
+        return data.results[0]?.content || data.results[0]?.markdown || data.results[0]?.text || JSON.stringify(data.results[0]);
     }
 
     return JSON.stringify(data);
@@ -64,7 +65,7 @@ export async function fetchUrl(url) {
 
 /**
  * Combined: Search + Fetch the top result in one call
- * This is the main helper used by liveDataController
+ * This is the main helper used by liveDataController for single-item lookups
  */
 export async function searchAndFetch(query) {
     // Step 2: Search
@@ -92,4 +93,51 @@ export async function searchAndFetch(query) {
         const snippets = searchResults.map(r => r.snippet || r.description || r.title || "").join("\n");
         return { text: snippets, source: "search_snippets_fallback" };
     }
+}
+
+/**
+ * Combined: Search + Fetch the top 2 results and combine text.
+ * Used for stay searches where more data = better name extraction.
+ * Returns combined text from multiple pages for richer extraction.
+ */
+export async function searchAndFetchMultiple(query) {
+    // Step 2: Search
+    const searchResults = await searchWeb(query);
+
+    if (!searchResults || searchResults.length === 0) {
+        throw new Error("No search results found for query: " + query);
+    }
+
+    // Collect URLs from top 2 results
+    const urls = searchResults
+        .slice(0, 2)
+        .map(r => r.url || r.link || r.href)
+        .filter(Boolean);
+
+    if (urls.length === 0) {
+        // No URLs — return all snippets combined
+        const snippets = searchResults.map(r => r.snippet || r.description || r.title || "").join("\n\n");
+        return { text: snippets, source: "search_snippets" };
+    }
+
+    // Step 3: Fetch both pages in parallel
+    const fetchPromises = urls.map(url =>
+        fetchUrl(url).catch(err => {
+            console.warn(`Fetch failed for ${url}:`, err.message);
+            return null;
+        })
+    );
+
+    const pages = await Promise.all(fetchPromises);
+    const validPages = pages.filter(Boolean);
+
+    if (validPages.length === 0) {
+        // All fetches failed — use snippets
+        const snippets = searchResults.map(r => r.snippet || r.description || r.title || "").join("\n\n");
+        return { text: snippets, source: "search_snippets_fallback" };
+    }
+
+    // Combine text from all fetched pages
+    const combined = validPages.join("\n\n--- Next Page ---\n\n");
+    return { text: combined, source: `fetched_${validPages.length}_pages` };
 }
