@@ -68,7 +68,7 @@ export async function cleanWebDataWithKey(rawText, outputSchema, extractionGoal,
     }
 
     // Truncate raw text to 5000 chars to save tokens (approx 1000-1500 tokens) while keeping enough data for top 5 hotels
-    const truncated = rawText.substring(0, 5000);
+    const truncated = rawText.substring(0, 4500);
 
     const prompt = `${extractionGoal}
 
@@ -107,7 +107,7 @@ ${truncated}`;
     const text = response.data.choices[0].message.content.trim();
     // Remove markdown code blocks if present
     const clean = text.replace(/```json|```/g, "").trim();
-    
+
     try {
         return JSON.parse(clean);
     } catch (err) {
