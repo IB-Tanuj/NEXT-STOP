@@ -34,18 +34,41 @@ export async function generateSearchQuery({ type, name, location }) {
 }
 
 /**
+ * Stay-specific search query — hardcoded template, no Groq tokens burned.
+ * Targets real booking sites for actual hotel names and prices.
+ */
+export function generateStaySearchQuery(location, stayType) {
+    const typeMap = {
+        hostel: "hostels",
+        budget: "budget hotels",
+        mid: "3 star hotels",
+        premium: "4 star hotels",
+        luxury: "5 star luxury hotels",
+    };
+    const searchType = typeMap[stayType] || "hotels";
+    return `best ${searchType} in ${location} India with price per night 2025`;
+}
+
+/**
  * Step 4: Cleaner — Ask Groq to extract structured data from raw web content
  * Strips all URLs. Returns clean JSON matching the provided schema.
- * Uses ~200 tokens because the output is a small JSON object.
+ * Uses the default GROQ_API_KEY.
  */
 export async function cleanWebData(rawText, outputSchema, extractionGoal) {
-    const apiKey = process.env.GROQ_API_KEY;
+    return cleanWebDataWithKey(rawText, outputSchema, extractionGoal, process.env.GROQ_API_KEY);
+}
+
+/**
+ * Step 4 (with custom key): Cleaner using a specified API key.
+ * Used by the stay search pipeline with GROQ_PROMPT_CLEANING_KEY.
+ */
+export async function cleanWebDataWithKey(rawText, outputSchema, extractionGoal, apiKey) {
     if (!apiKey) {
-        throw new Error("GROQ_API_KEY is not defined.");
+        throw new Error("Groq API key is not defined for cleaning.");
     }
 
-    // Truncate raw text to 2000 chars to save tokens
-    const truncated = rawText.substring(0, 2000);
+    // Truncate raw text to 8000 chars to give cleaner more data while staying fast (Llama 3.3 handles this easily)
+    const truncated = rawText.substring(0, 8000);
 
     const prompt = `${extractionGoal}
 
@@ -54,7 +77,9 @@ ${JSON.stringify(outputSchema)}
 
 RULES:
 - Do NOT include any URLs or web links in any field
-- If data is not found, use reasonable estimates and mark with "(estimated)"
+- Extract ONLY names that actually appear in the web content below
+- NEVER invent or make up hotel/hostel/restaurant names
+- If fewer than 5 real options are found in the text, return only what you find
 - Keep all text fields short (under 10 words)
 
 Web content:
@@ -65,11 +90,11 @@ ${truncated}`;
         {
             model: "llama-3.3-70b-versatile",
             messages: [
-                { role: "system", content: "Return ONLY valid JSON. Never include URLs or links. No markdown." },
+                { role: "system", content: "Return ONLY valid JSON. Never include URLs or links. Never invent data that is not in the provided text. No markdown." },
                 { role: "user", content: prompt }
             ],
-            temperature: 0.3,
-            max_tokens: 300,
+            temperature: 0.2,
+            max_tokens: 400,
         },
         {
             headers: {

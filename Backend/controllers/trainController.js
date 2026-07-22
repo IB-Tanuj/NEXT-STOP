@@ -63,10 +63,18 @@ export const searchTrains = async (req, res) => {
 
         console.log(`🚂 Searching trains: ${from} → ${toCode}`);
 
+        // Generate a date for the query (e.g., 10 days from today) for estimation
+        const journeyDate = new Date();
+        journeyDate.setDate(journeyDate.getDate() + 10);
+        const dd = String(journeyDate.getDate()).padStart(2, '0');
+        const mm = String(journeyDate.getMonth() + 1).padStart(2, '0');
+        const yyyy = journeyDate.getFullYear();
+        const dateStr = `${dd}-${mm}-${yyyy}`;
+
         const options = {
             method: 'GET',
-            url: `https://${process.env.RAPIDAPI_HOST}/api/trains-search/v1/train/${from}`,
-            params: { isH5: 'true', client: 'web' },
+            url: `https://${process.env.RAPIDAPI_HOST}/between/${from}/${toCode}`,
+            params: { date: dateStr },
             headers: {
                 'x-rapidapi-key': process.env.RAPIDAPI_KEY,
                 'x-rapidapi-host': process.env.RAPIDAPI_HOST
