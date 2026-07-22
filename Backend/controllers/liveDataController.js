@@ -203,7 +203,12 @@ export const searchStays = async (req, res) => {
         const result = await cleanWebDataWithKey(
             text,
             schema,
-            `Extract up to 5 actual ${stayType} accommodation options in ${location}, India from the text. For each, provide the name, price per night in INR (number only), rating out of 5, maximum room capacity (number of people), and a 3-word highlight. Extract ONLY real hotel names. If a real hotel is found but its price is missing in the text, you MAY estimate a realistic price based on its star rating and location.`,
+            `Extract up to 5 actual ${stayType} accommodation options in ${location}, India from the text. For each, provide the name, price per night in INR (number only), rating out of 5, maximum room capacity (number of people), and a 3-word highlight. Extract ONLY real hotel names. 
+CRITICAL RULES FOR PRICES:
+1. If the scraped price is in USD ($), you MUST convert it to INR by multiplying by 85.
+2. If the number is suspiciously low (e.g., under 300), assume it was USD and multiply it by 85. 
+3. If a real hotel is found but its price is missing in the text, estimate a highly realistic INR price based on its star rating, location, and the user's ${stayType} preference.
+4. If ${stayType} is 'budget', ensure prices are generally under 2500 INR. If ${stayType} is 'hostel', ensure prices are under 1000 INR. Ignore luxury hotels if the user wants budget.`,
             apiKey
         );
 
