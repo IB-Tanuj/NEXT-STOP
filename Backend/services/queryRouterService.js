@@ -75,8 +75,8 @@ export async function cleanWebDataWithKey(rawText, outputSchema, extractionGoal,
         throw new Error("Groq API key is not defined for cleaning.");
     }
 
-    // Truncate raw text to 5000 chars to save tokens (approx 1000-1500 tokens) while keeping enough data for top 5 hotels
-    const truncated = rawText.substring(0, 4500);
+    // Truncate raw text to 10000 chars to save tokens (approx 3000 tokens) while keeping enough data for top 5 hotels
+    const truncated = rawText.substring(0, 10000);
 
     const prompt = `${extractionGoal}
 

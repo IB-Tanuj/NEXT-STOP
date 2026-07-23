@@ -183,61 +183,80 @@ export const searchStays = async (req, res) => {
             return res.json(cached.data);
         }
 
+        // If a request for this key is already in progress, wait for it to finish instead of making duplicate API calls
+        if (pendingStayRequests.has(cacheKey)) {
+            console.log(`[Cache Pending] Waiting for existing request to finish for ${cacheKey}`);
+            const data = await pendingStayRequests.get(cacheKey);
+            return res.json(data);
+        }
+
         console.log(`[Cache Miss] Fetching live stays for ${cacheKey}`);
 
-        // Step 1: Hardcoded search query template (no Groq tokens used here)
-        const searchQuery = generateStaySearchQuery(location, stayType);
+        // Create the promise for the actual work
+        const fetchPromise = (async () => {
+            // Step 1: Hardcoded search query template (no Groq tokens used here)
+            const searchQuery = generateStaySearchQuery(location, stayType);
 
-        // Steps 2 & 3: TinyFish searches and fetches TOP 2 results in parallel
-        const { text } = await searchAndFetchMultiple(searchQuery);
+            // Steps 2 & 3: TinyFish searches and fetches TOP 2 results in parallel
+            const { text } = await searchAndFetchMultiple(searchQuery);
 
-        // Step 4: Groq cleans the data into up to 5 structured stay options
-        const schema = {
-            stays: [
-                { name: "", pricePerNight: 0, rating: "", maxCapacity: 0, highlight: "" }
-            ]
-        };
+            // Step 4: Groq cleans the data into up to 5 structured stay options
+            const schema = {
+                stays: [
+                    { name: "", pricePerNight: 0, rating: "", maxCapacity: 0, highlight: "" }
+                ]
+            };
 
-        // Use the new dedicated API key for cleaning, or fallback to main key if it's missing
-        const apiKey = process.env.GROQ_PROMPT_CLEANING_KEY || process.env.GROQ_API_KEY;
-        const result = await cleanWebDataWithKey(
-            text,
-            schema,
-            `Extract up to 5 actual ${stayType} accommodation options in ${location}, India from the text. For each, provide the name, price per night in INR (number only), rating out of 5, maximum room capacity (number of people), and a 3-word highlight. Extract ONLY real hotel names. 
+            // Use the new dedicated API key for cleaning, or fallback to main key if it's missing
+            const apiKey = process.env.GROQ_PROMPT_CLEANING_KEY || process.env.GROQ_API_KEY;
+            const result = await cleanWebDataWithKey(
+                text,
+                schema,
+                `Extract up to 5 actual ${stayType} accommodation options in ${location}, India from the text. For each, provide the name, price per night in INR (number only), rating out of 5, maximum room capacity (number of people), and a 3-word highlight. Extract ONLY real hotel names. 
 CRITICAL RULES FOR PRICES:
 1. If the scraped price is in USD ($), you MUST convert it to INR by multiplying by 96.
 2. If the number is suspiciously low (e.g., under 300), assume it was USD and multiply it by 96. 
 3. If a real hotel is found but its price is missing in the text, estimate a highly realistic INR price based on its star rating, location, and the user's ${stayType} preference.
 4. If ${stayType} is 'budget', ensure prices are generally under 2500 INR. If ${stayType} is 'hostel', ensure prices are under 1000 INR. Ignore luxury hotels if the user wants budget.`,
-            apiKey
-        );
+                apiKey
+            );
 
-        // Ensure we have an array of stays
-        const stays = Array.isArray(result?.stays) ? result.stays.slice(0, 5) : [];
+            // Ensure we have an array of stays
+            const stays = Array.isArray(result?.stays) ? result.stays.slice(0, 5) : [];
 
-        if (stays.length === 0) {
-            throw new Error("No real stay options could be extracted from the search results.");
+            // If no stays found, it will just return an empty array without throwing a 500 error
+
+            // Ensure pricePerNight is always a number
+            const cleanedStays = stays.map(stay => ({
+                ...stay,
+                pricePerNight: typeof stay.pricePerNight === 'number' ? stay.pricePerNight : parseInt(String(stay.pricePerNight).replace(/[^0-9]/g, '')) || 0,
+                maxCapacity: typeof stay.maxCapacity === 'number' ? stay.maxCapacity : parseInt(String(stay.maxCapacity).replace(/[^0-9]/g, '')) || 2,
+            }));
+
+            const responseData = {
+                stays: cleanedStays,
+                fetchedAt: new Date().toISOString(),
+            };
+
+            // Save to cache
+            stayCache.set(cacheKey, {
+                data: responseData,
+                timestamp: Date.now()
+            });
+
+            return responseData;
+        })();
+
+        // Store the promise so subsequent parallel requests can wait on it
+        pendingStayRequests.set(cacheKey, fetchPromise);
+
+        try {
+            const responseData = await fetchPromise;
+            res.json(responseData);
+        } finally {
+            // Always remove the pending promise once it's done or fails
+            pendingStayRequests.delete(cacheKey);
         }
-
-        // Ensure pricePerNight is always a number
-        const cleanedStays = stays.map(stay => ({
-            ...stay,
-            pricePerNight: typeof stay.pricePerNight === 'number' ? stay.pricePerNight : parseInt(String(stay.pricePerNight).replace(/[^0-9]/g, '')) || 0,
-            maxCapacity: typeof stay.maxCapacity === 'number' ? stay.maxCapacity : parseInt(String(stay.maxCapacity).replace(/[^0-9]/g, '')) || 2,
-        }));
-
-        const responseData = {
-            stays: cleanedStays,
-            fetchedAt: new Date().toISOString(),
-        };
-
-        // Save to cache
-        stayCache.set(cacheKey, {
-            data: responseData,
-            timestamp: Date.now()
-        });
-
-        res.json(responseData);
     } catch (error) {
         console.error("Error searching stays:", error.message);
         res.status(500).json({
