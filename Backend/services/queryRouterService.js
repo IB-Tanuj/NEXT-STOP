@@ -50,6 +50,14 @@ export function generateStaySearchQuery(location, stayType) {
 }
 
 /**
+ * Bus-specific search query — hardcoded template, no Groq tokens burned.
+ * Targets aggregators and booking sites for bus schedules.
+ */
+export function generateBusSearchQuery(from, to) {
+    return `bus tickets from ${from} to ${to} redbus Paytm MakeMyTrip price timings`;
+}
+
+/**
  * Step 4: Cleaner — Ask Groq to extract structured data from raw web content
  * Strips all URLs. Returns clean JSON matching the provided schema.
  * Uses the default GROQ_API_KEY.
