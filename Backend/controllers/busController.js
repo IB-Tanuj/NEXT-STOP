@@ -4,6 +4,7 @@ import { generateBusSearchQuery, cleanWebDataWithKey } from '../services/queryRo
 // In-memory cache for bus searches
 // Key: "from_to", Value: { data, timestamp }
 const busCache = new Map();
+const pendingBusRequests = new Map(); // Tracks ongoing requests to prevent duplicates
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 /**
@@ -27,61 +28,80 @@ export const searchBuses = async (req, res) => {
             return res.json(cached.data);
         }
 
+        // If a request for this key is already in progress, wait for it to finish
+        if (pendingBusRequests.has(cacheKey)) {
+            console.log(`[Cache Pending] Waiting for existing request to finish for ${cacheKey}`);
+            const data = await pendingBusRequests.get(cacheKey);
+            return res.json(data);
+        }
+
         console.log(`[Cache Miss] Fetching live buses for ${cacheKey}`);
 
-        // Step 1: Generate the search query targeting bus aggregators
-        const searchQuery = generateBusSearchQuery(from, to);
+        // Create the promise for the actual work
+        const fetchPromise = (async () => {
+            // Step 1: Generate the search query targeting bus aggregators
+            const searchQuery = generateBusSearchQuery(from, to);
 
-        // Steps 2 & 3: TinyFish searches and fetches TOP 2 results in parallel
-        const { text } = await searchAndFetchMultiple(searchQuery);
+            // Steps 2 & 3: TinyFish searches and fetches TOP 2 results in parallel
+            const { text } = await searchAndFetchMultiple(searchQuery);
 
-        // Step 4: Groq cleans the data into structured bus options
-        const schema = {
-            buses: [
-                { operatorName: "", departureTime: "", arrivalTime: "", price: 0, duration: "" }
-            ]
-        };
+            // Step 4: Groq cleans the data into structured bus options
+            const schema = {
+                buses: [
+                    { operatorName: "", departureTime: "", arrivalTime: "", price: 0, duration: "" }
+                ]
+            };
 
-        // Use the dedicated API key for cleaning, fallback to main key
-        const apiKey = process.env.GROQ_PROMPT_CLEANING_KEY || process.env.GROQ_API_KEY;
-        const result = await cleanWebDataWithKey(
-            text,
-            schema,
-            `Extract up to 5 actual bus travel options from ${from} to ${to}, India from the text. For each, provide the bus operator name (e.g., Zingbus, IntrCity, Redbus, etc.), departure time, arrival time, price in INR (number only), and estimated duration. Extract ONLY real bus operator names and schedules. 
+            // Use a dedicated API key for bus cleaning if available, fallback to main key
+            const apiKey = process.env.GROQ_BUS_CLEANING_KEY || process.env.GROQ_API_KEY;
+            const result = await cleanWebDataWithKey(
+                text,
+                schema,
+                `Extract up to 5 actual bus travel options from ${from} to ${to}, India from the text. For each, provide the bus operator name (e.g., Zingbus, IntrCity, Redbus, etc.), departure time, arrival time, price in INR (number only), and estimated duration. Extract ONLY real bus operator names and schedules. 
 CRITICAL RULES FOR PRICES:
 1. If the scraped price is in USD ($), you MUST convert it to INR by multiplying by 96.
 2. Ensure the price is a valid number. Estimate a realistic INR price (e.g., 500-2000 INR) if it is missing in the text but the operator is found.`,
-            apiKey
-        );
+                apiKey
+            );
 
-        // Ensure we have an array of buses
-        const buses = Array.isArray(result?.buses) ? result.buses.slice(0, 5) : [];
+            // Ensure we have an array of buses
+            const buses = Array.isArray(result?.buses) ? result.buses.slice(0, 5) : [];
 
-        if (buses.length === 0) {
-            throw new Error("No real bus options could be extracted from the search results.");
+            // If no buses found, it will just return an empty array without throwing a 500 error
+
+            // Clean up data types
+            const cleanedBuses = buses.map(bus => ({
+                ...bus,
+                price: typeof bus.price === 'number' ? bus.price : parseInt(String(bus.price).replace(/[^0-9]/g, '')) || 0,
+            }));
+
+            const responseData = {
+                from,
+                to,
+                date: date || new Date().toISOString().split('T')[0], // Return provided date or today
+                buses: cleanedBuses,
+                fetchedAt: new Date().toISOString(),
+            };
+
+            // Save to cache
+            busCache.set(cacheKey, {
+                data: responseData,
+                timestamp: Date.now()
+            });
+
+            return responseData;
+        })();
+
+        // Store the promise so subsequent parallel requests can wait on it
+        pendingBusRequests.set(cacheKey, fetchPromise);
+
+        try {
+            const responseData = await fetchPromise;
+            res.json(responseData);
+        } finally {
+            // Always remove the pending promise once it's done or fails
+            pendingBusRequests.delete(cacheKey);
         }
-
-        // Clean up data types
-        const cleanedBuses = buses.map(bus => ({
-            ...bus,
-            price: typeof bus.price === 'number' ? bus.price : parseInt(String(bus.price).replace(/[^0-9]/g, '')) || 0,
-        }));
-
-        const responseData = {
-            from,
-            to,
-            date: date || new Date().toISOString().split('T')[0], // Return provided date or today
-            buses: cleanedBuses,
-            fetchedAt: new Date().toISOString(),
-        };
-
-        // Save to cache
-        busCache.set(cacheKey, {
-            data: responseData,
-            timestamp: Date.now()
-        });
-
-        res.json(responseData);
     } catch (error) {
         console.error("Error searching buses:", error.message);
         res.status(500).json({
