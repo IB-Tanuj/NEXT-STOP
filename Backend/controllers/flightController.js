@@ -64,29 +64,67 @@ export const searchFlights = async (req, res) => {
       const originAirport = getAirportByCode(fromCode) || { code: fromCode, name: `${fromCode} Airport`, city: fromCode };
       const destAirport = getAirportByCode(toCode) || { code: toCode, name: `${toCode} Airport`, city: toCode };
 
-      // Method 1: Attempt RapidAPI lookup if RAPIDAPI_FLIGHT_HOST is set
+      // Method 1: Attempt RapidAPI lookup if RAPIDAPI_FLIGHT_HOST is set (e.g. google-flights2)
       const rapidHost = process.env.RAPIDAPI_FLIGHT_HOST;
       const rapidKey = process.env.RAPIDAPI_KEY;
 
       if (rapidHost && rapidKey) {
         try {
+          const outDate = date || new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
           const options = {
             method: 'GET',
-            url: `https://${rapidHost}/flights/search-one-way`,
+            url: `https://${rapidHost}/api/v1/searchFlights`,
             params: {
-              fromEntityId: fromCode,
-              toEntityId: toCode,
-              departDate: date || new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
+              departure_id: fromCode,
+              arrival_id: toCode,
+              outbound_date: outDate,
+              currency: 'INR',
+              travel_class: 'ECONOMY'
             },
             headers: {
               'x-rapidapi-key': rapidKey,
               'x-rapidapi-host': rapidHost
             },
-            timeout: 8000
+            timeout: 10000
           };
           const apiRes = await axios.request(options);
-          apiData = apiRes.data;
-          usedMethod = "rapidapi";
+          
+          const firstFlight = apiRes.data?.data?.itineraries?.topFlights?.[0] || apiRes.data?.data?.itineraries?.otherFlights?.[0];
+          
+          if (firstFlight && firstFlight.price) {
+            apiData = apiRes.data;
+            const basePrice = firstFlight.price;
+            const airline = firstFlight.flights?.[0]?.airline || "Flight";
+            const duration = firstFlight.duration?.text || "2 hr";
+            
+            flightOptions = [
+              {
+                type: `${airline} - Economy`,
+                price: basePrice,
+                cabinBaggage: "7 kg",
+                checkInBaggage: "15 kg",
+                duration: duration,
+                note: "Real-time Google Flights fare"
+              },
+              {
+                type: `${airline} - Premium Economy`,
+                price: Math.round(basePrice * 1.4),
+                cabinBaggage: "7 kg",
+                checkInBaggage: "15 kg + Extra Legroom",
+                duration: duration,
+                note: "Calculated estimate for Premium class"
+              },
+              {
+                type: `${airline} - Business Class`,
+                price: Math.round(basePrice * 2.8),
+                cabinBaggage: "12 kg",
+                checkInBaggage: "35 kg + Lounge Access",
+                duration: duration,
+                note: "Calculated estimate for Business class"
+              }
+            ];
+            usedMethod = "rapidapi";
+          }
         } catch (apiErr) {
           console.warn("RapidAPI flight lookup failed/unconfigured, trying TinyFish real-time search:", apiErr.message);
         }
