@@ -58,6 +58,14 @@ export function generateBusSearchQuery(from, to) {
 }
 
 /**
+ * Flight-specific search query — hardcoded template, no Groq tokens burned.
+ * Targets airline booking sites and flight aggregators.
+ */
+export function generateFlightSearchQuery(from, to) {
+    return `flights from ${from} to ${to} ticket price IndiGo Air India MakeMyTrip Google Flights`;
+}
+
+/**
  * Step 4: Cleaner — Ask Groq to extract structured data from raw web content
  * Strips all URLs. Returns clean JSON matching the provided schema.
  * Uses the default GROQ_API_KEY.
