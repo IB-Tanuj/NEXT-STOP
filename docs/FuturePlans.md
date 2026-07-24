@@ -28,3 +28,8 @@ This document outlines the planned features, enhancements, and tasks that we hav
 ### 7. Mobile App / Deployment Enhancements
 - Discuss strategies for pausing/saving project state effectively across environments.
 - Ensure 100% responsiveness on all mobile devices and consider a React Native port if mobile usage is high.
+
+### 8. Supabase Migration Architecture
+As the application scales, we plan to shift more backend responsibility to Supabase to reduce server load and token costs:
+- **Persistent API Caching**: Migrate the in-memory Node.js cache (for buses, stays, and trains) to a Supabase `api_cache` table. This will prevent data loss on server restarts and scale perfectly across multiple backend instances.
+- **Background Pre-fetching**: Implement Supabase Scheduled Edge Functions to proactively scrape and cache the top 20 most popular routes (e.g., Delhi to Manali) every morning. This drastically reduces the 10-second wait time for users making common searches.
