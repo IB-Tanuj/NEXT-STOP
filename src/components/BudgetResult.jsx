@@ -204,6 +204,33 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     }
   }, [fromStation, toStation, preferences.transport])
 
+  // ── Live flight data from API ────────────────────────
+  const [liveFlightData, setLiveFlightData] = useState(null)
+  const [flightLoading, setFlightLoading] = useState(false)
+  const [flightError, setFlightError] = useState(null)
+
+  useEffect(() => {
+    if (preferences.transport === "flight") {
+      setFlightLoading(true)
+      setFlightError(null)
+      // We assume DEL as default origin for flights, and use locationKey to resolve destination
+      fetch(`/api/flights/search?from=DEL&destination=${locationKey}`)
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
+          return res.json()
+        })
+        .then(data => {
+          if (data.error) throw new Error(data.error)
+          setLiveFlightData(data)
+        })
+        .catch(err => {
+          console.warn("Flight API failed:", err.message)
+          setFlightError(err.message)
+        })
+        .finally(() => setFlightLoading(false))
+    }
+  }, [locationKey, preferences.transport])
+
   // ── Stay (TinyFish-powered live search) ─────────────────
   const [stayOptions, setStayOptions] = useState([])
   const [stayLoading, setStayLoading] = useState(false)
@@ -350,6 +377,21 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
           })
         }
       })
+    }
+  }
+
+  // ── Inject Live Flight Data ────────────────────────────
+  if (transportMedium === "flight" && liveFlightData && liveFlightData.options?.length > 0) {
+    mediumData = {
+      ...mediumData,
+      options: liveFlightData.options.map(f => ({
+        type: f.type,
+        min: f.price,
+        max: f.price,
+        duration: f.duration,
+        note: f.note
+      })),
+      note: liveFlightData.options[0]?.note || "Live prices from Google Flights"
     }
   }
 
