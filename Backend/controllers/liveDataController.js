@@ -4,6 +4,7 @@ import { generateSearchQuery, generateStaySearchQuery, cleanWebData, cleanWebDat
 // In-memory cache for stay searches
 // Key: "location_stayType", Value: { data, timestamp }
 const stayCache = new Map();
+const pendingStayRequests = new Map();
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 /**
