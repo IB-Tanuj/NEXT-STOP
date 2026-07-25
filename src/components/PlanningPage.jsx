@@ -251,17 +251,17 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
             </div>
           )}
 
-          {leavingFrom && !selectedStationCode && !locationLoading && leavingFrom.length >= 2 && (
+          {leavingFrom && !selectedCity && !locationLoading && leavingFrom.length >= 2 && (
             <div style={{
               color: "#FFB347",
               fontSize: "12px",
               marginTop: "8px",
             }}>
-              ⚠️ Please select a station from the dropdown to continue!
+              ⚠️ Please select a city from the dropdown to continue!
             </div>
           )}
 
-          {selectedStationCode && (
+          {selectedCity && (
             <div style={{
               color: theme.subtext,
               fontSize: "12px",
@@ -271,7 +271,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
               alignItems: "center",
               gap: "6px",
             }}>
-              ✅ Station selected: <span style={{ color: theme.primary, fontWeight: "700" }}>{selectedStationName} ({selectedStationCode})</span>
+              ✅ City selected: <span style={{ color: theme.primary, fontWeight: "700" }}>{selectedCity}</span>
             </div>
           )}
         </div>
