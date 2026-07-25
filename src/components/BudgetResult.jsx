@@ -231,6 +231,34 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     }
   }, [locationKey, preferences.transport])
 
+  // ── Live vehicle data from API ───────────────────────
+  const [vehicleType, setVehicleType] = useState("hatchback")
+  const [fuelType, setFuelType] = useState("petrol")
+  const [liveVehicleData, setLiveVehicleData] = useState(null)
+  const [vehicleLoading, setVehicleLoading] = useState(false)
+  const [vehicleError, setVehicleError] = useState(null)
+
+  useEffect(() => {
+    if (preferences.transport === "personal") {
+      setVehicleLoading(true)
+      setVehicleError(null)
+      const baseDistance = getDistanceBetweenStations("NDLS", toStation) || 1500
+      const newDistance = getDistanceBetweenStations(fromStation, toStation) || baseDistance
+      
+      fetch(`/api/vehicle/calculate?distanceKm=${newDistance}&vehicleType=${vehicleType}&fuelType=${fuelType}&passengerCount=${groupSize}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) throw new Error(data.error)
+          setLiveVehicleData(data)
+        })
+        .catch(err => {
+          console.warn("Vehicle API failed:", err)
+          setVehicleError(err.message)
+        })
+        .finally(() => setVehicleLoading(false))
+    }
+  }, [preferences.transport, vehicleType, fuelType, fromStation, toStation, groupSize])
+
   // ── Stay (TinyFish-powered live search) ─────────────────
   const [stayOptions, setStayOptions] = useState([])
   const [stayLoading, setStayLoading] = useState(false)
@@ -452,7 +480,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
 
   // ── Transport Cost Calculation ─────────────────────────
   const getTransportCost = () => {
-    if (transportMedium === "personal") return 0
+    if (transportMedium === "personal") return liveVehicleData ? liveVehicleData.breakdown.totalTripCost : 0
 
     if (isMultiLeg && selectedStation) {
       const st = mediumData.stations[selectedStation]
@@ -906,12 +934,59 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
         {/* Personal Vehicle */}
         {transportMedium === "personal" && publicComparison.length > 0 && card(<>
           {sectionLabel("🚗 PERSONAL VEHICLE")}
-          <div style={{ color: theme.subtext, fontSize: "13px", marginBottom: "16px" }}>
-            {routeData?.personal?.note}
-          </div>
-          <div style={{ color: theme.text, fontWeight: "700", marginBottom: "16px" }}>
-            Approximate fuel cost: ₹{routeData?.personal?.approxFuel?.min?.toLocaleString("en-IN")} — ₹{routeData?.personal?.approxFuel?.max?.toLocaleString("en-IN")}
-          </div>
+          
+          {vehicleLoading ? (
+            <div style={{ color: theme.primary, padding: "10px", textAlign: "center", fontSize: "14px" }}>
+              Calculating optimal route distance and live fuel costs...
+            </div>
+          ) : liveVehicleData ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "20px" }}>
+              <div style={{ color: theme.text, fontSize: "14px", fontWeight: "600" }}>
+                Route Distance: <span style={{ color: theme.primary }}>{liveVehicleData.distanceKm} km (one-way)</span>
+              </div>
+              
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div style={{ background: `${theme.primary}11`, padding: "12px", borderRadius: "8px", border: `1px solid ${theme.primary}22` }}>
+                  <div style={{ color: theme.subtext, fontSize: "11px", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>⛽ Fuel Est.</div>
+                  <div style={{ color: theme.text, fontWeight: "700", fontSize: "16px" }}>₹{liveVehicleData.breakdown.fuelCost.toLocaleString("en-IN")}</div>
+                  <div style={{ color: theme.subtext, fontSize: "11px" }}>{liveVehicleData.breakdown.fuelRequired} req.</div>
+                </div>
+                <div style={{ background: `${theme.primary}11`, padding: "12px", borderRadius: "8px", border: `1px solid ${theme.primary}22` }}>
+                  <div style={{ color: theme.subtext, fontSize: "11px", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>🛣️ Toll Tax</div>
+                  <div style={{ color: theme.text, fontWeight: "700", fontSize: "16px" }}>₹{liveVehicleData.breakdown.tollCost.toLocaleString("en-IN")}</div>
+                  <div style={{ color: theme.subtext, fontSize: "11px" }}>NHAI standard rate</div>
+                </div>
+              </div>
+
+              <div style={{ color: theme.text, fontWeight: "800", fontSize: "16px", marginTop: "4px", display: "flex", justifyContent: "space-between" }}>
+                <span>Total Road Trip Cost</span>
+                <span style={{ color: "#4ECDC4" }}>₹{liveVehicleData.breakdown.totalTripCost.toLocaleString("en-IN")}</span>
+              </div>
+              
+              {isGroup && (
+                 <div style={{ color: theme.subtext, fontSize: "12px", textAlign: "right" }}>
+                   (₹{liveVehicleData.breakdown.costPerPerson.toLocaleString("en-IN")} per person)
+                 </div>
+              )}
+
+              {liveVehicleData.tips && liveVehicleData.tips.map((tip, i) => (
+                <div key={i} style={{ background: `${theme.primary}11`, padding: "8px 12px", borderRadius: "6px", fontSize: "12px", color: theme.subtext, display: "flex", gap: "8px" }}>
+                  <span>💡</span>
+                  <span>{tip}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              <div style={{ color: theme.subtext, fontSize: "13px", marginBottom: "16px" }}>
+                {routeData?.personal?.note || "A road trip is a great way to explore at your own pace!"}
+              </div>
+              <div style={{ color: theme.text, fontWeight: "700", marginBottom: "16px" }}>
+                Approximate fuel cost: ₹{routeData?.personal?.approxFuel?.min?.toLocaleString("en-IN")} — ₹{routeData?.personal?.approxFuel?.max?.toLocaleString("en-IN")}
+              </div>
+            </>
+          )}
+
           {sectionLabel("💡 PUBLIC TRANSPORT COMPARISON")}
           {publicComparison.map((item, i) => (
             <div key={i} style={{
