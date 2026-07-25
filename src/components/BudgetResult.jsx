@@ -18,9 +18,8 @@ const DEFAULT_FOOD_COSTS = {
 }
 
 // Generate dynamic medium data for direct routes
-const generateDynamicMediumData = (fromStationCode, toStationCode, mode, destinationName) => {
-  if (!fromStationCode || !toStationCode) return null
-  const dist = getDistanceBetweenStations(fromStationCode, toStationCode) || 1000
+const generateDynamicMediumData = (dist, mode, destinationName) => {
+  if (!dist) dist = 1000
 
   if (mode === "train") {
     const hours = Math.max(2, Math.round(dist / 55))
@@ -169,7 +168,8 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const [trainLoading, setTrainLoading] = useState(false)
   const [trainError, setTrainError] = useState(null)
 
-  const fromStation = planData.selectedStationCode
+  const fromStation = planData.selectedStation?.code
+  const fromAirport = planData.selectedAirport?.code
 
   // Resolve destination station dynamically (nearest to location coords)
   const destCoords = location?.coords
@@ -182,6 +182,14 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     ? haversineDistance(destCoords[0], destCoords[1], stationCoords[0], stationCoords[1])
     : 0
   const isMultiLegJourney = stationToDestDist > 40
+
+  const baseDistance = getDistanceBetweenStations("NDLS", toStation) || 1500
+  let calculatedDist = baseDistance
+  if (planData.originCoords && destCoords) {
+    calculatedDist = Math.round(haversineDistance(planData.originCoords.lat, planData.originCoords.lng, destCoords[0], destCoords[1]))
+  } else if (fromStation || fromAirport) {
+    calculatedDist = getDistanceBetweenStations(fromStation || fromAirport, toStation) || baseDistance
+  }
 
   useEffect(() => {
     if (fromStation && preferences.transport === "train") {
@@ -213,8 +221,8 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     if (preferences.transport === "flight") {
       setFlightLoading(true)
       setFlightError(null)
-      // We assume DEL as default origin for flights, and use locationKey to resolve destination
-      fetch(`/api/flights/search?from=DEL&destination=${locationKey}`)
+      const originParam = fromAirport || "DEL"
+      fetch(`/api/flights/search?from=${originParam}&destination=${locationKey}`)
         .then(res => {
           if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
           return res.json()
@@ -242,10 +250,8 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     if (preferences.transport === "personal") {
       setVehicleLoading(true)
       setVehicleError(null)
-      const baseDistance = getDistanceBetweenStations("NDLS", toStation) || 1500
-      const newDistance = getDistanceBetweenStations(fromStation, toStation) || baseDistance
       
-      fetch(`/api/vehicle/calculate?distanceKm=${newDistance}&vehicleType=${vehicleType}&fuelType=${fuelType}&passengerCount=${groupSize}`)
+      fetch(`/api/vehicle/calculate?distanceKm=${calculatedDist}&vehicleType=${vehicleType}&fuelType=${fuelType}&passengerCount=${groupSize}`)
         .then(res => res.json())
         .then(data => {
           if (data.error) throw new Error(data.error)
@@ -257,7 +263,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
         })
         .finally(() => setVehicleLoading(false))
     }
-  }, [preferences.transport, vehicleType, fuelType, fromStation, toStation, groupSize])
+  }, [preferences.transport, vehicleType, fuelType, groupSize, calculatedDist])
 
   // ── Stay (TinyFish-powered live search) ─────────────────
   const [stayOptions, setStayOptions] = useState([])
@@ -339,12 +345,12 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const transportMedium = preferences.transport
   let mediumData = routeData?.[transportMedium]
   let isDynamicTransport = false
-
-  if (!mediumData && fromStation && toStation) {
+  
+  if (!mediumData && (fromStation || fromAirport || transportMedium === "bus" || transportMedium === "personal")) {
     if (transportMedium === "train" && isMultiLegJourney && nearestStation) {
       mediumData = generateDynamicMultiLegData(fromStation, toStation, nearestStation, stationToDestDist, location?.name)
     } else {
-      mediumData = generateDynamicMediumData(fromStation, toStation, transportMedium, location?.name)
+      mediumData = generateDynamicMediumData(calculatedDist, transportMedium, location?.name)
     }
     isDynamicTransport = true
   }
