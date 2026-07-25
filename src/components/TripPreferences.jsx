@@ -1,5 +1,7 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import BudgetResult from "./BudgetResult"
+import { getStationsByCity, getNearbyStations } from "../data/stations"
+import { getAirportsByCity, getNearbyAirports } from "../data/airports"
 
 const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
   const [days, setDays] = useState("")
@@ -8,7 +10,12 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
   const [foodType, setFoodType] = useState(null)
   const [activities, setActivities] = useState([])
   const [showBudget, setShowBudget] = useState(false)
-const [prefData, setPrefData] = useState(null)
+  const [prefData, setPrefData] = useState(null)
+  
+  const [selectedStation, setSelectedStation] = useState(null)
+  const [selectedAirport, setSelectedAirport] = useState(null)
+  const [availableStations, setAvailableStations] = useState([])
+  const [availableAirports, setAvailableAirports] = useState([])
 
   const longDistanceLocations = ["goa", "kerala"]
   const isLongDistance = longDistanceLocations.includes(location?.name?.toLowerCase())
@@ -40,10 +47,28 @@ const [prefData, setPrefData] = useState(null)
     emoji: spot.emoji,
   })) || []
 
+  useEffect(() => {
+    if (transport === "train") {
+      if (planData?.originCity === "Current Location" && planData?.originCoords) {
+        setAvailableStations(getNearbyStations(planData.originCoords.lat, planData.originCoords.lng));
+      } else {
+        setAvailableStations(getStationsByCity(planData?.originCity));
+      }
+    } else if (transport === "flight") {
+      if (planData?.originCity === "Current Location" && planData?.originCoords) {
+        setAvailableAirports(getNearbyAirports(planData.originCoords.lat, planData.originCoords.lng));
+      } else {
+        setAvailableAirports(getAirportsByCity(planData?.originCity));
+      }
+    }
+  }, [transport, planData]);
+
   const isValid = () => {
     if (!days || isNaN(days) || Number(days) < 1) return false
     if (!transport) return false
     if (!stayType) return false
+    if (transport === "train" && !selectedStation) return false
+    if (transport === "flight" && !selectedAirport) return false
     return true
   }
 
@@ -53,6 +78,8 @@ const [prefData, setPrefData] = useState(null)
       transport,
       stayType,
       activities,
+      selectedStation,
+      selectedAirport
     })
     setShowBudget(true)
   }
@@ -169,55 +196,134 @@ const [prefData, setPrefData] = useState(null)
           />
         </div>
 
-        {/* Transport */}
-        <div style={{
-          background: theme.card,
-          borderRadius: "16px",
-          padding: "24px",
-          border: `1px solid ${theme.primary}33`,
-        }}>
-          <div style={{ color: theme.subtext, fontSize: "12px", letterSpacing: "2px", marginBottom: "10px" }}>
-            QUESTION 2
-          </div>
-          <div style={{ color: theme.text, fontSize: "18px", fontWeight: "700", marginBottom: "16px" }}>
-            🚌 How are you planning to travel?
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            {transportOptions.map((opt) => (
-              <div
-                key={opt.id}
-                onClick={() => setTransport(opt.id)}
-                style={{
-                  padding: "16px",
-                  borderRadius: "12px",
-                  border: `2px solid ${transport === opt.id ? theme.primary : theme.primary + "33"}`,
-                  background: transport === opt.id ? `${theme.primary}22` : "transparent",
-                  cursor: "pointer",
-                  transition: "all 0.3s ease",
-                  textAlign: "center",
-                }}>
-                <div style={{ fontSize: "28px", marginBottom: "6px" }}>{opt.emoji}</div>
-                <div style={{ color: transport === opt.id ? theme.primary : theme.text, fontWeight: "700", fontSize: "14px" }}>
-                  {opt.label}
+        {/* Transport Block with Side Panel */}
+        <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", alignItems: "flex-start" }}>
+          <div style={{
+            flex: "1 1 620px",
+            background: theme.card,
+            borderRadius: "16px",
+            padding: "24px",
+            border: `1px solid ${theme.primary}33`,
+            boxSizing: "border-box",
+          }}>
+            <div style={{ color: theme.subtext, fontSize: "12px", letterSpacing: "2px", marginBottom: "10px" }}>
+              QUESTION 2
+            </div>
+            <div style={{ color: theme.text, fontSize: "18px", fontWeight: "700", marginBottom: "16px" }}>
+              🚌 How are you planning to travel?
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              {transportOptions.map((opt) => (
+                <div
+                  key={opt.id}
+                  onClick={() => {
+                    setTransport(opt.id)
+                    setSelectedStation(null)
+                    setSelectedAirport(null)
+                  }}
+                  style={{
+                    padding: "16px",
+                    borderRadius: "12px",
+                    border: `2px solid ${transport === opt.id ? theme.primary : theme.primary + "33"}`,
+                    background: transport === opt.id ? `${theme.primary}22` : "transparent",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    textAlign: "center",
+                  }}>
+                  <div style={{ fontSize: "28px", marginBottom: "6px" }}>{opt.emoji}</div>
+                  <div style={{ color: transport === opt.id ? theme.primary : theme.text, fontWeight: "700", fontSize: "14px" }}>
+                    {opt.label}
+                  </div>
+                  <div style={{ color: theme.subtext, fontSize: "11px", marginTop: "4px" }}>
+                    {opt.desc}
+                  </div>
                 </div>
-                <div style={{ color: theme.subtext, fontSize: "11px", marginTop: "4px" }}>
-                  {opt.desc}
-                </div>
+              ))}
+            </div>
+            {transport === "personal" && (
+              <div style={{
+                marginTop: "12px",
+                padding: "12px 16px",
+                borderRadius: "10px",
+                background: `${theme.primary}11`,
+                border: `1px solid ${theme.primary}33`,
+                color: theme.subtext,
+                fontSize: "13px",
+                animation: "fadeIn 0.3s ease",
+              }}>
+                💡 For personal vehicles, we will use your exact coordinates (if provided) or city center for precise distance and fuel calculation!
               </div>
-            ))}
+            )}
           </div>
-          {transport === "personal" && (
+
+          {/* Side Panel for specific Station / Airport selection */}
+          {transport === "train" && availableStations.length > 0 && (
             <div style={{
-              marginTop: "12px",
-              padding: "12px 16px",
-              borderRadius: "10px",
-              background: `${theme.primary}11`,
-              border: `1px solid ${theme.primary}33`,
-              color: theme.subtext,
-              fontSize: "13px",
+              flex: "1 1 300px",
+              background: "transparent",
+              borderRadius: "12px",
+              border: `1px solid ${theme.primary}`,
+              overflow: "hidden",
               animation: "fadeIn 0.3s ease",
             }}>
-              💡 Since you're using a personal vehicle, we'll split your budget between stay, food and activities. We'll also show you what the trip would cost via public transport!
+              {availableStations.map((st, i) => (
+                <div
+                  key={st.code}
+                  onClick={() => setSelectedStation(st)}
+                  style={{
+                    padding: "16px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    cursor: "pointer",
+                    borderBottom: i < availableStations.length - 1 ? `1px solid ${theme.primary}33` : "none",
+                    background: selectedStation?.code === st.code ? `${theme.primary}22` : "transparent",
+                    transition: "all 0.2s ease"
+                  }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <span style={{ fontSize: "20px" }}>🚂</span>
+                    <span style={{ color: theme.text, fontWeight: "600", fontSize: "14px" }}>{st.name}</span>
+                  </div>
+                  <span style={{ color: theme.primary, fontWeight: "800", fontSize: "14px" }}>{st.code}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {transport === "flight" && availableAirports.length > 0 && (
+            <div style={{
+              flex: "1 1 300px",
+              background: "transparent",
+              borderRadius: "12px",
+              border: `1px solid ${theme.primary}`,
+              overflow: "hidden",
+              animation: "fadeIn 0.3s ease",
+            }}>
+              {availableAirports.map((ap, i) => (
+                <div
+                  key={ap.code}
+                  onClick={() => setSelectedAirport(ap)}
+                  style={{
+                    padding: "16px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    cursor: "pointer",
+                    borderBottom: i < availableAirports.length - 1 ? `1px solid ${theme.primary}33` : "none",
+                    background: selectedAirport?.code === ap.code ? `${theme.primary}22` : "transparent",
+                    transition: "all 0.2s ease"
+                  }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <span style={{ fontSize: "20px" }}>✈️</span>
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      <span style={{ color: theme.text, fontWeight: "600", fontSize: "14px", lineHeight: "1.2" }}>
+                        {ap.name.length > 25 ? ap.name.substring(0, 25) + '...' : ap.name}
+                      </span>
+                    </div>
+                  </div>
+                  <span style={{ color: theme.primary, fontWeight: "800", fontSize: "14px", marginLeft: "10px" }}>{ap.code}</span>
+                </div>
+              ))}
             </div>
           )}
         </div>

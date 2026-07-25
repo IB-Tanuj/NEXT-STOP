@@ -1,12 +1,11 @@
 import { useState } from "react"
 import TripPreferences from "./TripPreferences"
-import { searchStations, findNearestStation } from "../data/stations"
+import { searchCities } from "../data/stations"
 
 const PlanningPage = ({ location, theme, choice, onBack }) => {
   const [leavingFrom, setLeavingFrom] = useState("")
   const [leavingCoords, setLeavingCoords] = useState(null)
-  const [selectedStationCode, setSelectedStationCode] = useState(null)
-  const [selectedStationName, setSelectedStationName] = useState("")
+  const [selectedCity, setSelectedCity] = useState(null)
   const [locationLoading, setLocationLoading] = useState(false)
   const [locationError, setLocationError] = useState("")
   const [budgetType, setBudgetType] = useState(null)
@@ -15,19 +14,20 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
   const [specificPlace, setSpecificPlace] = useState("")
   const [placeSearch, setPlaceSearch] = useState("")
   const [suggestions, setSuggestions] = useState([])
-const [showSuggestions, setShowSuggestions] = useState(false)
-const [showPreferences, setShowPreferences] = useState(false)
-const [planData, setPlanData] = useState(null)
-const [showBudget, setShowBudget] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [showPreferences, setShowPreferences] = useState(false)
+  const [planData, setPlanData] = useState(null)
+  const [showBudget, setShowBudget] = useState(false)
 
   const isValid = () => {
-    if (!selectedStationCode) return false
+    if (!selectedCity) return false
     if (!budgetType) return false
     if (!budget.trim()) return false
     if (budgetType === "group" && !groupSize.trim()) return false
     if (choice === "specific" && !specificPlace) return false
     return true
   }
+
   const handleGetLocation = () => {
     setLocationLoading(true)
     setLocationError("")
@@ -40,30 +40,22 @@ const [showBudget, setShowBudget] = useState(false)
       (position) => {
         const { latitude, longitude } = position.coords
         setLeavingCoords({ lat: latitude, lng: longitude })
-        // Find nearest railway station from our curated list
-        const nearest = findNearestStation(latitude, longitude)
-        if (nearest) {
-          setLeavingFrom(`${nearest.name} (${nearest.code})`)
-          setSelectedStationCode(nearest.code)
-          setSelectedStationName(nearest.name)
-        } else {
-          setLeavingFrom(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`)
-        }
+        setLeavingFrom("Current Location")
+        setSelectedCity("Current Location")
         setLocationLoading(false)
       },
       (error) => {
-        setLocationError("Could not get location. Please search for your station manually.")
+        setLocationError("Could not get location. Please search for your city manually.")
         setLocationLoading(false)
       }
     )
   }
 
-  const handleStationSearch = (value) => {
+  const handleCitySearch = (value) => {
     setLeavingFrom(value)
-    setSelectedStationCode(null)
-    setSelectedStationName("")
+    setSelectedCity(null)
     setLeavingCoords(null)
-    const results = searchStations(value)
+    const results = searchCities(value)
     setSuggestions(results)
     setShowSuggestions(results.length > 0)
   }
@@ -170,12 +162,16 @@ const [showBudget, setShowBudget] = useState(false)
               fontWeight: "700",
               fontSize: "14px",
               cursor: "pointer",
-              marginBottom: "12px",
+              marginBottom: "4px",
               transition: "all 0.3s ease",
               letterSpacing: "1px",
             }}>
             {locationLoading ? "📡 Getting your location..." : leavingCoords ? "✅ Location detected!" : "🎯 Use my current location"}
           </button>
+          
+          <div style={{ color: theme.subtext, fontSize: "11px", textAlign: "center", marginBottom: "12px", fontStyle: "italic" }}>
+            *Planning a road trip? Use 'Current Location' for the most accurate fuel & distance calculation!
+          </div>
 
           <div style={{
             color: theme.subtext,
@@ -191,13 +187,13 @@ const [showBudget, setShowBudget] = useState(false)
             value={leavingFrom}
             onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-            onChange={(e) => handleStationSearch(e.target.value)}
-            placeholder="e.g. New Delhi, Mumbai Central, NDLS..."
+            onChange={(e) => handleCitySearch(e.target.value)}
+            placeholder="e.g. Delhi, Mumbai, Bengaluru..."
             style={{
               width: "100%",
               padding: "14px 18px",
               borderRadius: "12px",
-              border: `2px solid ${selectedStationCode ? theme.primary : theme.primary + "33"}`,
+              border: `2px solid ${selectedCity ? theme.primary : theme.primary + "33"}`,
               background: theme.bg,
               color: theme.text,
               fontSize: "15px",
@@ -206,7 +202,7 @@ const [showBudget, setShowBudget] = useState(false)
               boxSizing: "border-box",
             }}
           />
-           {/* Station Suggestions Dropdown */}
+           {/* City Suggestions Dropdown */}
           {showSuggestions && suggestions.length > 0 && (
             <div style={{
               background: theme.card,
@@ -218,14 +214,12 @@ const [showBudget, setShowBudget] = useState(false)
               maxHeight: "280px",
               overflowY: "auto",
             }}>
-              {suggestions.map((s, i) => (
+              {suggestions.map((city, i) => (
                   <div
-                    key={s.code}
+                    key={city}
                     onMouseDown={() => {
-                      setLeavingFrom(`${s.name} (${s.code})`)
-                      setSelectedStationCode(s.code)
-                      setSelectedStationName(s.name)
-                      setLeavingCoords({ lat: s.lat, lng: s.lng })
+                      setLeavingFrom(city)
+                      setSelectedCity(city)
                       setShowSuggestions(false)
                       setSuggestions([])
                     }}
@@ -241,32 +235,16 @@ const [showBudget, setShowBudget] = useState(false)
                     onMouseEnter={e => e.currentTarget.style.background = `${theme.primary}22`}
                     onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                   >
-                    <span style={{ fontSize: "18px" }}>🚉</span>
+                    <span style={{ fontSize: "18px" }}>📍</span>
                     <div style={{ flex: 1 }}>
                       <div style={{
                         color: theme.text,
                         fontWeight: "600",
                         fontSize: "14px",
                       }}>
-                        {s.name}
+                        {city}
                       </div>
-                      <div style={{
-                        color: theme.subtext,
-                        fontSize: "12px",
-                      }}>
-                        {s.city}, {s.state}
-                      </div>
-                    </div>
-                    <div style={{
-                      background: `${theme.primary}22`,
-                      color: theme.primary,
-                      padding: "4px 10px",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                      fontWeight: "800",
-                      letterSpacing: "1px",
-                    }}>
-                      {s.code}
+
                     </div>
                   </div>
               ))}
@@ -567,7 +545,7 @@ const [showBudget, setShowBudget] = useState(false)
           <TripPreferences
             location={location}
             theme={theme}
-            planData={{ leavingFrom, leavingCoords, selectedStationCode, selectedStationName, budget, budgetType, groupSize }}
+            planData={{ leavingFrom, originCoords: leavingCoords, originCity: selectedCity, budget, budgetType, groupSize }}
             onBack={() => setShowPreferences(false)}
             onNext={(prefs) => {
               setPlanData(prefs)

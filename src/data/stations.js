@@ -295,10 +295,38 @@ export const getStationsByState = (stateName) => {
   return stations.filter(s => s.state.toLowerCase() === stateName.toLowerCase())
 }
 
-// ─── HELPER: Get distance between two station codes
+// 🚉 HELPER: Get distance between two station codes
 export const getDistanceBetweenStations = (code1, code2) => {
   const st1 = stations.find(s => s.code === code1)
   const st2 = stations.find(s => s.code === code2)
   if (!st1 || !st2) return null
   return haversineDistance(st1.lat, st1.lng, st2.lat, st2.lng)
 }
+
+// 🏙️ HELPER: Search for unique cities
+export const searchCities = (query) => {
+  if (!query || query.length < 2) return [];
+  const q = query.toLowerCase();
+  const uniqueCities = [...new Set(stations.map(s => s.city))];
+  return uniqueCities
+    .filter(city => city.toLowerCase().includes(q))
+    .slice(0, 5);
+};
+
+// 🚉 HELPER: Get stations by city name
+export const getStationsByCity = (cityName) => {
+  if (!cityName) return [];
+  return stations.filter(s => s.city.toLowerCase() === cityName.toLowerCase());
+};
+
+// 📍 HELPER: Get nearby stations by GPS coordinates
+export const getNearbyStations = (lat, lng, limit = 4) => {
+  if (!lat || !lng) return [];
+  return stations
+    .map(station => ({
+      ...station,
+      distance: haversineDistance(lat, lng, station.lat, station.lng)
+    }))
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, limit);
+};
