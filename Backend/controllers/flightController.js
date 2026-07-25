@@ -99,28 +99,28 @@ export const searchFlights = async (req, res) => {
             
             flightOptions = [
               {
-                type: `${airline} - Economy`,
+                type: "Economy Class",
                 price: basePrice,
                 cabinBaggage: "7 kg",
                 checkInBaggage: "15 kg",
                 duration: duration,
-                note: "Real-time Google Flights fare"
+                note: "Cabin: 7kg | Check-in: 15kg | Paid Meals"
               },
               {
-                type: `${airline} - Premium Economy`,
+                type: "Premium Economy",
                 price: Math.round(basePrice * 1.4),
                 cabinBaggage: "7 kg",
-                checkInBaggage: "15 kg + Extra Legroom",
+                checkInBaggage: "15 kg",
                 duration: duration,
-                note: "Calculated estimate for Premium class"
+                note: "Cabin: 7kg | Check-in: 15kg | Extra Legroom"
               },
               {
-                type: `${airline} - Business Class`,
+                type: "Business Class",
                 price: Math.round(basePrice * 2.8),
                 cabinBaggage: "12 kg",
-                checkInBaggage: "35 kg + Lounge Access",
+                checkInBaggage: "35 kg",
                 duration: duration,
-                note: "Calculated estimate for Business class"
+                note: "Cabin: 12kg | Check-in: 35kg | Lounge & Meals"
               }
             ];
             usedMethod = "rapidapi";

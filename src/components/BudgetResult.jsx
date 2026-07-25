@@ -878,13 +878,17 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
           <div style={{ color: theme.text, fontWeight: "700", fontSize: "15px", marginBottom: "10px" }}>
             Step 1 — Select flight class:
           </div>
-          {mediumData.options?.map((opt, i) => selectableRow(
-            opt.type,
-            `Duration: ${opt.duration}`,
-            `₹${opt.min}–₹${opt.max}`, "per person",
-            selectedFlightClass === opt.type,
-            () => setSelectedFlightClass(opt.type)
-          ,i))}
+          {mediumData.options?.map((opt, i) => {
+            const priceText = opt.min === opt.max ? `₹${opt.min.toLocaleString("en-IN")}` : `₹${opt.min.toLocaleString("en-IN")}–₹${opt.max.toLocaleString("en-IN")}`
+            return selectableRow(
+              opt.type,
+              `${opt.note || ""} ${opt.duration ? `· ${opt.duration}` : ""}`,
+              priceText,
+              "per person",
+              selectedFlightClass === opt.type,
+              () => setSelectedFlightClass(opt.type)
+            ,i)
+          })}
 
           {/* Airport transfer */}
           <div style={{ color: theme.text, fontWeight: "700", fontSize: "15px", margin: "16px 0 10px" }}>
@@ -912,21 +916,29 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
 
         {/* Transport Card — Direct */}
         {isDirect && transportMedium !== "personal" && !isFlightMultiLeg && card(<>
-          {sectionLabel(`🚌 SELECT ${transportMedium.toUpperCase()} CLASS (${planData.selectedStationName || "Origin"} → ${location?.name})`)}
-          <div style={{ color: theme.subtext, fontSize: "12px", marginBottom: "16px" }}>
-            Tap to see real-time food buffer update
-          </div>
+          {sectionLabel(`${transportMedium === "flight" ? "✈️" : transportMedium === "train" ? "🚂" : "🚌"} SELECT ${transportMedium.toUpperCase()} CLASS (${planData.selectedStationName || "Origin"} → ${location?.name})`)}
+          
+          {transportMedium !== "flight" && (
+            <div style={{ color: theme.subtext, fontSize: "12px", marginBottom: "16px" }}>
+              Tap to see real-time food buffer update
+            </div>
+          )}
+
           {mediumData.options?.map((opt, i) => {
             const thisCost = Math.round((opt.min + opt.max) / 2) * 2 * (isGroup ? groupSize : 1)
             const thisBuffer = totalBudget - getStayCost(roomOption) - totalEntryCost - thisCost
+            
+            const priceText = opt.min === opt.max ? `₹${opt.min.toLocaleString("en-IN")} per leg` : `₹${opt.min.toLocaleString("en-IN")}–₹${opt.max.toLocaleString("en-IN")} per leg`
+            const rightBottomText = transportMedium === "flight" ? undefined : `${thisBuffer >= 0 ? `₹${thisBuffer.toLocaleString("en-IN")} for food` : `₹${Math.abs(thisBuffer).toLocaleString("en-IN")} over budget`}`
+            
             return selectableRow(
               opt.type,
               `${opt.note || ""} ${opt.duration ? `· ${opt.duration}` : ""}`,
-              `₹${opt.min}–₹${opt.max} per leg`,
-              `${thisBuffer >= 0 ? `₹${thisBuffer.toLocaleString("en-IN")} for food` : `₹${Math.abs(thisBuffer).toLocaleString("en-IN")} over budget`}`,
+              priceText,
+              rightBottomText,
               selectedDirectClass === opt.type,
               () => setSelectedDirectClass(opt.type),
-              thisBuffer < 0,i
+              thisBuffer < 0 && transportMedium !== "flight", i
             )
           })}
         </>)}
