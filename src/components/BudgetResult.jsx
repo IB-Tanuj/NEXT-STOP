@@ -168,8 +168,8 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const [trainLoading, setTrainLoading] = useState(false)
   const [trainError, setTrainError] = useState(null)
 
-  const fromStation = planData.selectedStation?.code
-  const fromAirport = planData.selectedAirport?.code
+  const fromStation = preferences.selectedStation?.code
+  const fromAirport = preferences.selectedAirport?.code
 
   // Resolve destination station dynamically (nearest to location coords)
   const destCoords = location?.coords
@@ -414,7 +414,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     }
   }
 
-  // ── Inject Live Flight Data ────────────────────────────
+  // ── Inject Live Flight/Train Data ────────────────────────────
   if (transportMedium === "flight" && liveFlightData && liveFlightData.options?.length > 0) {
     mediumData = {
       ...mediumData,
@@ -426,6 +426,18 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
         note: f.note
       })),
       note: liveFlightData.options[0]?.note || "Live prices from Google Flights"
+    }
+  } else if (transportMedium === "train" && liveTrainData && liveTrainData.options?.length > 0) {
+    mediumData = {
+      ...mediumData,
+      options: liveTrainData.options.map(t => ({
+        type: t.type,
+        min: t.price,
+        max: t.price,
+        duration: t.duration,
+        note: t.note
+      })),
+      note: liveTrainData.options[0]?.note || "Live prices from Train API"
     }
   }
 
@@ -922,7 +934,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
 
         {/* Transport Card — Direct */}
         {isDirect && transportMedium !== "personal" && !isFlightMultiLeg && card(<>
-          {sectionLabel(`${transportMedium === "flight" ? "✈️" : transportMedium === "train" ? "🚂" : "🚌"} SELECT ${transportMedium.toUpperCase()} CLASS (${planData.selectedStationName || "Origin"} → ${location?.name})`)}
+          {sectionLabel(`${transportMedium === "flight" ? "✈️" : transportMedium === "train" ? "🚂" : "🚌"} SELECT ${transportMedium.toUpperCase()} CLASS (${preferences.selectedStation?.name || preferences.selectedAirport?.name || planData.originCity || "Origin"} → ${location?.name})`)}
           
           {transportMedium !== "flight" && (
             <div style={{ color: theme.subtext, fontSize: "12px", marginBottom: "16px" }}>
