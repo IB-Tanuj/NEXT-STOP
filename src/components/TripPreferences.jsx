@@ -49,13 +49,13 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
 
   useEffect(() => {
     if (transport === "train") {
-      if (planData?.originCity === "Current Location" && planData?.originCoords) {
+      if (planData?.originCoords) {
         setAvailableStations(getNearbyStations(planData.originCoords.lat, planData.originCoords.lng));
       } else {
         setAvailableStations(getStationsByCity(planData?.originCity));
       }
     } else if (transport === "flight") {
-      if (planData?.originCity === "Current Location" && planData?.originCoords) {
+      if (planData?.originCoords) {
         setAvailableAirports(getNearbyAirports(planData.originCoords.lat, planData.originCoords.lng));
       } else {
         setAvailableAirports(getAirportsByCity(planData?.originCity));
