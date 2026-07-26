@@ -426,7 +426,7 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
             borderRadius: "8px",
             animation: "fadeInUp 0.3s ease both"
           }}>
-            Location not found. Please try a major city from the suggestions!
+            Location not found. Please try a major city!
           </div>
         )}
 
