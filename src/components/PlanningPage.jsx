@@ -46,11 +46,17 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
           const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
           const data = await res.json()
           
-          // Nominatim can return city, town, or village depending on the location size
-          const city = data.address?.city || data.address?.town || data.address?.village || data.address?.state_district || "Current Location"
-          const locality = data.address?.neighbourhood || data.address?.suburb || data.address?.residential || ""
+          // Nominatim's display_name provides the most accurate, street-level address available
+          let foundLocation = data.display_name || ""
           
-          const foundLocation = locality ? `${locality}, ${city}` : city
+          // If the display name is too long, we can shorten it to the first 3 components (e.g. Street, Suburb, City)
+          if (foundLocation) {
+            const parts = foundLocation.split(", ")
+            foundLocation = parts.slice(0, 3).join(", ")
+          } else {
+            // Fallback to exact coordinates if Nominatim fails to provide an address
+            foundLocation = `Current Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`
+          }
           
           setLeavingFrom(foundLocation)
           setSelectedCity(foundLocation)
