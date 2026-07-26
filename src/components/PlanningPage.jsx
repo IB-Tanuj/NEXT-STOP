@@ -23,6 +23,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
     if (!selectedCity) return false
     if (!budgetType) return false
     if (!budget.trim()) return false
+    if (Number(budget) < 2200) return false
     if (budgetType === "group" && !groupSize.trim()) return false
     if (choice === "specific" && !specificPlace) return false
     return true
@@ -374,8 +375,23 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                   }}
                 />
               </div>
+              
+              {budget && Number(budget) < 2200 && (
+                <div style={{
+                  color: "#FFB347",
+                  fontSize: "12px",
+                  marginTop: "12px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  animation: "fadeIn 0.2s ease"
+                }}>
+                  ⚠️ Minimum budget required is ₹2,200 to cover basic transport and stays.
+                </div>
+              )}
             </div>
           )}
+
 
           {budgetType === "group" && budget && (
             <div style={{ marginTop: "16px", animation: "fadeIn 0.3s ease" }}>

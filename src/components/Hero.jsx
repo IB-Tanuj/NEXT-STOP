@@ -168,6 +168,7 @@ const MessageBubble = ({ msg, visible, side, theme }) => (
 
 const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
   const [search, setSearch] = useState("")
+  const [searchError, setSearchError] = useState(false)
   const [leftMsg, setLeftMsg] = useState("")
   const [rightMsg, setRightMsg] = useState("")
   const [leftVisible, setLeftVisible] = useState(false)
@@ -224,7 +225,12 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
   const handleSearch = (e) => {
     e.preventDefault()
     if (search.trim()) {
-      onExplore(search.trim())
+      const isValid = onExplore(search.trim())
+      if (!isValid) {
+        setSearchError(true)
+      } else {
+        setSearchError(false)
+      }
     }
   }
 
@@ -365,7 +371,11 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
             id="hero-search"
             type="text"
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setLocationTheme(e.target.value) }}
+            onChange={(e) => { 
+              setSearch(e.target.value); 
+              setLocationTheme(e.target.value);
+              setSearchError(false); // clear error when typing
+            }}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             placeholder="Search a destination e.g. Manali, Goa..."
@@ -402,6 +412,23 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
             EXPLORE →
           </button>
         </form>
+
+        {/* Error Message */}
+        {searchError && (
+          <div style={{
+            color: "#FF6B6B",
+            fontSize: "14px",
+            marginBottom: "20px",
+            marginTop: "-12px",
+            padding: "8px 16px",
+            backgroundColor: "rgba(255, 107, 107, 0.1)",
+            border: "1px solid rgba(255, 107, 107, 0.2)",
+            borderRadius: "8px",
+            animation: "fadeInUp 0.3s ease both"
+          }}>
+            Location not found. Please try a major city from the suggestions!
+          </div>
+        )}
 
         {/* Quick Suggestions */}
         <div style={{
