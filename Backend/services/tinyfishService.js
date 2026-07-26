@@ -4,6 +4,22 @@ const TINYFISH_SEARCH_URL = "https://api.search.tinyfish.ai";
 const TINYFISH_FETCH_URL = "https://api.fetch.tinyfish.ai";
 
 /**
+ * Helper to retry a function up to maxRetries times with exponential backoff
+ */
+async function withRetry(fn, maxRetries = 3, baseDelay = 1000) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            return await fn();
+        } catch (error) {
+            if (attempt === maxRetries) throw error;
+            const delay = baseDelay * Math.pow(2, attempt - 1);
+            console.warn(`Attempt ${attempt} failed. Retrying in ${delay}ms...`, error.message);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+}
+
+/**
  * Step 2: Search the web using TinyFish Search API (FREE)
  * Returns top search results with titles, URLs, and snippets
  */
@@ -13,11 +29,11 @@ export async function searchWeb(query) {
         throw new Error("TINYFISH_API_KEY is not defined in environment variables.");
     }
 
-    const response = await axios.get(TINYFISH_SEARCH_URL, {
+    const response = await withRetry(() => axios.get(TINYFISH_SEARCH_URL, {
         params: { query },
         headers: { "X-API-Key": apiKey },
         timeout: 10000, // 10s timeout
-    });
+    }));
 
     const results = response.data?.results || response.data?.organic || response.data || [];
     // Only return top 3 results to keep things fast
@@ -34,7 +50,7 @@ export async function fetchUrl(url) {
         throw new Error("TINYFISH_API_KEY is not defined in environment variables.");
     }
 
-    const response = await axios.post(TINYFISH_FETCH_URL, {
+    const response = await withRetry(() => axios.post(TINYFISH_FETCH_URL, {
         urls: [url],
         format: "markdown"
     }, {
@@ -43,7 +59,7 @@ export async function fetchUrl(url) {
             "Content-Type": "application/json",
         },
         timeout: 15000, // 15s timeout — page rendering can be slow
-    });
+    }));
 
     // Extract the text content from the response
     const data = response.data;

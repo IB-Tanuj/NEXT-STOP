@@ -110,9 +110,16 @@ function App() {
       }
     }
 
-    setSelectedLocation(resolvedKey)
-    setLocationTheme(resolvedKey)
-    setCurrentPage("trip")
+    // Verify if the resolved key actually exists in our data
+    if (locationData[resolvedKey]) {
+      setSelectedLocation(resolvedKey)
+      setLocationTheme(resolvedKey)
+      setCurrentPage("trip")
+      return true
+    }
+    
+    // If not found (e.g. they typed numbers or unsupported city), return false
+    return false
   }
 
   const handleBack = () => {
