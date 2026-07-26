@@ -37,11 +37,29 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
       return
     }
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords
         setLeavingCoords({ lat: latitude, lng: longitude })
-        setLeavingFrom("Current Location")
-        setSelectedCity("Current Location")
+        
+        try {
+          // Reverse geocode to find the actual city name
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
+          const data = await res.json()
+          
+          // Nominatim can return city, town, or village depending on the location size
+          const city = data.address?.city || data.address?.town || data.address?.village || data.address?.state_district || "Current Location"
+          const locality = data.address?.neighbourhood || data.address?.suburb || data.address?.residential || ""
+          
+          const foundLocation = locality ? `${locality}, ${city}` : city
+          
+          setLeavingFrom(foundLocation)
+          setSelectedCity(foundLocation)
+        } catch (err) {
+          console.warn("Reverse geocoding failed, falling back to 'Current Location'")
+          setLeavingFrom("Current Location")
+          setSelectedCity("Current Location")
+        }
+        
         setLocationLoading(false)
       },
       (error) => {
