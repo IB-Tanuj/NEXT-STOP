@@ -39,7 +39,7 @@ router.get("/search", async (req, res) => {
           usage_rights: "any",
           file_type: "any",
           aspect_ratio: "any",
-          safe_search: "moderate",
+          safe_search: "off",
           region: "in", // India-focused results
         },
         headers: {
@@ -68,6 +68,16 @@ router.get("/search", async (req, res) => {
     return res.json({ images, cached: false });
   } catch (err) {
     console.error("Image search error:", err.message);
+    if (err.response) {
+      console.error("  Status:", err.response.status);
+      console.error("  Data:", JSON.stringify(err.response.data).slice(0, 500));
+    }
+    if (!process.env.RAPIDAPI_IMAGES_HOST) {
+      console.error("  ⚠️  RAPIDAPI_IMAGES_HOST is not set in .env!");
+    }
+    if (!process.env.RAPIDAPI_KEY) {
+      console.error("  ⚠️  RAPIDAPI_KEY is not set in .env!");
+    }
 
     // If API fails, return empty array (frontend will show fallback)
     return res.status(500).json({
