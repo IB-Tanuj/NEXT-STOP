@@ -8,6 +8,7 @@ import liveDataRoutes from "./routes/liveDataRoutes.js";
 import busRoutes from "./routes/busRoutes.js";
 import flightRoutes from "./routes/flightRoutes.js";
 import vehicleRoutes from "./routes/vehicleRoutes.js";
+import imageRoutes from "./routes/imageRoutes.js";
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use("/api/live", liveDataRoutes);
 app.use("/api/buses", busRoutes);
 app.use("/api/flights", flightRoutes);
 app.use("/api/vehicle", vehicleRoutes);
+app.use("/api/images", imageRoutes);
 
 app.get("/", (req, res) => {
   res.json({

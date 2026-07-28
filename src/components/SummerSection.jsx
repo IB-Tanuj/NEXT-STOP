@@ -11,23 +11,40 @@ const ImageSlider = ({ images, theme }) => {
     return () => clearInterval(timer)
   }, [images.length])
 
+  // Only render current, previous, and next slides (not all at once)
+  const visibleIndices = new Set([
+    current,
+    (current - 1 + images.length) % images.length,
+    (current + 1) % images.length,
+  ])
+
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
       {images.map((img, i) => (
-        <img
-          key={i}
-          src={img}
-          alt=""
-          style={{
+        visibleIndices.has(i) ? (
+          <img
+            key={i}
+            src={img}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              opacity: current === i ? 1 : 0,
+              transition: "opacity 0.8s ease",
+            }}
+          />
+        ) : (
+          <div key={i} style={{
             position: "absolute",
             inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            opacity: current === i ? 1 : 0,
-            transition: "opacity 0.8s ease",
-          }}
-        />
+            opacity: 0,
+          }} />
+        )
       ))}
 
       {/* Dot indicators */}
@@ -71,6 +88,8 @@ const ImageSlider = ({ images, theme }) => {
             key={i}
             src={img}
             alt=""
+            loading="lazy"
+            decoding="async"
             onClick={(e) => { e.stopPropagation(); setCurrent(i) }}
             style={{
               width: "40px",
@@ -87,6 +106,7 @@ const ImageSlider = ({ images, theme }) => {
     </div>
   )
 }
+
 
 const SummerSection = ({ theme, onLocationClick }) => {
   const [visibleCards, setVisibleCards] = useState([])
