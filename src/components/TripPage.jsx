@@ -20,7 +20,7 @@ const LocationBoundary = ({ coords, zoom, theme, locationName, customBoundary })
 
   useEffect(() => {
     map.setView(coords, zoom, { animate: true, duration: 1.5 })
-    map.setMinZoom(zoom - 1)
+    map.setMinZoom(4)
     map.setMaxZoom(16)
 
     const layerGroup = L.layerGroup().addTo(map)
@@ -212,7 +212,7 @@ const TripPage = ({ location, theme, onBack }) => {
           <MapContainer
             center={loc.coords}
             zoom={loc.zoom}
-            minZoom={loc.zoom - 2}
+            minZoom={4}
             maxZoom={16}
             style={{ width: "100%", height: "100vh" }}
             zoomControl={true}
