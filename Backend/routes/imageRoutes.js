@@ -1,0 +1,81 @@
+import express from "express";
+import axios from "axios";
+
+const router = express.Router();
+
+// In-memory cache to avoid burning API quota on repeated queries
+const imageCache = new Map();
+const CACHE_TTL = 1000 * 60 * 60 * 24; // 24 hours
+
+/**
+ * GET /api/images/search?q=Baga+Beach+Goa&limit=4
+ * Returns real images from Google via RapidAPI
+ */
+router.get("/search", async (req, res) => {
+  try {
+    const { q, limit = 4 } = req.query;
+
+    if (!q) {
+      return res.status(400).json({ error: "Missing 'q' query parameter" });
+    }
+
+    // Check cache first
+    const cacheKey = `${q.toLowerCase().trim()}_${limit}`;
+    const cached = imageCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return res.json({ images: cached.images, cached: true });
+    }
+
+    const response = await axios.get(
+      `https://${process.env.RAPIDAPI_IMAGES_HOST}/search`,
+      {
+        params: {
+          query: q,
+          limit: parseInt(limit),
+          size: "medium",
+          color: "any",
+          type: "photo",
+          time: "any",
+          usage_rights: "any",
+          file_type: "any",
+          aspect_ratio: "any",
+          safe_search: "moderate",
+          region: "in", // India-focused results
+        },
+        headers: {
+          "x-rapidapi-key": process.env.RAPIDAPI_KEY,
+          "x-rapidapi-host": process.env.RAPIDAPI_IMAGES_HOST,
+          "Content-Type": "application/json",
+        },
+        timeout: 8000,
+      }
+    );
+
+    // Extract image URLs from response
+    const results = response.data?.data || response.data?.results || [];
+    const images = results.map((item) => ({
+      url: item.url || item.original || item.image?.url,
+      thumbnail: item.thumbnail?.url || item.thumbnail || item.url,
+      title: item.title || "",
+      source: item.source?.url || item.source || "",
+      width: item.width || item.image?.width,
+      height: item.height || item.image?.height,
+    }));
+
+    // Cache the results
+    imageCache.set(cacheKey, { images, timestamp: Date.now() });
+
+    return res.json({ images, cached: false });
+  } catch (err) {
+    console.error("Image search error:", err.message);
+
+    // If API fails, return empty array (frontend will show fallback)
+    return res.status(500).json({
+      error: "Image search failed",
+      message: err.message,
+      images: [],
+    });
+  }
+});
+
+export default router;

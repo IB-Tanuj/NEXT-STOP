@@ -105,6 +105,28 @@ const TripPage = ({ location, theme, onBack }) => {
   const [activeSpot, setActiveSpot] = useState(null)
   const [planningVisible, setPlanningVisible] = useState(false)
   const [showBestTime, setShowBestTime] = useState(false)
+  const [spotImages, setSpotImages] = useState({}) // { "Baga Beach": [urls...] }
+  const [loadingImages, setLoadingImages] = useState(false)
+
+  // Fetch real images from backend when a spot marker is clicked
+  const fetchSpotImages = async (spotName, locationName) => {
+    // Skip if already cached
+    if (spotImages[spotName]) return
+
+    setLoadingImages(true)
+    try {
+      const query = `${spotName} ${locationName} India tourism`
+      const res = await fetch(`/api/images/search?q=${encodeURIComponent(query)}&limit=4`)
+      const data = await res.json()
+      const urls = (data.images || []).map(img => img.thumbnail || img.url).filter(Boolean)
+      setSpotImages(prev => ({ ...prev, [spotName]: urls.length > 0 ? urls : null }))
+    } catch (err) {
+      console.error("Image fetch failed:", err)
+      setSpotImages(prev => ({ ...prev, [spotName]: null }))
+    } finally {
+      setLoadingImages(false)
+    }
+  }
 
   const loc = locationData[location?.toLowerCase()] || {
     name: location,
@@ -240,7 +262,11 @@ const TripPage = ({ location, theme, onBack }) => {
                 })}
                 eventHandlers={{
                   click: () => {
-                    setActiveSpot(activeSpot?.name === spot.name ? null : spot)
+                    const newSpot = activeSpot?.name === spot.name ? null : spot
+                    setActiveSpot(newSpot)
+                    if (newSpot) {
+                      fetchSpotImages(newSpot.name, loc.name)
+                    }
                   }
                 }}
               >
@@ -257,20 +283,24 @@ const TripPage = ({ location, theme, onBack }) => {
               left: "50%",
               transform: "translateX(-50%)",
               zIndex: 2000,
-              background: "#000000cc",
-              borderRadius: "16px",
-              padding: "16px",
-              backdropFilter: "blur(10px)",
-              border: `2px solid ${theme.primary}44`,
+              background: `${theme.bg}ee`,
+              borderRadius: "20px",
+              padding: "20px",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              border: `1px solid ${theme.primary}33`,
               animation: "fadeIn 0.3s ease",
+              boxShadow: `0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px ${theme.primary}15`,
+              maxWidth: "380px",
+              width: "90vw",
             }}>
               <div style={{
                 color: theme.primary,
-                fontWeight: "700",
-                fontSize: "14px",
+                fontWeight: "800",
+                fontSize: "15px",
                 textAlign: "center",
-                marginBottom: "12px",
-                letterSpacing: "1px",
+                marginBottom: "14px",
+                letterSpacing: "0.5px",
               }}>
                 {activeSpot.emoji} {activeSpot.name}
               </div>
@@ -279,20 +309,56 @@ const TripPage = ({ location, theme, onBack }) => {
                 gridTemplateColumns: "1fr 1fr",
                 gap: "8px",
               }}>
-                {[1, 2, 3, 4].map((i) => (
-                  <img
-                    key={i}
-                    src={`https://picsum.photos/seed/${encodeURIComponent(activeSpot.name)}${i}/160/120`}
-                    alt={activeSpot.name}
-                    style={{
-                      width: "150px",
-                      height: "100px",
-                      objectFit: "cover",
-                      borderRadius: "8px",
-                      border: `2px solid ${theme.primary}`,
-                    }}
-                  />
-                ))}
+                {loadingImages && !spotImages[activeSpot.name] ? (
+                  /* Loading skeleton */
+                  [1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      style={{
+                        width: "100%",
+                        aspectRatio: "4/3",
+                        borderRadius: "10px",
+                        background: `linear-gradient(110deg, ${theme.card} 30%, ${theme.primary}15 50%, ${theme.card} 70%)`,
+                        backgroundSize: "200% 100%",
+                        animation: "shimmer 1.5s ease-in-out infinite",
+                      }}
+                    />
+                  ))
+                ) : spotImages[activeSpot.name] ? (
+                  /* Real images from API */
+                  spotImages[activeSpot.name].slice(0, 4).map((url, i) => (
+                    <img
+                      key={i}
+                      src={url}
+                      alt={`${activeSpot.name} ${i + 1}`}
+                      loading="lazy"
+                      decoding="async"
+                      style={{
+                        width: "100%",
+                        aspectRatio: "4/3",
+                        objectFit: "cover",
+                        borderRadius: "10px",
+                        border: `1px solid ${theme.primary}33`,
+                        transition: "transform 0.3s ease",
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.transform = "scale(1.03)"}
+                      onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+                      onError={e => { e.currentTarget.style.display = "none" }}
+                    />
+                  ))
+                ) : (
+                  /* Fallback if API failed */
+                  <div style={{
+                    gridColumn: "1 / -1",
+                    color: theme.subtext,
+                    fontSize: "13px",
+                    textAlign: "center",
+                    padding: "20px",
+                    opacity: 0.6,
+                  }}>
+                    📷 Images couldn't be loaded
+                  </div>
+                )}
               </div>
               <div
                 onClick={() => setActiveSpot(null)}
@@ -300,10 +366,15 @@ const TripPage = ({ location, theme, onBack }) => {
                   color: theme.subtext,
                   fontSize: "12px",
                   textAlign: "center",
-                  marginTop: "10px",
+                  marginTop: "12px",
                   cursor: "pointer",
-                }}>
-                click marker again to close ✕
+                  opacity: 0.7,
+                  transition: "opacity 0.2s ease",
+                }}
+                onMouseEnter={e => e.currentTarget.style.opacity = "1"}
+                onMouseLeave={e => e.currentTarget.style.opacity = "0.7"}
+              >
+                tap marker again to close ✕
               </div>
             </div>
           )}

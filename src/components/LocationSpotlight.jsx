@@ -80,6 +80,8 @@ const LocationSpotlight = ({ theme, activeLocation, locationData }) => {
             <img
               src={img}
               alt={`${loc.name} ${i + 1}`}
+              loading="lazy"
+              decoding="async"
               style={{
                 width: "100%",
                 height: "100%",
