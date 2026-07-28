@@ -47,7 +47,7 @@ router.get("/search", async (req, res) => {
           "x-rapidapi-host": process.env.RAPIDAPI_IMAGES_HOST,
           "Content-Type": "application/json",
         },
-        timeout: 8000,
+        timeout: 15000,
       }
     );
 

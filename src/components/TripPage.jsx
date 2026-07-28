@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
 import "leaflet/dist/leaflet.css"
 import L from "leaflet"
@@ -107,15 +107,18 @@ const TripPage = ({ location, theme, onBack }) => {
   const [showBestTime, setShowBestTime] = useState(false)
   const [spotImages, setSpotImages] = useState({}) // { "Baga Beach": [urls...] }
   const [loadingImages, setLoadingImages] = useState(false)
+  const fetchingRef = useRef(false) // prevent overlapping API calls (rate limit)
 
   // Fetch real images from backend when a spot marker is clicked
   const fetchSpotImages = async (spotName, locationName) => {
-    // Skip if already cached
+    // Skip if already cached or another request is in-flight
     if (spotImages[spotName]) return
+    if (fetchingRef.current) return
 
+    fetchingRef.current = true
     setLoadingImages(true)
     try {
-      const query = `${spotName} ${locationName} India tourism`
+      const query = `${spotName} ${locationName} India`
       const res = await fetch(`/api/images/search?q=${encodeURIComponent(query)}&limit=4`)
       const data = await res.json()
       const urls = (data.images || []).map(img => img.thumbnail || img.url).filter(Boolean)
@@ -125,6 +128,8 @@ const TripPage = ({ location, theme, onBack }) => {
       setSpotImages(prev => ({ ...prev, [spotName]: null }))
     } finally {
       setLoadingImages(false)
+      // Small delay before allowing next request (respects rate limits)
+      setTimeout(() => { fetchingRef.current = false }, 1500)
     }
   }
 
