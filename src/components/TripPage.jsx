@@ -107,6 +107,7 @@ const TripPage = ({ location, theme, onBack }) => {
   const [showBestTime, setShowBestTime] = useState(false)
   const [spotImages, setSpotImages] = useState({}) // { "Baga Beach": [urls...] }
   const [loadingImages, setLoadingImages] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(null) // fullscreen image viewer
   const fetchingRef = useRef(false) // prevent overlapping API calls (rate limit)
 
   // Fetch real images from backend when a spot marker is clicked
@@ -330,7 +331,7 @@ const TripPage = ({ location, theme, onBack }) => {
                     />
                   ))
                 ) : spotImages[activeSpot.name] ? (
-                  /* Real images from API */
+                  /* Real images from API — click to open lightbox */
                   spotImages[activeSpot.name].slice(0, 4).map((url, i) => (
                     <img
                       key={i}
@@ -338,16 +339,24 @@ const TripPage = ({ location, theme, onBack }) => {
                       alt={`${activeSpot.name} ${i + 1}`}
                       loading="lazy"
                       decoding="async"
+                      onClick={() => setLightboxIndex(i)}
                       style={{
                         width: "100%",
                         aspectRatio: "4/3",
                         objectFit: "cover",
                         borderRadius: "10px",
                         border: `1px solid ${theme.primary}33`,
-                        transition: "transform 0.3s ease",
+                        cursor: "pointer",
+                        transition: "transform 0.3s ease, border-color 0.3s ease",
                       }}
-                      onMouseEnter={e => e.currentTarget.style.transform = "scale(1.03)"}
-                      onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.transform = "scale(1.03)"
+                        e.currentTarget.style.borderColor = theme.primary
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.transform = "scale(1)"
+                        e.currentTarget.style.borderColor = `${theme.primary}33`
+                      }}
                       onError={e => { e.currentTarget.style.display = "none" }}
                     />
                   ))
@@ -379,10 +388,200 @@ const TripPage = ({ location, theme, onBack }) => {
                 onMouseEnter={e => e.currentTarget.style.opacity = "1"}
                 onMouseLeave={e => e.currentTarget.style.opacity = "0.7"}
               >
-                tap marker again to close ✕
+                tap here to close ✕
               </div>
             </div>
           )}
+
+          {/* Fullscreen Image Lightbox */}
+          {lightboxIndex !== null && activeSpot && spotImages[activeSpot.name] && (() => {
+            const images = spotImages[activeSpot.name].slice(0, 4)
+            const total = images.length
+            return (
+              <div
+                onClick={() => setLightboxIndex(null)}
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  zIndex: 3000,
+                  background: "rgba(0,0,0,0.92)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  animation: "fadeIn 0.25s ease",
+                }}
+              >
+                {/* Close button */}
+                <div
+                  onClick={() => setLightboxIndex(null)}
+                  style={{
+                    position: "absolute",
+                    top: "24px",
+                    right: "28px",
+                    color: "#fff",
+                    fontSize: "28px",
+                    cursor: "pointer",
+                    width: "44px",
+                    height: "44px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "50%",
+                    background: "rgba(255,255,255,0.1)",
+                    transition: "background 0.2s ease",
+                    zIndex: 3001,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.2)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+                >
+                  ✕
+                </div>
+
+                {/* Spot name */}
+                <div style={{
+                  position: "absolute",
+                  top: "28px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  color: theme.primary,
+                  fontWeight: "800",
+                  fontSize: "16px",
+                  letterSpacing: "0.5px",
+                }}>
+                  {activeSpot.emoji} {activeSpot.name}
+                </div>
+
+                {/* Main image */}
+                <img
+                  src={images[lightboxIndex]}
+                  alt={`${activeSpot.name} ${lightboxIndex + 1}`}
+                  onClick={e => e.stopPropagation()}
+                  style={{
+                    maxWidth: "85vw",
+                    maxHeight: "75vh",
+                    objectFit: "contain",
+                    borderRadius: "16px",
+                    boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+                    transition: "opacity 0.3s ease",
+                  }}
+                  onError={e => { e.currentTarget.src = "" }}
+                />
+
+                {/* Prev / Next buttons */}
+                {total > 1 && (
+                  <>
+                    <div
+                      onClick={e => {
+                        e.stopPropagation()
+                        setLightboxIndex((lightboxIndex - 1 + total) % total)
+                      }}
+                      style={{
+                        position: "absolute",
+                        left: "16px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        width: "48px",
+                        height: "48px",
+                        borderRadius: "50%",
+                        background: "rgba(255,255,255,0.1)",
+                        border: `1px solid rgba(255,255,255,0.2)`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                        fontSize: "22px",
+                        color: "#fff",
+                        transition: "all 0.2s ease",
+                        backdropFilter: "blur(8px)",
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.2)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+                    >
+                      ‹
+                    </div>
+                    <div
+                      onClick={e => {
+                        e.stopPropagation()
+                        setLightboxIndex((lightboxIndex + 1) % total)
+                      }}
+                      style={{
+                        position: "absolute",
+                        right: "16px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        width: "48px",
+                        height: "48px",
+                        borderRadius: "50%",
+                        background: "rgba(255,255,255,0.1)",
+                        border: `1px solid rgba(255,255,255,0.2)`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                        fontSize: "22px",
+                        color: "#fff",
+                        transition: "all 0.2s ease",
+                        backdropFilter: "blur(8px)",
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.2)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+                    >
+                      ›
+                    </div>
+                  </>
+                )}
+
+                {/* Image counter + thumbnail strip */}
+                <div
+                  onClick={e => e.stopPropagation()}
+                  style={{
+                    position: "absolute",
+                    bottom: "32px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "12px",
+                  }}
+                >
+                  <div style={{
+                    display: "flex",
+                    gap: "8px",
+                  }}>
+                    {images.map((img, i) => (
+                      <img
+                        key={i}
+                        src={img}
+                        alt=""
+                        onClick={() => setLightboxIndex(i)}
+                        style={{
+                          width: "52px",
+                          height: "36px",
+                          objectFit: "cover",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                          border: lightboxIndex === i
+                            ? `2px solid ${theme.primary}`
+                            : "2px solid rgba(255,255,255,0.2)",
+                          opacity: lightboxIndex === i ? 1 : 0.5,
+                          transition: "all 0.2s ease",
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <div style={{
+                    color: "rgba(255,255,255,0.5)",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                  }}>
+                    {lightboxIndex + 1} / {total}
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Continue Button */}
           <div style={{
