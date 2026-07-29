@@ -1,5 +1,6 @@
 // Wrap your app in an error boundary or check console
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { Routes, Route, useNavigate, useParams } from "react-router-dom"
 import { useTheme } from "./hooks/useTheme"
 import Navbar from "./components/Navbar"
 import Hero from "./components/Hero"
@@ -15,10 +16,21 @@ import PlanTripPage from "./components/PlanTripPage"
 
 import { allIndiaLocations } from "./data/allLocations"
 
+function TripPageWrapper({ theme, onBack, setLocationTheme }) {
+  const { locationId } = useParams();
+  
+  useEffect(() => {
+    if (locationId) {
+      setLocationTheme(locationId);
+    }
+  }, [locationId, setLocationTheme]);
+
+  return <TripPage location={locationId} theme={theme} onBack={onBack} />;
+}
+
 function App() {
   const { theme, setLocationTheme, resetToSeason } = useTheme()
-  const [currentPage, setCurrentPage] = useState("home")
-  const [selectedLocation, setSelectedLocation] = useState(null)
+  const navigate = useNavigate()
   const [spotlightLocation, setSpotlightLocation] = useState(null)
   const { isMobile, isTablet } = useScreenSize()
   const [showAbout, setShowAbout] = useState(false)
@@ -114,9 +126,8 @@ function App() {
 
     // Verify if the resolved key actually exists in our data
     if (locationData[resolvedKey]) {
-      setSelectedLocation(resolvedKey)
       setLocationTheme(resolvedKey)
-      setCurrentPage("trip")
+      navigate(`/trip/${resolvedKey}`)
       return true
     }
     
@@ -125,9 +136,8 @@ function App() {
   }
 
   const handleBack = () => {
-    setCurrentPage("home")
+    navigate("/")
     resetToSeason()
-    setSelectedLocation(null)
   }
   
 
@@ -138,49 +148,47 @@ function App() {
       fontFamily: "var(--sans)",
       transition: "all 0.8s ease",
     }}>
-      {currentPage === "home" && (
-  <>
-    <Navbar theme={theme} isMobile={isMobile} 
-    onAbout={() => setShowAbout(true)}
-    onExplore={() => setShowExplore(true)}
-    onBudget={() => setShowBudget(true)}
-    onPlanTrip={() => setShowPlanTrip(true)}
-    />
-    <Hero
-      theme={theme}
-      setLocationTheme={handleThemeOnly}
-      onExplore={handleExplore}
-      isMobile={isMobile}
-    />
-    {/* Season section — only when no location searched */}
-    {!spotlightLocation && (
-      <SeasonSection
-        theme={theme}
-        isMobile={isMobile}
-        onLocationClick={(name) => {
-          handleThemeOnly(name)
-          setSpotlightLocation(name)
-        }}
-      />
-    )}
-    {/* Location spotlight — only when a location IS searched */}
-    {spotlightLocation && (
-      <LocationSpotlight
-        theme={theme}
-        isMobile={isMobile}
-        activeLocation={spotlightLocation}
-        locationData={locationData}
-      />
-    )}
-  </>
-)}
-      {currentPage === "trip" && (
-        <TripPage
-          location={selectedLocation}
-          theme={theme}
-          onBack={handleBack}
-        />
-      )}
+      <Routes>
+        <Route path="/" element={
+          <>
+            <Navbar theme={theme} isMobile={isMobile} 
+            onAbout={() => setShowAbout(true)}
+            onExplore={() => setShowExplore(true)}
+            onBudget={() => setShowBudget(true)}
+            onPlanTrip={() => setShowPlanTrip(true)}
+            />
+            <Hero
+              theme={theme}
+              setLocationTheme={handleThemeOnly}
+              onExplore={handleExplore}
+              isMobile={isMobile}
+            />
+            {/* Season section — only when no location searched */}
+            {!spotlightLocation && (
+              <SeasonSection
+                theme={theme}
+                isMobile={isMobile}
+                onLocationClick={(name) => {
+                  handleThemeOnly(name)
+                  setSpotlightLocation(name)
+                }}
+              />
+            )}
+            {/* Location spotlight — only when a location IS searched */}
+            {spotlightLocation && (
+              <LocationSpotlight
+                theme={theme}
+                isMobile={isMobile}
+                activeLocation={spotlightLocation}
+                locationData={locationData}
+              />
+            )}
+          </>
+        } />
+        <Route path="/trip/:locationId" element={
+          <TripPageWrapper theme={theme} onBack={handleBack} setLocationTheme={setLocationTheme} />
+        } />
+      </Routes>
       {showAbout && (
   <AboutPage
     theme={theme}
