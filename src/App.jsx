@@ -169,8 +169,7 @@ function App() {
                 theme={theme}
                 isMobile={isMobile}
                 onLocationClick={(name) => {
-                  handleThemeOnly(name)
-                  setSpotlightLocation(name)
+                  handleExplore(name)
                 }}
               />
             )}

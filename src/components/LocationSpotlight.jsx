@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { spotPhotos } from "../data/homepageData"
+import { fetchImagesWithCache } from "../utils/imageCache"
 
 const LocationSpotlight = ({ theme, activeLocation, locationData }) => {
   const [visible, setVisible] = useState(false)
@@ -41,9 +42,7 @@ const LocationSpotlight = ({ theme, activeLocation, locationData }) => {
     setLoading(true)
     try {
       const query = `${loc.name} India famous places tourism`
-      const res = await fetch(`/api/images/search?q=${encodeURIComponent(query)}&limit=6`)
-      const json = await res.json()
-      const urls = (json.images || []).map(img => img.thumbnail || img.url).filter(Boolean)
+      const urls = await fetchImagesWithCache(query, 6)
       if (urls.length > 0) {
         setImages(urls)
       }
