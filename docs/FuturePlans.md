@@ -33,3 +33,6 @@ This document outlines the planned features, enhancements, and tasks that we hav
 As the application scales, we plan to shift more backend responsibility to Supabase to reduce server load and token costs:
 - **Persistent API Caching**: Migrate the in-memory Node.js cache (for buses, stays, and trains) to a Supabase `api_cache` table. This will prevent data loss on server restarts and scale perfectly across multiple backend instances.
 - **Background Pre-fetching**: Implement Supabase Scheduled Edge Functions to proactively scrape and cache the top 20 most popular routes (e.g., Delhi to Manali) every morning. This drastically reduces the 10-second wait time for users making common searches.
+
+### 9. Performance Optimizations
+- **Lazy Loading**: Implement React `lazy` and `Suspense` for components and pages that are not immediately visible on the initial load (e.g., `AboutPage`, `BudgetPage`, `PlanTripPage`, `ExploreSidebar`). This will help reduce the initial JavaScript bundle size as the application grows and more features or heavy dependencies are added.
