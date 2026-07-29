@@ -4,7 +4,7 @@ import { useTheme } from "./hooks/useTheme"
 import Navbar from "./components/Navbar"
 import Hero from "./components/Hero"
 import TripPage from "./components/TripPage"
-import SummerSection from "./components/SummerSection"
+import SeasonSection from "./components/SeasonSection"
 import LocationSpotlight from "./components/LocationSpotlight"
 import { locationData } from "./components/TripPage"
 import useScreenSize from "./hooks/useScreenSize"
@@ -30,6 +30,8 @@ function App() {
     setLocationTheme(location)
     if (location.trim() && locationData[location.trim().toLowerCase()]) {
       setSpotlightLocation(location.trim().toLowerCase())
+    } else if (!location.trim()) {
+      setSpotlightLocation(null)
     }
   }
 
@@ -150,20 +152,26 @@ function App() {
       onExplore={handleExplore}
       isMobile={isMobile}
     />
-    <SummerSection
-      theme={theme}
-      isMobile={isMobile}
-      onLocationClick={(name) => {
-        handleThemeOnly(name)
-        setSpotlightLocation(name)
-      }}
-    />
-    <LocationSpotlight
-      theme={theme}
-      isMobile={isMobile}
-      activeLocation={spotlightLocation}
-      locationData={locationData}
-    />
+    {/* Season section — only when no location searched */}
+    {!spotlightLocation && (
+      <SeasonSection
+        theme={theme}
+        isMobile={isMobile}
+        onLocationClick={(name) => {
+          handleThemeOnly(name)
+          setSpotlightLocation(name)
+        }}
+      />
+    )}
+    {/* Location spotlight — only when a location IS searched */}
+    {spotlightLocation && (
+      <LocationSpotlight
+        theme={theme}
+        isMobile={isMobile}
+        activeLocation={spotlightLocation}
+        locationData={locationData}
+      />
+    )}
   </>
 )}
       {currentPage === "trip" && (
