@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { seasonGetaways, getCurrentSeason } from "../data/homepageData"
 import { locationData } from "./TripPage"
+import { fetchImagesWithCache, getCachedImages } from "../utils/imageCache"
 
 // ── Shimmer Skeleton ────────────────────────────────────
 const ShimmerCard = ({ theme }) => (
@@ -179,20 +180,23 @@ const SeasonSection = ({ theme, onLocationClick }) => {
 
   const fetchAllCardImages = async () => {
     for (const spot of data.spots) {
+      const query = `${spot.name} ${spot.state} India tourism landscape`
+      const isCached = !!getCachedImages(query)
+      
       setLoadingCards(prev => ({ ...prev, [spot.name]: true }))
       try {
-        const query = `${spot.name} ${spot.state} India tourism landscape`
-        const res = await fetch(`/api/images/search?q=${encodeURIComponent(query)}&limit=4`)
-        const json = await res.json()
-        const urls = (json.images || []).map(img => img.thumbnail || img.url).filter(Boolean)
+        const urls = await fetchImagesWithCache(query, 4)
         setCardImages(prev => ({ ...prev, [spot.name]: urls.length > 0 ? urls : null }))
       } catch {
         setCardImages(prev => ({ ...prev, [spot.name]: null }))
       } finally {
         setLoadingCards(prev => ({ ...prev, [spot.name]: false }))
       }
-      // Rate limit delay
-      await new Promise(r => setTimeout(r, 1500))
+      
+      // Rate limit delay only if we actually hit the network
+      if (!isCached) {
+        await new Promise(r => setTimeout(r, 1500))
+      }
     }
   }
 

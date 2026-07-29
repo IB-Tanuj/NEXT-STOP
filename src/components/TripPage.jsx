@@ -5,6 +5,7 @@ import L from "leaflet"
 import PlanningPage from "./PlanningPage"
 import { bestTimeData } from "../data/bestTime"
 import { locationData } from "../data/locationData"
+import { fetchImagesWithCache, getCachedImages } from "../utils/imageCache"
 
 export { locationData }
 
@@ -112,25 +113,29 @@ const TripPage = ({ location, theme, onBack }) => {
 
   // Fetch real images from backend when a spot marker is clicked
   const fetchSpotImages = async (spotName, locationName) => {
-    // Skip if already cached or another request is in-flight
+    // Skip if already cached locally in state or another request is in-flight
     if (spotImages[spotName]) return
     if (fetchingRef.current) return
 
-    fetchingRef.current = true
+    const query = `${spotName} ${locationName} India`
+    const isCached = !!getCachedImages(query)
+
+    // Only block other requests if we're actually making a network call
+    if (!isCached) fetchingRef.current = true
+    
     setLoadingImages(true)
     try {
-      const query = `${spotName} ${locationName} India`
-      const res = await fetch(`/api/images/search?q=${encodeURIComponent(query)}&limit=4`)
-      const data = await res.json()
-      const urls = (data.images || []).map(img => img.thumbnail || img.url).filter(Boolean)
+      const urls = await fetchImagesWithCache(query, 4)
       setSpotImages(prev => ({ ...prev, [spotName]: urls.length > 0 ? urls : null }))
     } catch (err) {
       console.error("Image fetch failed:", err)
       setSpotImages(prev => ({ ...prev, [spotName]: null }))
     } finally {
       setLoadingImages(false)
-      // Small delay before allowing next request (respects rate limits)
-      setTimeout(() => { fetchingRef.current = false }, 1500)
+      // Small delay before allowing next request (respects rate limits), but only if we hit the network
+      if (!isCached) {
+        setTimeout(() => { fetchingRef.current = false }, 1500)
+      }
     }
   }
 
