@@ -12,8 +12,10 @@ const getOptions = (method = 'GET') => ({
 
 // 1. Search Trips
 async function searchTrips() {
-  console.log('\n--- 1. Fetching Flixbus Trips ---');
-  const url = 'https://flixbus2.p.rapidapi.com/trips?from_id=40de8044-8646-11e6-9066-549f350fcb0c&to_id=40dea87d-8646-11e6-9066-549f350fcb0c&date=15.08.2026&adult=1&search_by=cities&children=0&bikes=0&currency=EUR&locale=en';
+  console.log('\n--- 1. Fetching Flixbus Trips (Delhi to Manali in INR) ---');
+  // from: Delhi City ID (a002c4a4-1eef-4afa-82d9-ecd690ea51c5)
+  // to: Manali City ID (8c8bc1cc-c072-4377-a433-97f737e1095d)
+  const url = 'https://flixbus2.p.rapidapi.com/trips?from_id=a002c4a4-1eef-4afa-82d9-ecd690ea51c5&to_id=8c8bc1cc-c072-4377-a433-97f737e1095d&date=15.08.2026&adult=1&search_by=cities&children=0&bikes=0&currency=INR&locale=en';
   
   try {
     const res = await fetch(url, getOptions());
@@ -46,12 +48,10 @@ async function searchTrips() {
 
 // 2. Autocomplete
 async function testAutocomplete() {
-  console.log('\n--- 2. Testing Autocomplete (Query: ljubljana) ---');
-  const url = 'https://flixbus2.p.rapidapi.com/autocomplete?query=ljubljana&locale=en';
-  
+  const q = 'manali';
+  const url = `https://flixbus2.p.rapidapi.com/autocomplete?query=${q}&locale=en`;
   try {
     const res = await fetch(url, getOptions());
-    console.log(`Status: ${res.status}`);
     const json = await res.json();
     console.log(JSON.stringify(json, null, 2));
   } catch (err) {
