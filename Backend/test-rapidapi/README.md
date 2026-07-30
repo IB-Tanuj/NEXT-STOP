@@ -22,3 +22,10 @@ node test-flight-generic.js
 ## What to look for in the output:
 - **Status Code 200**: Indicates valid API Key and Host.
 - **Flight Prices & Airlines**: Look at the structure of `data` or `itineraries` to see if ticket prices, airlines, and durations are easily accessible.
+
+### 3. FlixBus API
+Run:
+```bash
+node test-flixbus.js
+```
+*(Uses the provided Flixbus RapidAPI key)*
