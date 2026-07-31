@@ -6,8 +6,66 @@ I have completed my research and here all the things and my plan.
 3. Deep Island Territories: Obviously, island destinations like the Andaman and Nicobar Islands or Lakshadweep are inaccessible by bus networks.
 
 # All type of seats
-1. Classic: A standard window or aisle seat of your choice.Semi-bed / Bed: Reclinable or fully flat sleeper beds, which are highly popular on overnight routes in regions like FlixBus India.
-2 .Extra / Single: Books your seat and leaves the adjacent seat empty for maximum privacy.
-3. Panorama: Seats in the very first row with an unobstructed front view.
-4. Table: Four seats facing each other with a table in the middle, available on double-decker buses.Legroom: Seats offering extra space to stretch your legs
+1. Classic: A standard window or aisle seat of your choice.
+2. Semi-bed / Bed: Reclinable or fully flat sleeper beds, which are highly popular on overnight routes in regions like FlixBus India.
+3. Extra / Single: Books your seat and leaves the adjacent seat empty for maximum privacy.
+4. Panorama: Seats in the very first row with an unobstructed front view.
 
+Seating Configurations (India):
+A/C Sleeper (2+1 layout): Rows of single berths on one side, double berths on the other.
+A/C Semi-Sleeper (2+2 layout): Reclining seats with calf support.
+Hybrid Seater/Sleeper: Lower seats with an upper tier of sleeper berths.
+
+# Range
+Distance Ranges for Direct FlixBus Routes
+The network is structured across three distinct distance tiers:
+Distance Tier            Average Range      Key Direct Route Examples
+Short-Distance           150 km – 300 km    • Delhi to Jaipur (~270 km)
+                                            • Delhi to Haridwar (~220 km)
+                                            • Bengaluru to Mysuru (~145 km)
+
+Mid-Distance             300 km – 600 km    • Delhi to Manali (~518 km)
+                                            • Delhi to Amritsar (~450 km)
+                                            • Bengaluru to Hyderabad (~570 km)
+                            
+Long-Distance(Max)       600 km – 850 km    • Delhi to Varanasi (~820 km)
+                                            • Delhi to Katra/Vaishno Devi (~650 km)
+                                            • Bengaluru to Kochi (~700 km)
+
+
+# Key Database Entities (Data Model)
+To handle the unique constraints of a bus network (like the regional networks and seat types):
+Stations: station_id, name, city, geo_coordinates, region_id.
+Routes: route_id, origin_station_id, destination_station_id, total_distance_km.
+Schedules / Trips: trip_id, route_id, bus_id, departure_time, arrival_time, base_price.
+Buses: bus_id, operator_name, bus_type (e.g., Sleeper, Semi-Sleeper, Double-Decker), total_capacity.
+Seat Configurations: seat_id, bus_id, seat_number, seat_category (e.g., Single-Bed, Panorama, Classic), price_multiplier.
+
+#The Gender Allocation Rules (The Logic Grid)
+The algorithmic rules governing the seating layout depend on the status of the booking object:
+Rule A (Group/Couple Booking): If a male and a female passenger are wrapped in the same Booking ID (PNR), they can select and lock a double sleeper berth together. The system recognizes them as a traveling unit and permits the mixed-gender adjacent seating.
+Rule B (Solo Female Booking): If a woman books a single seat within an empty double berth, the inventory engine immediately flags the adjacent seat as "Female Only".
+Rule C (Solo Male Booking Attempt): If a solo male traveler later tries to buy a ticket, the system will block him from selecting that specific adjacent seat to ensure safety. He can only choose completely empty rows or seats next to other men.
+
+This concludes my research , now as for plan .... the flow will go like this.
+
+
+we will add a new tab in homepage named " for bus lovers"
+ user clicks on it -> new page pops up with questions like  gender , origin location and desired location based of the data we will check if buses are operate on those locations or not.
+because flixbus do not support travel all india . we can't call the api for checking everytime if both. so we will make a data file for that like we doen for train and flight codes.
+if both locations are under supported areas then the next thing we need to check is if direct buses are available. 
+eg : user wants to travel from delhi to kochi in this scenario both locations are supported by flixbus but there is no direct bus available. 
+     if both availablity and location support is true then we will proceed to next question.
+
+solo or group , budget , preferred seat category (Classic , semibed/bed , extra/single , panorama), and travel date ( with calender feature - not like train that only show future 120 days - it should be like normal date picker - up to 1 year ), travel time ( morning, afternoon, evening, night).
+
+After that we show the results in a nice UI. The result logic will check all the above conditions.
+*OUTPUT PROCESS*
+First check if buses are available in selected date - if no then show all available dates ( eg:user selected 4 august (today in 31 july) and there is no buses available then show 2,3,5,6,7,8 august calender.  show mess like "sorry bus not available on 4,5 august but in 2,3,6,7,8 august there are buses available.")
+And if yes and if user selects recommended date then proceed and then search for selected time - if no then show available time period - if yes then show all time period in that range (suppose user slected night then all buses in night period will be shown) then check selected seat availablity ( same logic as previous ).
+
+Addition:-
+1.If user selects group then ask for all member genders.
+2.WE should add a "get available dates" button next to date selection feature.
+3.Can we provide this type of seats view (i will send photo in chat).
+4.After verifying that user enter valid locations , show user the pickup points ( eg : delhi have 3 pickup points Delhi RK Ashram (FlixBus Lounge) , Delhi Kashmere Gate ISBT , Delhi - Majnu Ka Tilla (N) ).
