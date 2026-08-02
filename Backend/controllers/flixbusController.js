@@ -48,16 +48,20 @@ export const searchBuses = async (req, res) => {
     try {
         const { from, to, date } = req.body;
 
+        const fromClean = (from || '').trim();
+        const toClean = (to || '').trim();
+
         // 1. Resolve names to RapidAPI UUIDs
         const { data: cities } = await supabase
             .from('flixbus_cities')
             .select('rapidapi_id, name')
-            .or(`name.ilike.${from},name.ilike.${to}`);
+            .or(`name.ilike.${fromClean},name.ilike.${toClean}`);
 
-        const fromCity = cities?.find(c => c.name.toLowerCase() === from.toLowerCase());
-        const toCity = cities?.find(c => c.name.toLowerCase() === to.toLowerCase());
+        const fromCity = cities?.find(c => c.name.toLowerCase() === fromClean.toLowerCase());
+        const toCity = cities?.find(c => c.name.toLowerCase() === toClean.toLowerCase());
 
         if (!fromCity || !toCity) {
+            console.log(`Missing city in DB! fromClean: ${fromClean}, toClean: ${toClean}. Found in DB:`, cities);
             return res.status(400).json({ error: "One or both cities are not supported by FlixBus yet." });
         }
 
