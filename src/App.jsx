@@ -13,6 +13,7 @@ import AboutPage from "./components/AboutPage"
 import ExploreSidebar from "./components/ExploreSidebar"
 import BudgetPage from "./components/BudgetPage"
 import PlanTripPage from "./components/PlanTripPage"
+import BusLoversPage from "./components/BusLoversPage"
 
 import { allIndiaLocations } from "./data/allLocations"
 
@@ -37,6 +38,7 @@ function App() {
   const [showExplore, setShowExplore] = useState(false)
   const [showBudget, setShowBudget] = useState(false)
   const [showPlanTrip, setShowPlanTrip] = useState(false)
+  const [showBusLovers, setShowBusLovers] = useState(false)
 
   const handleThemeOnly = (location) => {
     setLocationTheme(location)
@@ -156,6 +158,7 @@ function App() {
             onExplore={() => setShowExplore(true)}
             onBudget={() => setShowBudget(true)}
             onPlanTrip={() => setShowPlanTrip(true)}
+            onBusLovers={() => setShowBusLovers(true)}
             />
             <Hero
               theme={theme}
@@ -227,6 +230,13 @@ function App() {
         setTimeout(() => searchBar.focus(), 600)
       }
     }}
+  />
+)}
+
+{showBusLovers && (
+  <BusLoversPage
+    theme={theme}
+    onClose={() => setShowBusLovers(false)}
   />
 )}
     </div>

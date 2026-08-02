@@ -1,6 +1,6 @@
 import { useState } from "react"
 
-const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip }) => {
+const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onBusLovers }) => {
   const [menuOpen, setMenuOpen] = useState(false)
   
 
@@ -34,13 +34,14 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip }) =
       {/* Desktop Nav Links */}
       {!isMobile && (
         <div style={{ display: "flex", gap: "30px", alignItems: "center" }}>
-          {["Explore", "Plan Trip", "Budget", "About"].map((item) => (
+          {["Explore", "Plan Trip", "Bus Lovers", "Budget", "About"].map((item) => (
             <span key={item}
             onClick={() => {
   if (item === "About") onAbout()
   if (item === "Explore") onExplore()
     if (item === "Budget") onBudget()
       if (item === "Plan Trip") onPlanTrip()
+      if (item === "Bus Lovers") onBusLovers()
 
 }}
              style={{
@@ -131,7 +132,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip }) =
           animation: "fadeIn 0.2s ease",
           zIndex: 100,
         }}>
-          {["Explore", "Plan Trip", "Budget", "About"].map((item) => (
+          {["Explore", "Plan Trip", "Bus Lovers", "Budget", "About"].map((item) => (
             <span
               key={item}
               onClick={() => {
@@ -139,6 +140,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip }) =
   if (item === "Explore") onExplore()
     if (item === "Budget") onBudget()
     if (item === "Plan Trip") onPlanTrip()
+    if (item === "Bus Lovers") { onBusLovers(); setMenuOpen(false); }
 }}
               style={{
                 color: theme.subtext,
