@@ -1,15 +1,18 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-const API_HOST = 'flixbus-api2.p.rapidapi.com';
+
 
 // Key Rotation Logic
 const getApiKey = () => {
-    // If the 1st key hits limit, we can easily swap to the 2nd here. 
-    // We'll build a simple global tracker for the current active key.
+    // If the 1st key hits limit, we swap to the 2nd.
     global.activeFlixbusKeyIndex = global.activeFlixbusKeyIndex || 1;
-    const key = process.env[`RAPIDAPI_FLIXBUS_KEY_${global.activeFlixbusKeyIndex}`] || process.env.RAPIDAPI_KEY;
-    return key;
+    if (global.activeFlixbusKeyIndex === 1) return process.env.RAPIDAPI_KEY;
+    return process.env.RAPIDAPI_KEY_2 || process.env.RAPIDAPI_KEY;
+};
+
+const getApiHost = () => {
+    return process.env.RAPID_HOST_2 || 'flixbus-api2.p.rapidapi.com';
 };
 
 const rotateKey = () => {
@@ -19,14 +22,15 @@ const rotateKey = () => {
 
 // Generic Fetch Wrapper
 const fetchFromFlixbus = async (endpoint, retries = 1) => {
-    const url = `https://${API_HOST}${endpoint}`;
+    const currentHost = getApiHost();
+    const url = `https://${currentHost}${endpoint}`;
     
     try {
         const res = await fetch(url, {
             method: 'GET',
             headers: {
                 'x-rapidapi-key': getApiKey(),
-                'x-rapidapi-host': API_HOST,
+                'x-rapidapi-host': currentHost,
                 'Content-Type': 'application/json'
             }
         });
