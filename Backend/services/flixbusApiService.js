@@ -5,8 +5,8 @@ dotenv.config();
 
 // Key Rotation Logic
 const getApiKey = () => {
-    // If the 1st key hits limit, we swap to the 2nd.
-    global.activeFlixbusKeyIndex = global.activeFlixbusKeyIndex || 1;
+    // Default to the 2nd key since the 1st one is exhausted for the month.
+    global.activeFlixbusKeyIndex = global.activeFlixbusKeyIndex || 2;
     if (global.activeFlixbusKeyIndex === 1) return process.env.RAPIDAPI_KEY;
     return process.env.RAPIDAPI_KEY_2 || process.env.RAPIDAPI_KEY;
 };
