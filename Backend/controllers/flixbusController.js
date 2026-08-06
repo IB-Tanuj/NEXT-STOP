@@ -107,7 +107,12 @@ export const searchBuses = async (req, res) => {
         }
 
         // 2. Search requested date
-        const searchData = await flixbusApi.searchTrips(fromCity.rapidapi_id, toCity.rapidapi_id, date);
+        let searchData = {};
+        try {
+            searchData = await flixbusApi.searchTrips(fromCity.rapidapi_id, toCity.rapidapi_id, date);
+        } catch (e) {
+            console.log(`RapidAPI search error for ${date}: ${e.message}. Will try fallback if applicable.`);
+        }
         const trips = searchData.trips || [];
 
         if (trips.length > 0) {
