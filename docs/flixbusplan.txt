@@ -22,15 +22,15 @@ The network is structured across three distinct distance tiers:
 Distance Tier            Average Range      Key Direct Route Examples
 Short-Distance           150 km – 300 km    • Delhi to Jaipur (~270 km)
                                             • Delhi to Haridwar (~220 km)
-                                            • Bengaluru to Mysuru (~145 km)
+                                            • Bengaluru to Mysuru (~145 km) etc.
 
 Mid-Distance             300 km – 600 km    • Delhi to Manali (~518 km)
                                             • Delhi to Amritsar (~450 km)
-                                            • Bengaluru to Hyderabad (~570 km)
+                                            • Bengaluru to Hyderabad (~570 km) etc.
                             
 Long-Distance(Max)       600 km – 850 km    • Delhi to Varanasi (~820 km)
                                             • Delhi to Katra/Vaishno Devi (~650 km)
-                                            • Bengaluru to Kochi (~700 km)
+                                            • Bengaluru to Kochi (~700 km) etc.
 
 
 # Key Database Entities (Data Model)

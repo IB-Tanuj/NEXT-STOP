@@ -1,0 +1,48 @@
+Starting with skills .
+language :- i know python , C , C++ and put the language we used for this project.
+
+let me just put everything here no tags .
+
+numpy     #can work with
+pandas    #can work with
+polars    # i have only readed about it   
+
+Matplotlib   #about to study but have general knowledge about it 
+Plotly      #about to study but have general knowledge about it 
+seaborn     #about to study but have general knowledge about it
+
+
+Scikit-Learn   #about to study but have general knowledge about it
+XGBoost        #about to study but have general knowledge about it
+
+PyTorch        #about to study but have general knowledge about it  (interested)
+Tensorflow     #about to study but have general knowledge about it (interested)
+
+LangChain / LangGraph  # have basic knowledge
+
+Database = supabase which we are using and for vectoe database use pinecone
+
+EXPERIENE = NONE ( SADLY )
+
+PROJECTS 
+you know already what the project is so use all good points of it  , and also what i have learned in it .
+
+and also add one more project Customer Churn Prediction , its about using ML and deep learning to predict customer churn and also use explainable AI to explain the predictions . ( and we have to built it in few weeks for a prove )
+
+
+ACHIEVEMENTS AND CERTIFICATES
+
+participated in samsung solve for tomorrow 2026 with a working prototype 
+completed Ml training by acmegrade ( certificate is present )
+NPTEL ONLINE CRETIFICATE in python for data science
+AWs trainingand certification of AI practitioner
+completed data science course (certificate present )
+
+EDUCATION
+Greater Noida Institute of Technology Greater Noida, UP
+Bachelor of Science Computer Science | CGPA: 7.6 Aug 2024 - Present
+ 
+ sarvodaya vidyalaya dichaon kalan ,new delhi
+Intermediate | Percentage: 78%   june 2022- may2024
+Dhruva Public school  , new delhi
+Matriculation | Percentage: 80%  july 2022

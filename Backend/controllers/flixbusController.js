@@ -3,6 +3,30 @@ import supabase from '../config/supabase.js';
 import crypto from 'crypto';
 
 /**
+ * Deduplicate trips: group by departure time, keep only the first trip per group.
+ * The FlixBus API returns many sub-routes for the same physical bus (different drop-off points),
+ * resulting in 500+ entries when there are really only ~42 buses.
+ * The real FlixBus website shows only the first entry per departure time.
+ */
+const deduplicateTrips = (trips) => {
+    const seen = new Map();
+    const unique = [];
+
+    for (const trip of trips) {
+        const depTime = trip.departure?.time;
+        if (!depTime) continue;
+
+        if (!seen.has(depTime)) {
+            seen.set(depTime, true);
+            unique.push(trip);
+        }
+    }
+
+    console.log(`[DEDUP] ${trips.length} raw → ${unique.length} unique trips`);
+    return unique;
+};
+
+/**
  * Deterministically pick a layout ID based on the trip ID
  */
 const assignLayoutToTrip = async (apiTripId) => {
@@ -116,11 +140,16 @@ export const searchBuses = async (req, res) => {
         const trips = searchData.trips || [];
 
         if (trips.length > 0) {
-            // Found trips! Attach layout info and return.
-            const enhancedTrips = await Promise.all(trips.map(async (trip) => {
+            // Deduplicate: keep only the first trip per departure time
+            const uniqueTrips = deduplicateTrips(trips);
+
+            // Attach layout info, strip seat availability
+            const enhancedTrips = await Promise.all(uniqueTrips.map(async (trip) => {
                 const layout = await assignLayoutToTrip(trip.id);
+                // Remove seat count from listing — will be fetched separately
+                const { availability, ...tripWithoutSeats } = trip;
                 return {
-                    ...trip,
+                    ...tripWithoutSeats,
                     assignedLayoutId: layout?.id,
                     totalCapacity: layout?.total_capacity
                 };
