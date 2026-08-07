@@ -143,13 +143,11 @@ export const searchBuses = async (req, res) => {
             // Deduplicate: keep only the first trip per departure time
             const uniqueTrips = deduplicateTrips(trips);
 
-            // Attach layout info, strip seat availability
+            // Attach layout info (seat count stays — it's free from the search response)
             const enhancedTrips = await Promise.all(uniqueTrips.map(async (trip) => {
                 const layout = await assignLayoutToTrip(trip.id);
-                // Remove seat count from listing — will be fetched separately
-                const { availability, ...tripWithoutSeats } = trip;
                 return {
-                    ...tripWithoutSeats,
+                    ...trip,
                     assignedLayoutId: layout?.id,
                     totalCapacity: layout?.total_capacity
                 };
@@ -157,11 +155,11 @@ export const searchBuses = async (req, res) => {
             return res.json({ trips: enhancedTrips });
         }
 
-        // 3. Tier 1: No trips found — auto-check next 7 days
-        console.log(`No trips on ${date}. Checking next 7 days...`);
+        // 3. No trips found — auto-check next 2 days only (to save API quota)
+        console.log(`No trips on ${date}. Checking next 2 days...`);
         let nextAvailableDate = null;
 
-        for (let i = 1; i <= 7; i++) {
+        for (let i = 1; i <= 2; i++) {
             const checkDate = new Date(date);
             checkDate.setDate(checkDate.getDate() + i);
             const dateStr = checkDate.toISOString().split('T')[0];
