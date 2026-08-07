@@ -708,7 +708,6 @@ const BusLoversPage = ({ theme, onClose }) => {
                       </div>
                       <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#888' }}>
                         <span>⏱ {trip.duration?.hours}h {trip.duration?.minutes}m</span>
-                        <span>💺 {trip.availability?.seats} seats left</span>
                         {trip.transferType && <span>🚌 {trip.transferType}</span>}
                       </div>
                     </div>
