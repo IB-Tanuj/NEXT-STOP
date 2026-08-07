@@ -572,7 +572,7 @@ const BusLoversPage = ({ theme, onClose }) => {
                 </div>
               )}
 
-              {/* ─── Tier 2: No trips in 7 days ─── */}
+              {/* ─── Tier 2: No trips in 2 days ─── */}
               {noTripsIn7Days && !monthDate && !noTripsThisMonth && (
                 <div style={{
                   marginTop: '20px', padding: '20px', borderRadius: '14px',
@@ -581,7 +581,7 @@ const BusLoversPage = ({ theme, onClose }) => {
                   textAlign: 'center'
                 }}>
                   <p style={{ color: '#ffaa00', fontSize: '15px', fontWeight: 500, margin: '0 0 14px 0' }}>
-                    😕 No buses available for the next 7 days
+                    😕 Oops! Seems like there are no buses for next 2 days
                   </p>
                   <button
                     onClick={handleSearchMonth}
@@ -708,6 +708,7 @@ const BusLoversPage = ({ theme, onClose }) => {
                       </div>
                       <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#888' }}>
                         <span>⏱ {trip.duration?.hours}h {trip.duration?.minutes}m</span>
+                        {trip.availability?.seats != null && <span>💺 {trip.availability.seats} seats left</span>}
                         {trip.transferType && <span>🚌 {trip.transferType}</span>}
                       </div>
                     </div>
