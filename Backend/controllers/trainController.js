@@ -15,7 +15,6 @@ export const getTrainStatus = async (req, res) => {
             url: `https://${process.env.RAPIDAPI_HOST}/api/trains-search/v1/train/${trainNo}`,
             params: { isH5: 'true', client: 'web' },
             headers: {
-            headers: {
                 'x-rapidapi-host': process.env.RAPIDAPI_HOST
             }
         };
@@ -79,7 +78,6 @@ export const searchTrains = async (req, res) => {
             method: 'GET',
             url: `https://${process.env.RAPIDAPI_HOST}/between/${from}/${toCode}`,
             params: { date: dateStr },
-            headers: {
             headers: {
                 'x-rapidapi-host': process.env.RAPIDAPI_HOST
             }
