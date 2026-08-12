@@ -87,6 +87,7 @@ export const searchFlights = async (req, res) => {
               'x-rapidapi-host': rapidHost
             },
             timeout: 10000
+          };
           const apiRes = await runWithKeyRotation(async (apiKey) => {
             options.headers['x-rapidapi-key'] = apiKey;
             return await axios.request(options);
