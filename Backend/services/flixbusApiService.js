@@ -17,7 +17,7 @@ const fetchFromFlixbus = async (endpoint) => {
     const currentHost = getApiHost();
     const url = `https://${currentHost}${endpoint}`;
     
-    return await runWithKeyRotation(async (apiKey) => {
+    return await runWithKeyRotation(currentHost, async (apiKey) => {
         const res = await fetch(url, {
             method: 'GET',
             headers: {
