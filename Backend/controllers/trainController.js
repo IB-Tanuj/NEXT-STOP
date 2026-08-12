@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { destinationStations } from '../utils/destinationStations.js';
+import { runWithKeyRotation } from '../utils/rapidApiKeyManager.js';
 
 // Simple in-memory cache
 const cache = {};
@@ -14,11 +15,14 @@ export const getTrainStatus = async (req, res) => {
             url: `https://${process.env.RAPIDAPI_HOST}/api/trains-search/v1/train/${trainNo}`,
             params: { isH5: 'true', client: 'web' },
             headers: {
-                'x-rapidapi-key': process.env.RAPIDAPI_KEY,
+            headers: {
                 'x-rapidapi-host': process.env.RAPIDAPI_HOST
             }
         };
-        const response = await axios.request(options);
+        const response = await runWithKeyRotation(async (apiKey) => {
+            options.headers['x-rapidapi-key'] = apiKey;
+            return await axios.request(options);
+        });
         res.json(response.data);
     } catch (error) {
         console.error("Error fetching train status:", error.response?.data || error.message);
@@ -76,12 +80,15 @@ export const searchTrains = async (req, res) => {
             url: `https://${process.env.RAPIDAPI_HOST}/between/${from}/${toCode}`,
             params: { date: dateStr },
             headers: {
-                'x-rapidapi-key': process.env.RAPIDAPI_KEY,
+            headers: {
                 'x-rapidapi-host': process.env.RAPIDAPI_HOST
             }
         };
 
-        const response = await axios.request(options);
+        const response = await runWithKeyRotation(async (apiKey) => {
+            options.headers['x-rapidapi-key'] = apiKey;
+            return await axios.request(options);
+        });
 
         const responseData = {
             from: from,
