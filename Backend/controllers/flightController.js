@@ -2,6 +2,7 @@ import axios from 'axios';
 import { getAirportByDestination, getAirportByCode, searchAirports as searchAirportsUtil } from '../utils/destinationAirports.js';
 import { searchAndFetchMultiple } from '../services/tinyfishService.js';
 import { generateFlightSearchQuery, cleanWebDataWithKey } from '../services/queryRouterService.js';
+import { runWithKeyRotation } from '../utils/rapidApiKeyManager.js';
 
 // Simple in-memory cache with request deduplication
 const flightCache = new Map();
@@ -86,8 +87,10 @@ export const searchFlights = async (req, res) => {
               'x-rapidapi-host': rapidHost
             },
             timeout: 10000
-          };
-          const apiRes = await axios.request(options);
+          const apiRes = await runWithKeyRotation(async (apiKey) => {
+            options.headers['x-rapidapi-key'] = apiKey;
+            return await axios.request(options);
+          });
           
           const firstFlight = apiRes.data?.data?.itineraries?.topFlights?.[0] || apiRes.data?.data?.itineraries?.otherFlights?.[0];
           
