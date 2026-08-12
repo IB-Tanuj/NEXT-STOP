@@ -56,10 +56,11 @@ export const getAllKeys = () => {
 };
 
 /**
- * Get an available RapidAPI key that is not dead,
+ * Get an available RapidAPI key that is not dead for the given host,
  * or whose dead duration has expired.
+ * @param {string} host - The RapidAPI host
  */
-export const getAvailableKey = () => {
+export const getAvailableKey = (host) => {
     const allKeys = getAllKeys();
     if (allKeys.length === 0) return null;
 
@@ -67,53 +68,60 @@ export const getAvailableKey = () => {
     const now = Date.now();
 
     for (const key of allKeys) {
-        const deadInfo = deadKeys[key];
+        if (!deadKeys[key]) deadKeys[key] = {};
+        
+        const deadInfo = deadKeys[key][host];
         if (!deadInfo) {
-            return key; // Key is alive
+            return key; // Key is alive for this host
         }
 
-        // Check if the dead duration has expired
+        // Check if the dead duration has expired for this host
         if (now - deadInfo.diedAt > DEAD_DURATION_MS) {
-            console.log(`[RapidAPI Manager] Resurrecting key ${key.substring(0, 5)}... (30 days passed)`);
-            delete deadKeys[key];
+            console.log(`[RapidAPI Manager] Resurrecting key ${key.substring(0, 5)}... for host ${host} (30 days passed)`);
+            delete deadKeys[key][host];
             saveDeadKeys(deadKeys);
             return key;
         }
     }
 
-    return null; // All keys are dead
+    return null; // All keys are dead for this host
 };
 
 /**
- * Mark a specific key as dead due to rate limits
+ * Mark a specific key as dead for a specific host due to rate limits
+ * @param {string} key - The RapidAPI key
+ * @param {string} host - The RapidAPI host
  */
-export const markKeyAsDead = (key) => {
-    if (!key) return;
+export const markKeyAsDead = (key, host) => {
+    if (!key || !host) return;
     const deadKeys = loadDeadKeys();
     
+    if (!deadKeys[key]) deadKeys[key] = {};
+    
     // Only mark it if it's not already marked recently
-    if (!deadKeys[key]) {
-        deadKeys[key] = { diedAt: Date.now() };
+    if (!deadKeys[key][host]) {
+        deadKeys[key][host] = { diedAt: Date.now() };
         saveDeadKeys(deadKeys);
-        console.warn(`[RapidAPI Manager] Marked key ${key.substring(0, 5)}... as DEAD.`);
+        console.warn(`[RapidAPI Manager] Marked key ${key.substring(0, 5)}... as DEAD for host ${host}.`);
     }
 };
 
 /**
  * Wrapper to automatically run an API call and rotate keys on 429/503 errors.
  * 
+ * @param {string} host - The RapidAPI host for this request
  * @param {Function} taskFn - An async function that takes (apiKey) and returns a Promise.
  * @returns {Promise<any>}
  */
-export const runWithKeyRotation = async (taskFn) => {
+export const runWithKeyRotation = async (host, taskFn) => {
     const allKeysCount = getAllKeys().length;
     let attempts = 0;
     
     while (attempts <= allKeysCount) {
-        const apiKey = getAvailableKey();
+        const apiKey = getAvailableKey(host);
         
         if (!apiKey) {
-            throw new Error("No RapidAPI keys available (all are rate-limited or exhausted).");
+            throw new Error(`No RapidAPI keys available for host ${host} (all are rate-limited or exhausted).`);
         }
 
         try {
@@ -124,8 +132,8 @@ export const runWithKeyRotation = async (taskFn) => {
             
             // Note: 403 can also be an authentication/quota issue from RapidAPI.
             if (status === 429 || status === 503 || status === 403) {
-                console.warn(`[RapidAPI Manager] Key ${apiKey.substring(0, 5)}... hit rate limit/forbidden (Status ${status}). Marking as dead and retrying.`);
-                markKeyAsDead(apiKey);
+                console.warn(`[RapidAPI Manager] Key ${apiKey.substring(0, 5)}... hit rate limit/forbidden (Status ${status}) on host ${host}. Marking as dead and retrying.`);
+                markKeyAsDead(apiKey, host);
                 attempts++;
             } else {
                 // Not a rate limit issue, bubble it up
@@ -134,5 +142,5 @@ export const runWithKeyRotation = async (taskFn) => {
         }
     }
 
-    throw new Error("All available RapidAPI keys failed with rate limits during this request.");
+    throw new Error(`All available RapidAPI keys failed with rate limits during this request for host ${host}.`);
 };
