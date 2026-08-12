@@ -1,5 +1,6 @@
 import express from "express";
 import axios from "axios";
+import { runWithKeyRotation } from "../utils/rapidApiKeyManager.js";
 
 const router = express.Router();
 
@@ -26,30 +27,32 @@ router.get("/search", async (req, res) => {
       return res.json({ images: cached.images, cached: true });
     }
 
-    const response = await axios.get(
-      `https://${process.env.RAPIDAPI_IMAGES_HOST}/search`,
-      {
-        params: {
-          query: q,
-          limit: parseInt(limit),
-          size: "medium",
-          color: "any",
-          type: "photo",
-          time: "any",
-          usage_rights: "any",
-          file_type: "any",
-          aspect_ratio: "any",
-          safe_search: "off",
-          region: "in", // India-focused results
-        },
-        headers: {
-          "x-rapidapi-key": process.env.RAPIDAPI_KEY,
-          "x-rapidapi-host": process.env.RAPIDAPI_IMAGES_HOST,
-          "Content-Type": "application/json",
-        },
-        timeout: 15000,
-      }
-    );
+    const response = await runWithKeyRotation(async (apiKey) => {
+      return await axios.get(
+        `https://${process.env.RAPIDAPI_IMAGES_HOST}/search`,
+        {
+          params: {
+            query: q,
+            limit: parseInt(limit),
+            size: "medium",
+            color: "any",
+            type: "photo",
+            time: "any",
+            usage_rights: "any",
+            file_type: "any",
+            aspect_ratio: "any",
+            safe_search: "off",
+            region: "in", // India-focused results
+          },
+          headers: {
+            "x-rapidapi-key": apiKey,
+            "x-rapidapi-host": process.env.RAPIDAPI_IMAGES_HOST,
+            "Content-Type": "application/json",
+          },
+          timeout: 15000,
+        }
+      );
+    });
 
     // Extract image URLs from response
     const results = response.data?.data || response.data?.results || [];
