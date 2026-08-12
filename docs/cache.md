@@ -48,7 +48,7 @@ A reusable, singleton `MemoryCache` class exported as a default instance.
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `get` | `get(key): any \| null` | Returns the cached value, or `null` if missing/expired. Auto-deletes expired entries on access. |
+| `get`  | `get(key): any \| null` | Returns the cached value, or `null` if missing/expired. Auto-deletes expired entries on access. |
 | `set` | `set(key, value, ttlMs)` | Stores a value with an absolute `expiresAt` timestamp. |
 | `has` | `has(key): boolean` | Returns `true` if a non-expired entry exists. |
 | `delete` | `delete(key)` | Removes a specific key. |
