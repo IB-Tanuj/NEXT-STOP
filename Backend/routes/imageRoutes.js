@@ -27,7 +27,7 @@ router.get("/search", async (req, res) => {
       return res.json({ images: cached.images, cached: true });
     }
 
-    const response = await runWithKeyRotation(async (apiKey) => {
+    const response = await runWithKeyRotation(process.env.RAPIDAPI_IMAGES_HOST, async (apiKey) => {
       return await axios.get(
         `https://${process.env.RAPIDAPI_IMAGES_HOST}/search`,
         {
