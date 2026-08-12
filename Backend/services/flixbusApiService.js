@@ -1,58 +1,43 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import cache from '../utils/cache.js';
+import { runWithKeyRotation } from '../utils/rapidApiKeyManager.js';
 
 // Cache TTL constants
 const TTL_REACHABLE = 24 * 60 * 60 * 1000;  // 24 hours
 const TTL_SEARCH    = 10 * 60 * 1000;        // 10 minutes
 const TTL_TIMETABLE = 10 * 60 * 1000;        // 10 minutes
 
-// Key Rotation Logic
-const getApiKey = () => {
-    // Default to the 2nd key since the 1st one is exhausted for the month.
-    global.activeFlixbusKeyIndex = global.activeFlixbusKeyIndex || 2;
-    if (global.activeFlixbusKeyIndex === 1) return process.env.RAPIDAPI_KEY;
-    return process.env.RAPIDAPI_KEY_2 || process.env.RAPIDAPI_KEY;
-};
-
 const getApiHost = () => {
-    return process.env.RAPID_HOST_2 || 'flixbus-api2.p.rapidapi.com';
+    return process.env.RAPIDAPI_FLIXBUS_HOST || process.env.RAPID_HOST_2 || 'flixbus-api2.p.rapidapi.com';
 };
 
-const rotateKey = () => {
-    console.log(`[API WARNING] Key ${global.activeFlixbusKeyIndex} rate limited. Rotating key...`);
-    global.activeFlixbusKeyIndex = global.activeFlixbusKeyIndex === 1 ? 2 : 1;
-};
-
-// Generic Fetch Wrapper
-const fetchFromFlixbus = async (endpoint, retries = 1) => {
+// Generic Fetch Wrapper using Key Rotation
+const fetchFromFlixbus = async (endpoint) => {
     const currentHost = getApiHost();
     const url = `https://${currentHost}${endpoint}`;
     
-    try {
+    return await runWithKeyRotation(async (apiKey) => {
         const res = await fetch(url, {
             method: 'GET',
             headers: {
-                'x-rapidapi-key': getApiKey(),
+                'x-rapidapi-key': apiKey,
                 'x-rapidapi-host': currentHost,
                 'Content-Type': 'application/json'
             }
         });
 
-        if (res.status === 429 && retries > 0) {
-            rotateKey();
-            return fetchFromFlixbus(endpoint, retries - 1);
-        }
-
         if (!res.ok) {
-            throw new Error(`Flixbus API Error: ${res.status}`);
+            const err = new Error(`Flixbus API Error: ${res.status}`);
+            err.status = res.status;
+            throw err;
         }
 
         return await res.json();
-    } catch (error) {
+    }).catch(error => {
         console.error(`[Flixbus API] Request failed for ${url}:`, error.message);
         throw error;
-    }
+    });
 };
 
 export const flixbusApi = {
