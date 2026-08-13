@@ -575,7 +575,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
 
   const selectableRow = (label, sublabel, rightTop, rightBottom, isSelected, onClick, danger = false, keyProp) => (
     <div
-      key={keyProp}
+      key={keyProp || `${label}-${sublabel}`}
       onClick={onClick}
       style={{
         padding: "12px 16px",
