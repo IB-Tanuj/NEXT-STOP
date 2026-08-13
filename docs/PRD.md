@@ -23,6 +23,7 @@
 - International trip planning (currently limited to India)
 - Direct flight or hotel booking transactions
 - Advanced social networking features
+- availability check for hotels and travel.
 
 **User Stories** =
 - As a traveler, I want to search for a location so that I can see its details and decide if I want to visit.
