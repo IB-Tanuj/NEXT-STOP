@@ -912,7 +912,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
           <div style={{ color: theme.text, fontWeight: "700", fontSize: "15px", margin: "16px 0 10px" }}>
             Step 2 — Airport → {location?.name} transfer:
           </div>
-          {Object.entries(mediumData.transfer || {}).map(([key, val]) => selectableRow(
+          {Object.entries(mediumData.transfer || {}).map(([key, val], i) => selectableRow(
             key === "cab" ? "🚕 Cab" : key === "selfDrive" ? "🚗 Self Drive" : "🚙 SUV/Premium Cab",
             `Duration: ${val.duration}`,
             `₹${val.min}–₹${val.max}`, "per transfer",
