@@ -8,8 +8,8 @@ This document tracks the technical issues and bugs we have encountered during de
 
 
 ### 2. General State Management (Placeholder)
-- **Issue**: 
-- **Fix**: 
+- **Issue**: In homepage and mainly in map there are placeholders for spot images
+- **Fix**: I used the real time image serch api for this and i am locally storing the url stringd of these images .
 
 ---
 *Note: Add new errors and their solutions here as they occur to maintain a knowledge base for the project.*
