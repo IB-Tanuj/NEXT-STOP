@@ -83,7 +83,7 @@ export const searchTrains = async (req, res) => {
             }
         };
 
-        const response = await runWithKeyRotation(async (apiKey) => {
+        const response = await runWithKeyRotation(process.env.RAPIDAPI_HOST, async (apiKey) => {
             options.headers['x-rapidapi-key'] = apiKey;
             return await axios.request(options);
         });
