@@ -11,5 +11,8 @@ This document tracks the technical issues and bugs we have encountered during de
 - **Issue**: In homepage and mainly in map there are placeholders for spot images
 - **Fix**: I used the real time image serch api for this and i am locally storing the url stringd of these images .
 
+### 3. Hotel Searches
+- **Issue**: Tiny fish and groq combination gives nice search results but the prices are little off and it's not show results everytime .
+- **Fix**: Start using booking.com api .
 ---
 *Note: Add new errors and their solutions here as they occur to maintain a knowledge base for the project.*
