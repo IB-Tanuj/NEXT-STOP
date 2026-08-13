@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { runWithKeyRotation } from '../utils/rapidApiKeyManager.js';
+import { getLocationId } from '../utils/hotelLocationCache.js';
 
 // Simple in-memory cache to save quota
 const cache = {};
@@ -8,7 +9,7 @@ const CACHE_DURATION = 3 * 60 * 60 * 1000; // 3 hours
 export const searchHotels = async (req, res) => {
     try {
         const { 
-            locationId, 
+            destination, 
             daysOfStay, 
             transportMode, 
             travelDurationHours,
@@ -16,8 +17,14 @@ export const searchHotels = async (req, res) => {
             adults = 2 // Default to 2 adults if not provided
         } = req.query;
 
-        if (!locationId || !daysOfStay) {
-            return res.status(400).json({ error: "locationId and daysOfStay are required." });
+        if (!destination || !daysOfStay) {
+            return res.status(400).json({ error: "destination and daysOfStay are required." });
+        }
+
+        // Fetch the location ID using our smart cache
+        const locationId = await getLocationId(destination);
+        if (!locationId) {
+            return res.status(404).json({ error: `Could not find a valid location ID for destination: ${destination}` });
         }
 
         // --- Smart Date Logic ---
