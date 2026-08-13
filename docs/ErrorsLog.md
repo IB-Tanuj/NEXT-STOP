@@ -14,5 +14,9 @@ This document tracks the technical issues and bugs we have encountered during de
 ### 3. Hotel Searches
 - **Issue**: Tiny fish and groq combination gives nice search results but the prices are little off and it's not show results everytime .
 - **Fix**: Start using booking.com api .
+
+
+### 4. 
+
 ---
 *Note: Add new errors and their solutions here as they occur to maintain a knowledge base for the project.*
