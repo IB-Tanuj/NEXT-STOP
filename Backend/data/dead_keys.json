@@ -3,6 +3,9 @@
     "diedAt": 1786536188109,
     "some-host.com": {
       "diedAt": 1786539817410
+    },
+    "booking-com18.p.rapidapi.com": {
+      "diedAt": 1786598053368
     }
   }
 }
