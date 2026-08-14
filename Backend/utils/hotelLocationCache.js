@@ -68,7 +68,8 @@ export const getLocationId = async (destination) => {
         const options = {
             method: 'GET',
             url: `https://${process.env.RAPIDAPI_HOTEL_HOST}/stays/auto-complete`,
-            params: { query: destination },
+            // Append "India" to prefer Indian destinations (this is an India-focused travel site)
+            params: { query: `${destination} India` },
             headers: {
                 'x-rapidapi-host': process.env.RAPIDAPI_HOTEL_HOST
             }
@@ -81,15 +82,16 @@ export const getLocationId = async (destination) => {
 
         const data = response.data?.data;
         if (data && data.length > 0) {
-            // Find the first city or district (usually index 0 is most relevant)
-            const bestMatch = data.find(item => item.dest_type === 'city') || data[0];
+            // Prefer Indian results, then fall back to first city/region match
+            const indianMatch = data.find(item => item.country === 'India');
+            const bestMatch = indianMatch || data.find(item => item.dest_type === 'city') || data[0];
             const locationId = bestMatch.id;
             
             if (locationId) {
                 // Save it to cache
                 locations[normalizedDest] = locationId;
                 saveLocations(locations);
-                console.log(`[Hotel Cache] Successfully cached location ID for "${destination}".`);
+                console.log(`[Hotel Cache] Successfully cached location ID for "${destination}" (${bestMatch.name}, ${bestMatch.country}).`);
                 return locationId;
             }
         }
