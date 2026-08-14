@@ -152,6 +152,7 @@ function App() {
       transition: "all 0.8s ease",
     }}>
       <Routes>
+        <Route path="/dev" element={<DevAdminPage theme={theme} setLocationTheme={setLocationTheme} />} />
         <Route path="/" element={
           <>
             <Navbar theme={theme} isMobile={isMobile} 
