@@ -780,37 +780,55 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
               </div>
             </div>
           ) : stayOptions.length > 0 ? (
-            stayOptions.map((stay, i) => {
-              const isSelected = selectedStayIndex === i
-              const thisCost = stay.pricePerNight * preferences.days * (isGroup ? (roomOption === "one" ? 1 : roomOption === "two" ? 2 : groupSize) : 1)
-              const thisBuffer = totalBudget - totalEntryCost - transportCost - thisCost
-              return (
-                <div
-                  key={i}
-                  onClick={() => setSelectedStayIndex(i)}
+            <>
+              {stayOptions.slice(0, visibleStaysCount).map((stay, i) => {
+                const isSelected = selectedStayIndex === i
+                const thisCost = stay.pricePerNight * preferences.days * (isGroup ? (roomOption === "one" ? 1 : roomOption === "two" ? 2 : groupSize) : 1)
+                const thisBuffer = totalBudget - totalEntryCost - transportCost - thisCost
+                return (
+                  <div
+                    key={i}
+                    onClick={() => setSelectedStayIndex(i)}
+                    style={{
+                      padding: "14px 16px", borderRadius: "12px", marginBottom: "8px",
+                      border: `2px solid ${isSelected ? theme.primary : theme.primary + "22"}`,
+                      background: isSelected ? `${theme.primary}22` : "transparent",
+                      cursor: "pointer", transition: "all 0.3s ease",
+                    }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                      <div style={{ color: isSelected ? theme.primary : theme.text, fontWeight: isSelected ? "800" : "600", fontSize: "14px" }}>
+                        {isSelected ? "⭐ " : ""}{stay.name}
+                      </div>
+                      <div style={{ color: theme.primary, fontWeight: "800" }}>₹{stay.pricePerNight}/night</div>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <div style={{ color: theme.subtext, fontSize: "11px" }}>
+                        ⭐ {stay.rating} · 👥 {stay.maxCapacity} people · {stay.highlight}
+                      </div>
+                      <div style={{ color: thisBuffer >= 0 ? theme.subtext : "#ff6b6b", fontSize: "11px" }}>
+                        {thisBuffer >= 0 ? `₹${thisBuffer.toLocaleString("en-IN")} left` : `₹${Math.abs(thisBuffer).toLocaleString("en-IN")} over`}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+              
+              {visibleStaysCount < stayOptions.length && (
+                <div 
+                  onClick={() => setVisibleStaysCount(prev => Math.min(prev + 5, stayOptions.length))}
                   style={{
-                    padding: "14px 16px", borderRadius: "12px", marginBottom: "8px",
-                    border: `2px solid ${isSelected ? theme.primary : theme.primary + "22"}`,
-                    background: isSelected ? `${theme.primary}22` : "transparent",
-                    cursor: "pointer", transition: "all 0.3s ease",
-                  }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                    <div style={{ color: isSelected ? theme.primary : theme.text, fontWeight: isSelected ? "800" : "600", fontSize: "14px" }}>
-                      {isSelected ? "⭐ " : ""}{stay.name}
-                    </div>
-                    <div style={{ color: theme.primary, fontWeight: "800" }}>₹{stay.pricePerNight}/night</div>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <div style={{ color: theme.subtext, fontSize: "11px" }}>
-                      ⭐ {stay.rating} · 👥 {stay.maxCapacity} people · {stay.highlight}
-                    </div>
-                    <div style={{ color: thisBuffer >= 0 ? theme.subtext : "#ff6b6b", fontSize: "11px" }}>
-                      {thisBuffer >= 0 ? `₹${thisBuffer.toLocaleString("en-IN")} left` : `₹${Math.abs(thisBuffer).toLocaleString("en-IN")} over`}
-                    </div>
-                  </div>
+                    padding: "10px", textAlign: "center", color: theme.primary, 
+                    fontWeight: "700", fontSize: "13px", cursor: "pointer",
+                    borderRadius: "8px", background: `${theme.primary}11`,
+                    marginTop: "4px", marginBottom: "8px", transition: "background 0.2s"
+                  }}
+                  onMouseOver={e => e.currentTarget.style.background = `${theme.primary}22`}
+                  onMouseOut={e => e.currentTarget.style.background = `${theme.primary}11`}
+                >
+                  Show more ⬇
                 </div>
-              )
-            })
+              )}
+            </>
           ) : null}
 
           {isGroup && stayOptions.length > 0 && !stayLoading && (
