@@ -301,6 +301,45 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     })
     if (calculatedDist) params.set('distanceKms', String(calculatedDist))
 
+    if (sessionStorage.getItem('DEV_MOCK_API') === 'true') {
+      setTimeout(() => {
+        setStayError("Mock API Mode Enabled - Trying TinyFish fallback")
+        setStayLoading(false)
+        
+        // Directly trigger the fallback fetch logic since the normal fetch chain won't run
+        fetch('/api/live/search-stays', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            location: location?.name || locationKey,
+            days: preferences.days,
+            budgetType: preferences.budgetType,
+            groupSize: isGroup ? groupSize : 1
+          }),
+          signal: controller.signal
+        })
+        .then(r => r.json())
+        .then(tinyData => {
+          if (tinyData?.stays) {
+            setStayOptions(tinyData.stays.map(s => ({
+              ...s,
+              pricePerNight: Math.round(Number(s.totalCost) / Number(preferences.days)),
+              maxCapacity: groupSize,
+            })))
+            setSelectedStayIndex(0)
+            setStayError(null)
+          } else {
+            throw new Error("TinyFish mock failed")
+          }
+        })
+        .catch(err => {
+          if (err.name !== "AbortError") setStayError(err.message)
+        })
+
+      }, 500)
+      return
+    }
+
     fetch(`/api/hotels/search?${params.toString()}`, { signal: controller.signal })
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
