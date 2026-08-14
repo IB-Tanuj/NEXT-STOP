@@ -813,21 +813,38 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
                 )
               })}
               
-              {visibleStaysCount < stayOptions.length && (
-                <div 
-                  onClick={() => setVisibleStaysCount(prev => Math.min(prev + 5, stayOptions.length))}
-                  style={{
-                    padding: "10px", textAlign: "center", color: theme.primary, 
-                    fontWeight: "700", fontSize: "13px", cursor: "pointer",
-                    borderRadius: "8px", background: `${theme.primary}11`,
-                    marginTop: "4px", marginBottom: "8px", transition: "background 0.2s"
-                  }}
-                  onMouseOver={e => e.currentTarget.style.background = `${theme.primary}22`}
-                  onMouseOut={e => e.currentTarget.style.background = `${theme.primary}11`}
-                >
-                  Show more ⬇
-                </div>
-              )}
+              <div style={{ display: "flex", gap: "10px" }}>
+                {visibleStaysCount < stayOptions.length && (
+                  <div 
+                    onClick={() => setVisibleStaysCount(prev => Math.min(prev + 5, stayOptions.length))}
+                    style={{
+                      flex: 1, padding: "10px", textAlign: "center", color: theme.primary, 
+                      fontWeight: "700", fontSize: "13px", cursor: "pointer",
+                      borderRadius: "8px", background: `${theme.primary}11`,
+                      marginTop: "4px", marginBottom: "8px", transition: "background 0.2s"
+                    }}
+                    onMouseOver={e => e.currentTarget.style.background = `${theme.primary}22`}
+                    onMouseOut={e => e.currentTarget.style.background = `${theme.primary}11`}
+                  >
+                    Show more ⬇
+                  </div>
+                )}
+                {visibleStaysCount > 5 && (
+                  <div 
+                    onClick={() => setVisibleStaysCount(5)}
+                    style={{
+                      flex: 1, padding: "10px", textAlign: "center", color: theme.subtext, 
+                      fontWeight: "700", fontSize: "13px", cursor: "pointer",
+                      borderRadius: "8px", background: `rgba(255, 255, 255, 0.05)`,
+                      marginTop: "4px", marginBottom: "8px", transition: "background 0.2s"
+                    }}
+                    onMouseOver={e => e.currentTarget.style.background = `rgba(255, 255, 255, 0.1)`}
+                    onMouseOut={e => e.currentTarget.style.background = `rgba(255, 255, 255, 0.05)`}
+                  >
+                    Show less ⬆
+                  </div>
+                )}
+              </div>
             </>
           ) : null}
 
