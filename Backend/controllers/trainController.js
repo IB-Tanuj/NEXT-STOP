@@ -12,13 +12,13 @@ export const getTrainStatus = async (req, res) => {
         const { trainNo } = req.params;
         const options = {
             method: 'GET',
-            url: `https://${process.env.RAPIDAPI_HOST}/api/trains-search/v1/train/${trainNo}`,
+            url: `https://${process.env.RAPIDAPI_TRAIN_HOST}/api/trains-search/v1/train/${trainNo}`,
             params: { isH5: 'true', client: 'web' },
             headers: {
-                'x-rapidapi-host': process.env.RAPIDAPI_HOST
+                'x-rapidapi-host': process.env.RAPIDAPI_TRAIN_HOST
             }
         };
-        const response = await runWithKeyRotation(process.env.RAPIDAPI_HOST, async (apiKey) => {
+        const response = await runWithKeyRotation(process.env.RAPIDAPI_TRAIN_HOST, async (apiKey) => {
             options.headers['x-rapidapi-key'] = apiKey;
             return await axios.request(options);
         });
@@ -76,14 +76,14 @@ export const searchTrains = async (req, res) => {
 
         const options = {
             method: 'GET',
-            url: `https://${process.env.RAPIDAPI_HOST}/between/${from}/${toCode}`,
+            url: `https://${process.env.RAPIDAPI_TRAIN_HOST}/between/${from}/${toCode}`,
             params: { date: dateStr },
             headers: {
-                'x-rapidapi-host': process.env.RAPIDAPI_HOST
+                'x-rapidapi-host': process.env.RAPIDAPI_TRAIN_HOST
             }
         };
 
-        const response = await runWithKeyRotation(process.env.RAPIDAPI_HOST, async (apiKey) => {
+        const response = await runWithKeyRotation(process.env.RAPIDAPI_TRAIN_HOST, async (apiKey) => {
             options.headers['x-rapidapi-key'] = apiKey;
             return await axios.request(options);
         });
