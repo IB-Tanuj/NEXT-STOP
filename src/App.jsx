@@ -14,6 +14,7 @@ import ExploreSidebar from "./components/ExploreSidebar"
 import BudgetPage from "./components/BudgetPage"
 import PlanTripPage from "./components/PlanTripPage"
 import BusLoversPage from "./components/BusLoversPage"
+import DevAdminPage from "./components/DevAdminPage"
 
 import { allIndiaLocations } from "./data/allLocations"
 
