@@ -270,6 +270,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const [stayLoading, setStayLoading] = useState(false)
   const [stayError, setStayError] = useState(null)
   const [selectedStayIndex, setSelectedStayIndex] = useState(0)
+  const [visibleStaysCount, setVisibleStaysCount] = useState(5)
   const [manualPrice, setManualPrice] = useState("")
   const [roomOption, setRoomOption] = useState("separate")
 
@@ -280,6 +281,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     setStayLoading(true)
     setStayError(null)
     setStayOptions([]) // Clear old options
+    setVisibleStaysCount(5) // Reset visible count on new search
 
     // Build query params for hotel API
     const params = new URLSearchParams({
