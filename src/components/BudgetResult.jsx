@@ -195,6 +195,15 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     if (fromStation && preferences.transport === "train") {
       setTrainLoading(true)
       setTrainError(null)
+      
+      if (sessionStorage.getItem('DEV_MOCK_API') === 'true') {
+        setTimeout(() => {
+          setTrainError("Mock API Mode Enabled - Using Fallback Data")
+          setTrainLoading(false)
+        }, 500)
+        return
+      }
+
       fetch(`/api/trains/search?from=${fromStation}&to=${toStation}`)
         .then(res => {
           if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
