@@ -265,7 +265,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     }
   }, [preferences.transport, vehicleType, fuelType, groupSize, calculatedDist])
 
-  // ── Stay (TinyFish-powered live search) ─────────────────
+  // ── Stay (Booking.com via RapidAPI, TinyFish fallback) ────
   const [stayOptions, setStayOptions] = useState([])
   const [stayLoading, setStayLoading] = useState(false)
   const [stayError, setStayError] = useState(null)
@@ -280,31 +280,83 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     setStayLoading(true)
     setStayError(null)
     setStayOptions([]) // Clear old options
-    
-    fetch('/api/live/search-stays', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ location: location?.name, stayType: preferences.stayType }),
-      signal: controller.signal
+
+    // Build query params for hotel API
+    const params = new URLSearchParams({
+      destination: location?.name || locationKey,
+      daysOfStay: String(preferences.days || 3),
+      transportMode: preferences.transport || 'personal',
+      adults: String(isGroup ? groupSize : 2),
     })
+    if (calculatedDist) params.set('distanceKms', String(calculatedDist))
+
+    fetch(`/api/hotels/search?${params.toString()}`, { signal: controller.signal })
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()
       })
       .then(data => {
-        if (data.stays?.length > 0) {
-          setStayOptions(data.stays)
+        const hotels = data?.apiData?.data
+        if (Array.isArray(hotels) && hotels.length > 0) {
+          const daysOfStay = preferences.days || 3
+
+          // Map Booking.com response to our stayOptions format
+          const mapped = hotels.slice(0, 5).map(hotel => {
+            const totalPrice = hotel.priceBreakdown?.grossPrice?.value || 0
+            const currency = hotel.priceBreakdown?.grossPrice?.currency || 'INR'
+            // Convert to INR if needed (approximate rates)
+            let priceINR = totalPrice
+            if (currency === 'EUR') priceINR = totalPrice * 96
+            else if (currency === 'USD') priceINR = totalPrice * 85
+            else if (currency === 'GBP') priceINR = totalPrice * 108
+
+            const perNight = Math.round(priceINR / daysOfStay)
+            const stars = hotel.propertyClass || hotel.accuratePropertyClass || 0
+            const reviewWord = hotel.reviewScoreWord || ''
+            const starText = stars > 0 ? `${stars}★` : ''
+
+            return {
+              name: hotel.name || 'Hotel',
+              pricePerNight: perNight,
+              rating: hotel.reviewScore ? String(hotel.reviewScore) : 'N/A',
+              maxCapacity: 2, // Booking.com doesn't expose this directly; we searched with `adults` param
+              highlight: [starText, reviewWord].filter(Boolean).join(' · ') || 'Great stay',
+            }
+          })
+
+          setStayOptions(mapped)
           setSelectedStayIndex(0)
         } else {
-          throw new Error("No real stay options could be extracted")
+          throw new Error("No hotels found from Booking API")
         }
       })
       .catch(err => {
-        if (err.name === "AbortError") return // Ignore abort errors
-        console.warn("Stay search failed:", err.message)
-        setStayError(err.message)
-        setStayOptions([]) // Ensure options are clear on error
-        setSelectedStayIndex(-1) // Remove any selection
+        if (err.name === "AbortError") return
+
+        // Fallback to TinyFish if hotel API fails
+        console.warn("Hotel API failed, trying TinyFish fallback:", err.message)
+        fetch('/api/live/search-stays', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ location: location?.name, stayType: preferences.stayType }),
+          signal: controller.signal
+        })
+          .then(res => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
+          .then(data => {
+            if (data.stays?.length > 0) {
+              setStayOptions(data.stays)
+              setSelectedStayIndex(0)
+            } else {
+              throw new Error("No stay options from fallback either")
+            }
+          })
+          .catch(fallbackErr => {
+            if (fallbackErr.name === "AbortError") return
+            console.warn("TinyFish fallback also failed:", fallbackErr.message)
+            setStayError(fallbackErr.message)
+            setStayOptions([])
+            setSelectedStayIndex(-1)
+          })
       })
       .finally(() => {
         if (!controller.signal.aborted) {
