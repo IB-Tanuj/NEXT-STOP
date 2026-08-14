@@ -18,6 +18,7 @@
 - Saved itineraries and trip sharing
 - Live train status and booking integration
 - Real-time weather updates for destinations
+- Global backend caching for hotel image galleries (to save API quota)
 
 **Out of Scope** =
 - International trip planning (currently limited to India)
