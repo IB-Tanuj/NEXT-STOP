@@ -707,11 +707,11 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
           </div>
         </div>
 
-        {/* Stay Card — Live TinyFish Search */}
+        {/* Stay Card — Live Booking.com Search */}
         {card(<>
           {sectionLabel(`🏨 SELECT YOUR STAY IN ${location?.name?.toUpperCase()}`)}
           <div style={{ color: theme.subtext, fontSize: "12px", marginBottom: "16px" }}>
-            Showing real {preferences.stayType} options — tap to select
+            Showing real {preferences.stayType} options from Booking.com — tap to select
           </div>
 
           {stayLoading ? (
