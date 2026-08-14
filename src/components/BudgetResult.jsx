@@ -301,7 +301,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
           const daysOfStay = preferences.days || 3
 
           // Map Booking.com response to our stayOptions format
-          const mapped = hotels.slice(0, 5).map(hotel => {
+          let mapped = hotels.map(hotel => {
             const totalPrice = hotel.priceBreakdown?.grossPrice?.value || 0
             const currency = hotel.priceBreakdown?.grossPrice?.currency || 'INR'
             // Convert to INR if needed (approximate rates)
@@ -323,6 +323,34 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
               highlight: [starText, reviewWord].filter(Boolean).join(' · ') || 'Great stay',
             }
           })
+
+          // Filter and Sort based on stayType
+          const stayType = (preferences.stayType || '').toLowerCase();
+          let filtered = [...mapped];
+          
+          if (stayType === 'hostel') {
+             filtered = mapped.filter(h => h.pricePerNight >= 150 && h.pricePerNight <= 1200);
+             if (filtered.length === 0) filtered = [...mapped]; // Fallback if no matching prices
+             filtered.sort((a, b) => a.pricePerNight - b.pricePerNight);
+          } else if (stayType === 'budget') {
+             filtered = mapped.filter(h => h.pricePerNight >= 500 && h.pricePerNight <= 2500);
+             if (filtered.length === 0) filtered = [...mapped]; 
+             filtered.sort((a, b) => a.pricePerNight - b.pricePerNight);
+          } else if (stayType === 'mid') {
+             filtered = mapped.filter(h => h.pricePerNight >= 2000 && h.pricePerNight <= 6000);
+             if (filtered.length === 0) filtered = [...mapped];
+             filtered.sort((a, b) => a.pricePerNight - b.pricePerNight);
+          } else if (stayType === 'luxury') {
+             filtered = mapped.filter(h => h.pricePerNight >= 5000);
+             if (filtered.length === 0) filtered = [...mapped];
+             filtered.sort((a, b) => b.pricePerNight - a.pricePerNight); // Highest price first for luxury
+          } else {
+             // Fallback sort
+             filtered.sort((a, b) => a.pricePerNight - b.pricePerNight);
+          }
+          
+          // Return up to 20 hotels
+          mapped = filtered.slice(0, 20);
 
           setStayOptions(mapped)
           setSelectedStayIndex(0)
