@@ -14,8 +14,9 @@
 6. [Backend — Bus Controller Cache](#5-backend--bus-controller-cache)
 7. [Backend — Live Data Controller (Stay Search) Cache](#6-backend--live-data-controller-stay-search-cache)
 8. [Backend — Image Routes Cache](#7-backend--image-routes-cache)
-9. [Frontend — Image Cache (localStorage)](#8-frontend--image-cache-localstorage)
-10. [Summary Table](#summary-table)
+9. [Backend/Frontend — Itinerary Cache](#8-backendfrontend--itinerary-cache)
+10. [Frontend — Image Cache (localStorage)](#9-frontend--image-cache-localstorage)
+11. [Summary Table](#summary-table)
 
 ---
 
@@ -247,7 +248,44 @@ The response includes a `cached: boolean` flag so the client knows whether the r
 
 ---
 
-## 8. Frontend — Image Cache (localStorage)
+## 8. Backend/Frontend — Itinerary Cache
+
+**Backend File:** [`Backend/utils/itineraryCache.js`](file:///c:/Users/91928/trip-website/Backend/utils/itineraryCache.js) & [`Backend/controllers/tripController.js`](file:///c:/Users/91928/trip-website/Backend/controllers/tripController.js)  
+**Frontend File:** [`src/components/TripPlan.jsx`](file:///c:/Users/91928/trip-website/src/components/TripPlan.jsx)
+
+### Implementation
+
+A two-layer caching system to avoid expensive Groq API token usage for AI itinerary generation. 
+
+- **Storage:**
+  - **Frontend:** `sessionStorage`
+  - **Backend:** `Map` (`cache`) in `itineraryCache.js`
+- **TTL:** **None** (Backend: persists for process lifetime, Frontend: persists for session lifetime)
+- **Cache Key:** `itinerary:{loc}:{days}:{stay}:{trans}:act_{actNames}:fest_{festNames}:bucket_{budget}`
+- **Cached Function:** `generateItinerary`
+
+### Budget Bucketing
+
+To prevent cache busting on minor budget changes (e.g., swapping a hotel that changes the budget by ₹200), the budget is rounded to the nearest ₹500 increment using a `bucketize()` function.
+
+```js
+const BUCKET_SIZE = 500;
+const bucket = Math.round(budget / BUCKET_SIZE) * BUCKET_SIZE;
+```
+
+### Flow
+
+1. Frontend builds key using `buildItineraryCacheKey()`.
+2. Frontend checks `sessionStorage`. On hit, renders instantly without API call.
+3. On miss, Frontend calls `/api/trip/generate-itinerary`.
+4. Backend builds key using `buildCacheKey()` (same logic).
+5. Backend checks in-memory Map. On hit, responds with `X-Cache: HIT`.
+6. On miss, Backend calls Groq, saves result, and responds with `X-Cache: MISS`.
+7. Frontend receives response and saves it in `sessionStorage`.
+
+---
+
+## 9. Frontend — Image Cache (localStorage)
 
 **File:** [`src/utils/imageCache.js`](file:///c:/Users/91928/trip-website/src/utils/imageCache.js)
 
@@ -289,8 +327,9 @@ The response includes a `cached: boolean` flag so the client knows whether the r
 | 5 | Backend Controller | `controllers/busController.js` | `Map` | 30 minutes | ✅ | `{from}_{to}` |
 | 6 | Backend Controller | `controllers/liveDataController.js` | `Map` | 30 minutes | ✅ | `{location}_{stayType}` |
 | 7 | Backend Route | `routes/imageRoutes.js` | `Map` | 24 hours | ❌ | `{query}_{limit}` |
-| 8 | Frontend Utility | `src/utils/imageCache.js` | `localStorage` | ♾️ Never | ❌ | `{query}` |
+| 8 | Backend & Frontend | `utils/itineraryCache.js` & `TripPlan.jsx` | `Map` & `sessionStorage` | ♾️ Never | ❌ | `itinerary:...:bucket_{budget}` |
+| 9 | Frontend Utility | `src/utils/imageCache.js` | `localStorage` | ♾️ Never | ❌ | `{query}` |
 
 ---
 
-*Last updated: 2026-08-08*
+*Last updated: 2026-08-15*
