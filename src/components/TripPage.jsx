@@ -3,7 +3,6 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
 import "leaflet/dist/leaflet.css"
 import L from "leaflet"
 import PlanningPage from "./PlanningPage"
-import { bestTimeData } from "../data/bestTime"
 import { locationData } from "../data/locationData"
 import { fetchImagesWithCache, getCachedImages } from "../utils/imageCache"
 
@@ -109,7 +108,30 @@ const TripPage = ({ location, theme, onBack }) => {
   const [spotImages, setSpotImages] = useState({}) // { "Baga Beach": [urls...] }
   const [loadingImages, setLoadingImages] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(null) // fullscreen image viewer
+  const [bestTimeData, setBestTimeData] = useState(null)
   const fetchingRef = useRef(false) // prevent overlapping API calls (rate limit)
+
+  useEffect(() => {
+    if (!location) return;
+    const locKey = location.toLowerCase();
+    
+    // Fetch Best Time data
+    const fetchBestTime = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/best-time/${locKey}`);
+        if (res.ok) {
+          const data = await res.json();
+          setBestTimeData(data);
+        } else {
+          console.error("Failed to fetch best time data");
+        }
+      } catch (err) {
+        console.error("Error fetching best time:", err);
+      }
+    };
+
+    fetchBestTime();
+  }, [location]);
 
   // Fetch real images from backend when a spot marker is clicked
   const fetchSpotImages = async (spotName, locationName) => {
@@ -617,7 +639,7 @@ const TripPage = ({ location, theme, onBack }) => {
       )}
       {/* BEST TIME SECTION */}
       {showBestTime && !questionsVisible && (() => {
-        const data = bestTimeData[locationKey]
+        const data = bestTimeData;
         const currentMonth = new Date().toLocaleString("default", { month: "short" })
         const ratingColors = {
           5: "#4CAF50",
