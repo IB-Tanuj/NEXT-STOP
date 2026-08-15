@@ -82,6 +82,22 @@ export const generateItinerary = async (req, res) => {
             return res.status(400).json({ error: "Location is required" });
         }
 
+        // ── Build cache key (budget is bucketed to ₹500 increments) ──
+        const cacheKey = buildCacheKey({ location, days, budget, stayType, transport, selectedActivities, selectedFestivals });
+        const bucketedBudget = bucketize(Number(budget) || 0);
+
+        console.log(`[Itinerary Cache] Key: ${cacheKey}`);
+
+        // ── Check backend cache ──
+        const cached = cacheGet(cacheKey);
+        if (cached) {
+            console.log(`[Itinerary Cache] HIT — returning cached result (0 tokens)`);
+            res.setHeader('X-Cache', 'HIT');
+            return res.json(cached);
+        }
+
+        console.log(`[Itinerary Cache] MISS — calling Groq API`);
+
         const activitiesText = selectedActivities?.length > 0 ? selectedActivities.map(a => a.name).join(", ") : "none specified";
         const festivalsText = selectedFestivals?.length > 0 ? selectedFestivals.map(f => f.name).join(", ") : "none specified";
 
@@ -89,7 +105,7 @@ export const generateItinerary = async (req, res) => {
 
 Location: ${location}
 Duration: ${days || 3} days
-Budget: ₹${budget || 0}
+Budget: ₹${bucketedBudget}
 Stay type: ${stayType || 'budget'}
 Transport: ${transport || 'train'}
 User has already selected these activities: ${activitiesText}
@@ -141,6 +157,12 @@ Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. 
         }
 
         const parsedData = JSON.parse(clean);
+
+        // ── Store in backend cache ──
+        cacheSet(cacheKey, parsedData);
+        console.log(`[Itinerary Cache] Stored result. Cache stats:`, getStats());
+
+        res.setHeader('X-Cache', 'MISS');
         res.json(parsedData);
     } catch (error) {
         console.error("Error generating itinerary:", error.response?.data || error.message);
@@ -150,3 +172,4 @@ Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. 
         });
     }
 };
+
