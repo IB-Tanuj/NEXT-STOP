@@ -51,29 +51,88 @@ const fetchItineraryData = async (location, days, budget, stayType, transport, s
     throw new Error(`HTTP ${response.status}`);
   }
 
+  const cacheStatus = response.headers.get("X-Cache") || "UNKNOWN"
   const data = await response.json();
-  return data;
+  return { data, cacheStatus };
+}
+
+// ── Budget Bucketing & Cache Key (mirrors backend logic) ──
+const BUCKET_SIZE = 500
+
+const bucketize = (budget) => Math.round(budget / BUCKET_SIZE) * BUCKET_SIZE
+
+const buildItineraryCacheKey = ({ location, days, budget, stayType, transport, selectedActivities, selectedFestivals }) => {
+  const loc = (location || "").toLowerCase().trim()
+  const d = days || 3
+  const stay = (stayType || "budget").toLowerCase()
+  const trans = (transport || "train").toLowerCase()
+
+  const actNames = (selectedActivities || [])
+    .map(a => (typeof a === "string" ? a : a.name || ""))
+    .filter(Boolean)
+    .sort()
+    .join("+")
+
+  const festNames = (selectedFestivals || [])
+    .map(f => (typeof f === "string" ? f : f.name || ""))
+    .filter(Boolean)
+    .sort()
+    .join("+")
+
+  const bucket = bucketize(Number(budget) || 0)
+
+  return `itinerary:${loc}:${d}:${stay}:${trans}:act_${actNames || "none"}:fest_${festNames || "none"}:bucket_${bucket}`
 }
 
 const ItineraryView = ({ theme, locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals, onBack }) => {
   const [itineraryData, setItineraryData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [cacheSource, setCacheSource] = useState("") // "session", "backend", or "api"
 
   useEffect(() => {
     let cancelled = false
     const fetchItinerary = async () => {
+      // ── Build cache key ──
+      const cacheKey = buildItineraryCacheKey({
+        location: locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals
+      })
+      console.log(`[Itinerary Cache] Frontend key: ${cacheKey}`)
+
+      // ── Check sessionStorage first ──
       try {
-        const data = await fetchItineraryData(
-          locationName,
-          days,
-          budget,
-          stayType,
-          transport,
-          selectedActivities,
-          selectedFestivals
+        const sessionCached = sessionStorage.getItem(cacheKey)
+        if (sessionCached) {
+          console.log(`[Itinerary Cache] SESSION HIT — using cached result (0 API calls)`)
+          const parsed = JSON.parse(sessionCached)
+          if (!cancelled) {
+            setItineraryData(parsed)
+            setCacheSource("session")
+            setLoading(false)
+          }
+          return
+        }
+      } catch (e) {
+        console.warn("[Itinerary Cache] sessionStorage read failed:", e)
+      }
+
+      // ── Fetch from backend (which has its own cache layer) ──
+      try {
+        const { data, cacheStatus } = await fetchItineraryData(
+          locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals
         )
-        if (!cancelled) setItineraryData(data)
+        if (!cancelled) {
+          setItineraryData(data)
+          setCacheSource(cacheStatus === "HIT" ? "backend" : "api")
+          console.log(`[Itinerary Cache] Backend responded with X-Cache: ${cacheStatus}`)
+
+          // ── Store in sessionStorage for future same-session hits ──
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify(data))
+          } catch (e) {
+            console.warn("[Itinerary Cache] sessionStorage write failed:", e)
+          }
+        }
       } catch (err) {
         console.error("Itinerary generation failed:", err)
         if (!cancelled) setError("Failed to generate itinerary. Please try again.")
