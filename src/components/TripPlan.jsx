@@ -703,7 +703,7 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
             marginTop: "6px",
             lineHeight: "1.2",
           }}>
-            don't click on itinerary until you are sure about trip, please. it take too much tokens 🥲
+            cached results load instantly ⚡ — only new combos use tokens
           </div>
         </div>
       </div>
