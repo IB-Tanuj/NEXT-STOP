@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { buildCacheKey, bucketize, get as cacheGet, set as cacheSet, getStats } from '../utils/itineraryCache.js';
 
 export const generateTripPlan = async (req, res) => {
     try {
