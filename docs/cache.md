@@ -275,7 +275,6 @@ The response includes a `cached: boolean` flag so the client knows whether the r
 
 ### ⚠️ No Expiration
 
-This cache has **no TTL**. Once an image query is stored, it stays until the user clears their browser data. This is intentional — images rarely change and this saves API quota.
 
 ---
 
