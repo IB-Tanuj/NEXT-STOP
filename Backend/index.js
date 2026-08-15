@@ -10,6 +10,7 @@ import flightRoutes from "./routes/flightRoutes.js";
 import vehicleRoutes from "./routes/vehicleRoutes.js";
 import imageRoutes from "./routes/imageRoutes.js";
 import hotelRoutes from "./routes/hotelRoutes.js";
+import bestTimeRoutes from "./routes/bestTimeRoutes.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use("/api/flights", flightRoutes);
 app.use("/api/vehicle", vehicleRoutes);
 app.use("/api/images", imageRoutes);
 app.use("/api/hotels", hotelRoutes);
+app.use("/api/best-time", bestTimeRoutes);
 
 app.get("/", (req, res) => {
   res.json({
