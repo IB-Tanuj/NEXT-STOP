@@ -88,3 +88,40 @@ xhr.setRequestHeader('Content-Type', 'application/json');
 
 xhr.send(data);
 
+5.getReachableCities
+const data = null;
+
+const xhr = new XMLHttpRequest();
+xhr.withCredentials = true;
+
+xhr.addEventListener('readystatechange', function () {
+	if (this.readyState === this.DONE) {
+		console.log(this.responseText);
+	}
+});
+
+xhr.open('GET', 'https://flixbus-api2.p.rapidapi.com/cities/40d8f682-8646-11e6-9066-549f350fcb0c/reachable?language=en-gl&limit=20');
+xhr.setRequestHeader('x-rapidapi-key', 'f817651148msh728be16da7b7b61p1063e4jsn6d6496b45ea6');
+xhr.setRequestHeader('x-rapidapi-host', 'flixbus-api2.p.rapidapi.com');
+xhr.setRequestHeader('Content-Type', 'application/json');
+
+xhr.send(data);
+
+6.getTimetable
+const data = null;
+
+const xhr = new XMLHttpRequest();
+xhr.withCredentials = true;
+
+xhr.addEventListener('readystatechange', function () {
+	if (this.readyState === this.DONE) {
+		console.log(this.responseText);
+	}
+});
+
+xhr.open('GET', 'https://flixbus-api2.p.rapidapi.com/timetable?cityId=40d8f682-8646-11e6-9066-549f350fcb0c&date=2026-08-01');
+xhr.setRequestHeader('x-rapidapi-key', 'f817651148msh728be16da7b7b61p1063e4jsn6d6496b45ea6');
+xhr.setRequestHeader('x-rapidapi-host', 'flixbus-api2.p.rapidapi.com');
+xhr.setRequestHeader('Content-Type', 'application/json');
+
+xhr.send(data);
