@@ -313,6 +313,7 @@ const bucket = Math.round(budget / BUCKET_SIZE) * BUCKET_SIZE;
 
 ### ⚠️ No Expiration
 
+This cache has **no TTL**. Once an image query is stored, it stays until the user clears their browser data. This is intentional — images rarely change and this saves API quota.
 
 ---
 
