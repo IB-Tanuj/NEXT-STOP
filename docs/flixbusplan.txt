@@ -64,8 +64,3 @@ After that we show the results in a nice UI. The result logic will check all the
 First check if buses are available in selected date - if no then show all available dates ( eg:user selected 4 august (today in 31 july) and there is no buses available then show 2,3,5,6,7,8 august calender.  show mess like "sorry bus not available on 4,5 august but in 2,3,6,7,8 august there are buses available.")
 And if yes and if user selects recommended date then proceed and then search for selected time - if no then show available time period - if yes then show all time period in that range (suppose user slected night then all buses in night period will be shown) then check selected seat availablity ( same logic as previous ).
 
-Addition:-
-1.If user selects group then ask for all member genders.
-2.WE should add a "get available dates" button next to date selection feature.
-3.Can we provide this type of seats view (i will send photo in chat).
-4.After verifying that user enter valid locations , show user the pickup points ( eg : delhi have 3 pickup points Delhi RK Ashram (FlixBus Lounge) , Delhi Kashmere Gate ISBT , Delhi - Majnu Ka Tilla (N) ).
