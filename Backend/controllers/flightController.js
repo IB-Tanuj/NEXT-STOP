@@ -4,8 +4,10 @@ import { searchAndFetchMultiple } from '../services/tinyfishService.js';
 import { generateFlightSearchQuery, cleanWebDataWithKey } from '../services/queryRouterService.js';
 import { runWithKeyRotation } from '../utils/rapidApiKeyManager.js';
 
-// Simple in-memory cache with request deduplication
-const flightCache = new Map();
+import { AsyncCache } from '../utils/cache.js';
+
+// Global cache and request deduplication
+const flightCache = new AsyncCache('cache_flights');
 const pendingFlightRequests = new Map();
 const CACHE_TTL = 3 * 60 * 60 * 1000; // 3 hours
 
@@ -42,10 +44,10 @@ export const searchFlights = async (req, res) => {
     const cacheKey = `${fromCode}_${toCode}_${date || 'default'}`;
 
     // Check cache
-    const cached = flightCache.get(cacheKey);
-    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+    const cached = await flightCache.get(cacheKey);
+    if (cached) {
       console.log(`✈️ [Cache Hit] Serving flights: ${fromCode} → ${toCode}`);
-      return res.json(cached.data);
+      return res.json(cached);
     }
 
     // Deduplicate pending requests
@@ -218,10 +220,8 @@ export const searchFlights = async (req, res) => {
         fetchedAt: new Date().toISOString()
       };
 
-      flightCache.set(cacheKey, {
-        timestamp: Date.now(),
-        data: responseData
-      });
+      // Background cache set (fire and forget)
+      flightCache.set(cacheKey, responseData, CACHE_TTL);
 
       return responseData;
     })();
