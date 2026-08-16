@@ -1,9 +1,10 @@
 import { searchAndFetchMultiple } from '../services/tinyfishService.js';
 import { generateBusSearchQuery, cleanWebDataWithKey } from '../services/queryRouterService.js';
 
-// In-memory cache for bus searches
-// Key: "from_to", Value: { data, timestamp }
-const busCache = new Map();
+import { AsyncCache } from '../utils/cache.js';
+
+// Global cache for bus searches
+const busCache = new AsyncCache('cache_buses');
 const pendingBusRequests = new Map(); // Tracks ongoing requests to prevent duplicates
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
@@ -22,10 +23,10 @@ export const searchBuses = async (req, res) => {
         const cacheKey = `${from.toLowerCase()}_${to.toLowerCase()}`;
         
         // Check cache first
-        const cached = busCache.get(cacheKey);
-        if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+        const cached = await busCache.get(cacheKey);
+        if (cached) {
             console.log(`[Cache Hit] Buses for ${cacheKey}`);
-            return res.json(cached.data);
+            return res.json(cached);
         }
 
         // If a request for this key is already in progress, wait for it to finish
@@ -83,11 +84,8 @@ CRITICAL RULES FOR PRICES:
                 fetchedAt: new Date().toISOString(),
             };
 
-            // Save to cache
-            busCache.set(cacheKey, {
-                data: responseData,
-                timestamp: Date.now()
-            });
+            // Save to cache (fire and forget)
+            busCache.set(cacheKey, responseData, CACHE_TTL);
 
             return responseData;
         })();
