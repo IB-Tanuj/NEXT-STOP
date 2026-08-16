@@ -4,7 +4,7 @@ import cache from '../utils/cache.js';
 import { runWithKeyRotation } from '../utils/rapidApiKeyManager.js';
 
 // Cache TTL constants
-const TTL_REACHABLE = 24 * 60 * 60 * 1000;  // 24 hours
+const TTL_REACHABLE = 10 * 365 * 24 * 60 * 60 * 1000;  // 10 years (cities don't change often)
 const TTL_SEARCH    = 10 * 60 * 1000;        // 10 minutes
 const TTL_TIMETABLE = 10 * 60 * 1000;        // 10 minutes
 
@@ -65,7 +65,7 @@ export const flixbusApi = {
 
         const result = await fetchFromFlixbus(`/cities/${cityId}/reachable?language=en-gl&limit=100`);
         cache.set(cacheKey, result, TTL_REACHABLE);
-        console.log(`[CACHE SET] getReachableCities ${cacheKey} (TTL: 24h)`);
+        console.log(`[CACHE SET] getReachableCities ${cacheKey} (TTL: 10y)`);
         return result;
     },
 
