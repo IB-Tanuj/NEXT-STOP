@@ -2,8 +2,10 @@ import axios from 'axios';
 import { runWithKeyRotation } from '../utils/rapidApiKeyManager.js';
 import { getLocationId } from '../utils/hotelLocationCache.js';
 
-// Simple in-memory cache to save quota
-const cache = {};
+import { AsyncCache } from '../utils/cache.js';
+
+// Global cache to save quota
+const cache = new AsyncCache('cache_hotels');
 const CACHE_DURATION = 3 * 60 * 60 * 1000; // 3 hours
 
 export const searchHotels = async (req, res) => {
@@ -60,9 +62,10 @@ export const searchHotels = async (req, res) => {
         const cacheKey = `${locationId}-${checkinStr}-${checkoutStr}-${adults}`;
         const now = Date.now();
 
-        if (cache[cacheKey] && (now - cache[cacheKey].timestamp < CACHE_DURATION)) {
+        const cached = await cache.get(cacheKey);
+        if (cached) {
             console.log(`🏨 Serving hotels from cache for location ${locationId}`);
-            return res.json(cache[cacheKey].data);
+            return res.json(cached);
         }
 
         console.log(`🏨 Searching hotels for location ${locationId} (${checkinStr} to ${checkoutStr}) for ${adults} adults`);
@@ -99,10 +102,8 @@ export const searchHotels = async (req, res) => {
             timestamp: new Date().toISOString()
         };
 
-        cache[cacheKey] = {
-            timestamp: now,
-            data: responseData
-        };
+        // Save to cache (fire and forget)
+        cache.set(cacheKey, responseData, CACHE_DURATION);
 
         res.json(responseData);
 
