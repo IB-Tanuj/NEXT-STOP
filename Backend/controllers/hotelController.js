@@ -6,6 +6,7 @@ import { AsyncCache } from '../utils/cache.js';
 
 // Global cache to save quota
 const cache = new AsyncCache('cache_hotels');
+const pendingHotelRequests = new Map();
 const CACHE_DURATION = 3 * 60 * 60 * 1000; // 3 hours
 
 export const searchHotels = async (req, res) => {
@@ -68,44 +69,66 @@ export const searchHotels = async (req, res) => {
             return res.json(cached);
         }
 
+        // Deduplicate in-flight requests
+        if (pendingHotelRequests.has(cacheKey)) {
+            console.log(`🏨 Waiting for existing hotel search to finish for ${locationId}`);
+            const result = await pendingHotelRequests.get(cacheKey);
+            return res.json(result);
+        }
+
         console.log(`🏨 Searching hotels for location ${locationId} (${checkinStr} to ${checkoutStr}) for ${adults} adults`);
 
-        const options = {
-            method: 'GET',
-            url: `https://${process.env.RAPIDAPI_HOTEL_HOST}/stays/search`,
-            params: {
-                locationId: locationId,
-                checkinDate: checkinStr,
-                checkoutDate: checkoutStr,
-                units: 'metric',
-                temperature: 'c',
-                adults: adults
-            },
-            headers: {
-                'x-rapidapi-host': process.env.RAPIDAPI_HOTEL_HOST
+        const fetchPromise = (async () => {
+            const options = {
+                method: 'GET',
+                url: `https://${process.env.RAPIDAPI_HOTEL_HOST}/stays/search`,
+                params: {
+                    locationId: locationId,
+                    checkinDate: checkinStr,
+                    checkoutDate: checkoutStr,
+                    units: 'metric',
+                    temperature: 'c',
+                    adults: adults
+                },
+                headers: {
+                    'x-rapidapi-host': process.env.RAPIDAPI_HOTEL_HOST
+                }
+            };
+
+            const response = await runWithKeyRotation(process.env.RAPIDAPI_HOTEL_HOST, async (apiKey) => {
+                options.headers['x-rapidapi-key'] = apiKey;
+                return await axios.request(options);
+            });
+
+            const responseData = {
+                query: {
+                    locationId,
+                    checkinDate: checkinStr,
+                    checkoutDate: checkoutStr,
+                    inferredFrom: { transportMode, durationHours }
+                },
+                apiData: response.data,
+                timestamp: new Date().toISOString()
+            };
+
+            // Save to cache (fire and forget). Use await to ensure we catch size limit errors
+            try {
+                await cache.set(cacheKey, responseData, CACHE_DURATION);
+            } catch (cacheErr) {
+                console.error("🏨 Error saving hotel search to cache:", cacheErr.message);
             }
-        };
 
-        const response = await runWithKeyRotation(process.env.RAPIDAPI_HOTEL_HOST, async (apiKey) => {
-            options.headers['x-rapidapi-key'] = apiKey;
-            return await axios.request(options);
-        });
+            return responseData;
+        })();
 
-        const responseData = {
-            query: {
-                locationId,
-                checkinDate: checkinStr,
-                checkoutDate: checkoutStr,
-                inferredFrom: { transportMode, durationHours }
-            },
-            apiData: response.data,
-            timestamp: new Date().toISOString()
-        };
+        pendingHotelRequests.set(cacheKey, fetchPromise);
 
-        // Save to cache (fire and forget)
-        cache.set(cacheKey, responseData, CACHE_DURATION);
-
-        res.json(responseData);
+        try {
+            const result = await fetchPromise;
+            return res.json(result);
+        } finally {
+            pendingHotelRequests.delete(cacheKey);
+        }
 
     } catch (error) {
         console.error("Error searching hotels:", error.response?.data || error.message);

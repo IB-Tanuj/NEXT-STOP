@@ -8,7 +8,8 @@ const router = express.Router();
 
 // Global cache to avoid burning API quota on repeated queries
 const imageCache = new AsyncCache('cache_images');
-const CACHE_TTL = 1000 * 60 * 60 * 24; // 24 hours
+// Images don't change, store them effectively forever (10 years)
+const CACHE_TTL = 10 * 365 * 24 * 60 * 60 * 1000;
 
 /**
  * GET /api/images/search?q=Baga+Beach+Goa&limit=4
