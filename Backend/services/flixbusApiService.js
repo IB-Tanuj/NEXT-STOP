@@ -43,7 +43,7 @@ const fetchFromFlixbus = async (endpoint) => {
 export const flixbusApi = {
     searchTrips: async (fromId, toId, date) => {
         const cacheKey = `search:${fromId}:${toId}:${date}`;
-        const cached = cache.get(cacheKey);
+        const cached = await cache.get(cacheKey);
         if (cached) {
             console.log(`[CACHE HIT] searchTrips ${cacheKey}`);
             return cached;
@@ -57,7 +57,7 @@ export const flixbusApi = {
 
     getReachableCities: async (cityId) => {
         const cacheKey = `reachable:${cityId}`;
-        const cached = cache.get(cacheKey);
+        const cached = await cache.get(cacheKey);
         if (cached) {
             console.log(`[CACHE HIT] getReachableCities ${cacheKey}`);
             return cached;
@@ -71,7 +71,7 @@ export const flixbusApi = {
 
     getTimetable: async (cityId, date) => {
         const cacheKey = `timetable:${cityId}:${date}`;
-        const cached = cache.get(cacheKey);
+        const cached = await cache.get(cacheKey);
         if (cached) {
             console.log(`[CACHE HIT] getTimetable ${cacheKey}`);
             return cached;
