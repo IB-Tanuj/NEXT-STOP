@@ -2,8 +2,10 @@ import axios from 'axios';
 import { destinationStations } from '../utils/destinationStations.js';
 import { runWithKeyRotation } from '../utils/rapidApiKeyManager.js';
 
-// Simple in-memory cache
-const cache = {};
+import { AsyncCache } from '../utils/cache.js';
+
+// Global cache for train searches
+const cache = new AsyncCache('cache_trains');
 const CACHE_DURATION = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
 
 // ── Existing: Get train info by train number ────
@@ -59,9 +61,10 @@ export const searchTrains = async (req, res) => {
         const cacheKey = `${from}-${toCode}`;
         const now = Date.now();
 
-        if (cache[cacheKey] && (now - cache[cacheKey].timestamp < CACHE_DURATION)) {
+        const cached = await cache.get(cacheKey);
+        if (cached) {
             console.log(`🚂 Serving from cache: ${from} → ${toCode}`);
-            return res.json(cache[cacheKey].data);
+            return res.json(cached);
         }
 
         console.log(`🚂 Searching trains: ${from} → ${toCode}`);
@@ -95,11 +98,8 @@ export const searchTrains = async (req, res) => {
             timestamp: new Date().toISOString()
         };
 
-        // Save to cache
-        cache[cacheKey] = {
-            timestamp: now,
-            data: responseData
-        };
+        // Save to cache (fire and forget)
+        cache.set(cacheKey, responseData, CACHE_DURATION);
 
         // Return the response along with our query context
         res.json(responseData);
