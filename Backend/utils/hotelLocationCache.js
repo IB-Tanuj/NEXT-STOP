@@ -4,7 +4,7 @@ import { AsyncCache } from './cache.js';
 
 const locationCache = new AsyncCache('cache_hotels');
 const pendingLocationRequests = new Map();
-const LOCATION_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
+const LOCATION_TTL = 10 * 365 * 24 * 60 * 60 * 1000; // 10 years
 
 /**
  * Get the base64 locationId for a destination (city).
