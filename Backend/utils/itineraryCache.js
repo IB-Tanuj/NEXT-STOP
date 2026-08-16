@@ -7,9 +7,12 @@
  * the cache and waste Groq tokens.
  */
 
+import { AsyncCache } from './cache.js';
+
 const BUCKET_SIZE = 500; // ₹500 increments
 
-const cache = new Map();
+// Global cache for AI-generated itineraries (long TTL)
+const cache = new AsyncCache('cache_itineraries');
 let hits = 0;
 let misses = 0;
 
@@ -54,10 +57,11 @@ export const buildCacheKey = ({ location, days, budget, stayType, transport, sel
  * Get a cached itinerary result by key.
  * Returns the cached data or undefined.
  */
-export const get = (key) => {
-  if (cache.has(key)) {
+export const get = async (key) => {
+  const data = await cache.get(key);
+  if (data) {
     hits++;
-    return cache.get(key);
+    return data;
   }
   misses++;
   return undefined;
@@ -67,14 +71,15 @@ export const get = (key) => {
  * Store an itinerary result in the cache.
  */
 export const set = (key, value) => {
-  cache.set(key, value);
+  // Save with a very long TTL (e.g. 30 days)
+  cache.set(key, value, 30 * 24 * 60 * 60 * 1000);
 };
 
 /**
  * Get cache statistics for debugging / DevAdmin.
  */
 export const getStats = () => ({
-  size: cache.size,
+  size: 'N/A (Global Cache)',
   hits,
   misses,
   hitRate: hits + misses > 0 ? ((hits / (hits + misses)) * 100).toFixed(1) + '%' : 'N/A',

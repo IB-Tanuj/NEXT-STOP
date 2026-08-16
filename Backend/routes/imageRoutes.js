@@ -2,10 +2,12 @@ import express from "express";
 import axios from "axios";
 import { runWithKeyRotation } from "../utils/rapidApiKeyManager.js";
 
+import { AsyncCache } from "../utils/cache.js";
+
 const router = express.Router();
 
-// In-memory cache to avoid burning API quota on repeated queries
-const imageCache = new Map();
+// Global cache to avoid burning API quota on repeated queries
+const imageCache = new AsyncCache('cache_images');
 const CACHE_TTL = 1000 * 60 * 60 * 24; // 24 hours
 
 /**
@@ -22,8 +24,8 @@ router.get("/search", async (req, res) => {
 
     // Check cache first
     const cacheKey = `${q.toLowerCase().trim()}_${limit}`;
-    const cached = imageCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    const cached = await imageCache.get(cacheKey);
+    if (cached) {
       return res.json({ images: cached.images, cached: true });
     }
 
@@ -65,8 +67,8 @@ router.get("/search", async (req, res) => {
       height: item.height || item.image?.height,
     }));
 
-    // Cache the results
-    imageCache.set(cacheKey, { images, timestamp: Date.now() });
+    // Cache the results (fire and forget)
+    imageCache.set(cacheKey, { images }, CACHE_TTL);
 
     return res.json({ images, cached: false });
   } catch (err) {
