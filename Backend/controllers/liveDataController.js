@@ -1,9 +1,10 @@
 import { searchAndFetch, searchAndFetchMultiple } from '../services/tinyfishService.js';
 import { generateSearchQuery, generateStaySearchQuery, cleanWebData, cleanWebDataWithKey } from '../services/queryRouterService.js';
 
-// In-memory cache for stay searches
-// Key: "location_stayType", Value: { data, timestamp }
-const stayCache = new Map();
+import { AsyncCache } from '../utils/cache.js';
+
+// Global cache for stay searches
+const stayCache = new AsyncCache('cache_stays');
 const pendingStayRequests = new Map();
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
@@ -178,10 +179,10 @@ export const searchStays = async (req, res) => {
         const cacheKey = `${location.toLowerCase()}_${stayType.toLowerCase()}`;
         
         // Check cache first
-        const cached = stayCache.get(cacheKey);
-        if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+        const cached = await stayCache.get(cacheKey);
+        if (cached) {
             console.log(`[Cache Hit] Stays for ${cacheKey}`);
-            return res.json(cached.data);
+            return res.json(cached);
         }
 
         // If a request for this key is already in progress, wait for it to finish instead of making duplicate API calls
@@ -239,11 +240,8 @@ CRITICAL RULES FOR PRICES:
                 fetchedAt: new Date().toISOString(),
             };
 
-            // Save to cache
-            stayCache.set(cacheKey, {
-                data: responseData,
-                timestamp: Date.now()
-            });
+            // Save to cache (fire and forget)
+            stayCache.set(cacheKey, responseData, CACHE_TTL);
 
             return responseData;
         })();
