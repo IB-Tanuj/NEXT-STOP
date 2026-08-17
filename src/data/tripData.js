@@ -220,53 +220,6 @@ export const foodCosts = {
   },
 }
 
-export const entryCosts = {
-  goa: {
-    "Baga Beach": { cost: 0, note: "Free entry" },
-    "Dudhsagar Falls": { cost: 400, note: "Includes jeep safari" },
-    "Old Goa Churches": { cost: 0, note: "Free entry" },
-    "Anjuna Beach": { cost: 0, note: "Free entry" },
-    "Fort Aguada": { cost: 25, note: "Nominal entry fee" },
-    "Palolem Beach": { cost: 0, note: "Free entry" },
-    "Calangute Beach": { cost: 0, note: "Free entry" },
-  },
-  manali: {
-    "Rohtang Pass": { cost: 600, note: "Permit required, book in advance" },
-    "Solang Valley": { cost: 0, note: "Free, activities cost extra ₹500-2000" },
-    "Hadimba Temple": { cost: 0, note: "Free entry, donations welcome" },
-    "Beas River": { cost: 0, note: "Free, rafting ₹600-1200 extra" },
-    "Mall Road": { cost: 0, note: "Free, shopping area" },
-    "Naggar Castle": { cost: 50, note: "Small entry fee" },
-    "Jogini Falls": { cost: 0, note: "Free, 2km trek from Manali" },
-  },
-  kerala: {
-    "Alleppey Backwaters": { cost: 6000, note: "Houseboat per night, can share" },
-    "Munnar Tea Gardens": { cost: 75, note: "Tea museum entry" },
-    "Kovalam Beach": { cost: 0, note: "Free entry" },
-    "Wayanad Wildlife": { cost: 300, note: "Safari extra ₹500-1000" },
-    "Thekkady Periyar": { cost: 200, note: "Boat ride extra ₹150" },
-    "Varkala Beach": { cost: 0, note: "Free entry" },
-    "Thrissur Pooram": { cost: 0, note: "Free, seasonal festival" },
-    "Bekal Fort": { cost: 25, note: "Nominal entry fee" },
-    "Athirappilly Falls": { cost: 30, note: "Nominal entry fee" },
-    "Kannur Beach": { cost: 0, note: "Free entry" },
-    "Padmanabhaswamy Temple": { cost: 0, note: "Free, dress code required" },
-  },
-  rajasthan: {
-    "Jaipur City Palace": { cost: 200, note: "Camera fee extra ₹100" },
-    "Jaisalmer Fort": { cost: 100, note: "Free to roam inside" },
-    "Udaipur Lake Palace": { cost: 0, note: "Hotel, visit by boat ₹500" },
-    "Sam Sand Dunes": { cost: 0, note: "Free, camel ride ₹300-500 extra" },
-    "Mehrangarh Fort": { cost: 100, note: "Audio guide extra ₹100" },
-    "Pushkar Lake": { cost: 0, note: "Free, donations at ghats" },
-    "Amber Fort": { cost: 200, note: "Elephant ride extra ₹900" },
-    "Ranthambore Tiger Reserve": { cost: 1500, note: "Safari, book in advance" },
-    "Hawa Mahal": { cost: 50, note: "Nominal entry fee" },
-    "Mount Abu": { cost: 0, note: "Free town, Dilwara temple free" },
-    "Chittorgarh Fort": { cost: 100, note: "Large fort, full day needed" },
-  },
-}
-
 export const miscCosts = {
   goa: 300,
   manali: 250,
