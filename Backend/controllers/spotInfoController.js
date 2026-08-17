@@ -5,85 +5,103 @@ import { AsyncCache } from '../utils/cache.js';
 const CACHE_TTL = 30 * 24 * 60 * 60 * 1000;
 const spotCache = new AsyncCache('cache_spot_info');
 
-export const getSpotInfo = async (req, res) => {
+export const getSpotInfoBatch = async (req, res) => {
     try {
-        const { spotName, locationName } = req.body;
+        const { spots, locationName } = req.body;
 
-        if (!spotName || !locationName) {
-            return res.status(400).json({ error: "Both spotName and locationName are required." });
+        if (!Array.isArray(spots) || spots.length === 0 || !locationName) {
+            return res.status(400).json({ error: "spots (array) and locationName are required." });
         }
 
-        // Cache Key Example: spotinfo:hawa_mahal:rajasthan
-        const cleanSpot = spotName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
         const cleanLoc = locationName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
-        const cacheKey = `spotinfo:${cleanSpot}:${cleanLoc}`;
+        const results = {};
+        const missingSpots = [];
 
-        console.log(`[Spot Info Cache] Key: ${cacheKey}`);
-
-        // ── Check backend cache ──
-        const cached = await spotCache.get(cacheKey);
-        if (cached) {
-            console.log(`[Spot Info Cache] HIT — returning cached result`);
-            res.setHeader('X-Cache', 'HIT');
-            return res.json(cached);
+        // 1. Check cache for all spots
+        for (const spot of spots) {
+            const cleanSpot = spot.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+            const cacheKey = `spotinfo:${cleanSpot}:${cleanLoc}`;
+            const cached = await spotCache.get(cacheKey);
+            
+            if (cached) {
+                results[spot] = cached;
+            } else {
+                missingSpots.push(spot);
+            }
         }
 
-        console.log(`[Spot Info Cache] MISS — calling Gemini API`);
+        console.log(`[Spot Info Batch] Requested: ${spots.length} | Cached: ${Object.keys(results).length} | Missing: ${missingSpots.length}`);
+
+        // 2. If all are cached, return immediately
+        if (missingSpots.length === 0) {
+            res.setHeader('X-Cache', 'HIT');
+            return res.json(results);
+        }
+
+        // 3. Call Gemini for the missing spots in ONE batch
+        console.log(`[Spot Info Batch] Calling Gemini for missing spots: ${missingSpots.join(', ')}`);
 
         const apiKey = process.env.GEMINI_KEY;
         if (!apiKey) {
-            console.error("GEMINI_KEY is not defined in backend environment variables.");
-            return res.status(500).json({ error: "Backend configuration error: GEMINI API key missing" });
+            return res.status(500).json({ error: "GEMINI API key missing" });
         }
 
         const ai = new GoogleGenAI({ apiKey: apiKey });
 
-        const prompt = `You are a travel expert for India. Provide detailed, accurate visitor information for the following tourist spot:
+        const prompt = `You are a travel expert for India. Provide detailed, accurate visitor information for the following tourist spots located in ${locationName}, India.
 
-Spot: ${spotName}
-Location: ${locationName}, India
+SPOTS TO ANALYZE:
+${missingSpots.map((s, i) => `${i + 1}. ${s}`).join('\n')}
 
-Return ONLY a valid JSON object matching the following structure. NO markdown formatting, NO backticks, NO text outside the JSON. Ensure prices are in INR (₹).
+Return ONLY a valid JSON object where the keys are the EXACT spot names listed above, and the value is the spot info object. NO markdown formatting, NO backticks. Ensure prices are in INR (₹).
 
+Format:
 {
-  "entryPrice": { "adult": number (or null if free), "child": number (or null if free), "free": boolean },
-  "openingHours": { "open": "string", "close": "string", "closedOn": "string (or null)", "note": "string (or null)" },
-  "rules": ["string array of rules (e.g., dress code, no plastics)"],
-  "permit": { "required": boolean, "details": "string (or null)", "cost": number (or null) },
-  "ageRestrictions": { "hasRestriction": boolean, "details": "string (or null)" },
-  "recommendedDuration": "string (e.g., '~2 hours')",
-  "photographyPolicy": { "allowed": boolean, "fee": number (or null), "dronesAllowed": boolean },
-  "accessibility": "string (e.g., 'Wheelchair accessible' or 'Steep climb required')",
-  "tips": ["string array of 2 helpful tips"]
-}
-
-If a specific field's data is unknown or inapplicable, use null (or empty arrays for lists), but preserve the structure.`;
+  "Spot Name 1": {
+    "entryPrice": { "adult": number (or null), "child": number (or null), "free": boolean },
+    "openingHours": { "open": "string", "close": "string", "closedOn": "string (or null)", "note": "string (or null)" },
+    "rules": ["string array of rules"],
+    "permit": { "required": boolean, "details": "string (or null)", "cost": number (or null) },
+    "ageRestrictions": { "hasRestriction": boolean, "details": "string (or null)" },
+    "recommendedDuration": "string",
+    "photographyPolicy": { "allowed": boolean, "fee": number (or null), "dronesAllowed": boolean },
+    "accessibility": "string",
+    "tips": ["string array of 2 tips"]
+  },
+  "Spot Name 2": { ... }
+}`;
 
         const response = await ai.models.generateContent({
             model: 'gemini-3.7-flash',
             contents: prompt,
-            config: {
-                temperature: 0.2, // Low temp for factual data
-            }
+            config: { temperature: 0.2 }
         });
 
         const text = response.text || "";
         const clean = text.replace(/```json|```/g, "").trim();
 
-        if (!clean) {
-            throw new Error("Gemini returned an empty response.");
-        }
+        if (!clean) throw new Error("Gemini returned an empty response.");
 
         const parsedData = JSON.parse(clean);
 
-        // ── Store in backend cache ──
-        await spotCache.set(cacheKey, parsedData, CACHE_TTL);
-        console.log(`[Spot Info Cache] Stored result.`);
+        // 4. Cache the new results and merge into final response
+        for (const spot of missingSpots) {
+            const data = parsedData[spot];
+            if (data) {
+                const cleanSpot = spot.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+                const cacheKey = `spotinfo:${cleanSpot}:${cleanLoc}`;
+                await spotCache.set(cacheKey, data, CACHE_TTL);
+                results[spot] = data;
+            } else {
+                // Gemini didn't return data for this spot for some reason
+                results[spot] = { error: true, reason: "Not found in Gemini response" };
+            }
+        }
 
         res.setHeader('X-Cache', 'MISS');
-        res.json(parsedData);
+        res.json(results);
     } catch (error) {
-        console.error("Error fetching spot info:", error.message);
+        console.error("Error fetching batch spot info:", error.message);
         res.status(500).json({
             error: "Failed to generate AI spot info.",
             details: error.message
