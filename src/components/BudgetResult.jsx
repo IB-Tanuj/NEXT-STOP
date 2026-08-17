@@ -179,30 +179,24 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
 
     const fetchAllSpots = async () => {
       setSpotLoading(true)
-      const newInfos = { ...spotInfos }
-      let fetchedAny = false
-
-      for (const spot of preferences.activities) {
-        if (newInfos[spot]) continue // Already fetched
-        try {
-          fetchedAny = true
-          const res = await fetch('/api/spots/info', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ spotName: spot, locationName: location?.name })
-          })
-          if (res.ok) {
-            newInfos[spot] = await res.json()
-          } else {
-            newInfos[spot] = { error: true }
-          }
-        } catch (err) {
-          console.error("Failed to fetch spot info for", spot, err)
-          newInfos[spot] = { error: true }
+      
+      try {
+        const res = await fetch('/api/spots/info-batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ spots: preferences.activities, locationName: location?.name })
+        })
+        
+        if (res.ok) {
+          const data = await res.json()
+          setSpotInfos(data)
+        } else {
+          console.error("Batch spot fetch failed:", res.status)
         }
+      } catch (err) {
+        console.error("Failed to fetch spot info batch", err)
       }
 
-      if (fetchedAny) setSpotInfos(newInfos)
       setSpotLoading(false)
     }
 

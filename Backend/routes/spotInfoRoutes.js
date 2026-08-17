@@ -1,8 +1,8 @@
 import express from 'express';
-import { getSpotInfo } from '../controllers/spotInfoController.js';
+import { getSpotInfoBatch } from '../controllers/spotInfoController.js';
 
 const router = express.Router();
 
-router.post('/info', getSpotInfo);
+router.post('/info-batch', getSpotInfoBatch);
 
 export default router;
