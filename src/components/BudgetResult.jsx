@@ -161,7 +161,6 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const isGroup = planData.budgetType === "group"
   const groupSize = Number(planData.groupSize) || 1
   const totalBudget = Number(planData.budget)
-  const totalBudget = Number(planData.budget)
   const perPersonBudget = isGroup ? Math.round(totalBudget / groupSize) : totalBudget
 
   // ── Spot Info Data (Dynamic via Gemini API) ─────────
