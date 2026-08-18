@@ -1,8 +1,11 @@
 import { useState } from "react"
+import { useAuth } from "../context/AuthContext"
+import { useNavigate } from "react-router-dom"
 
 const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onBusLovers }) => {
   const [menuOpen, setMenuOpen] = useState(false)
-  
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
 
   return (
     <nav style={{
@@ -58,31 +61,50 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
               {item}
             </span>
           ))}
-          <button 
-          onClick={() => {
-    const searchBar = document.getElementById("hero-search")
-    if (searchBar) {
-      searchBar.scrollIntoView({ behavior: "smooth", block: "center" })
-      setTimeout(() => searchBar.focus(), 600)
-    }
-  }}
-          style={{
-            background: theme.primary,
-            border: "none",
-            padding: "10px 24px",
-            borderRadius: "25px",
-            color: "#fff",
-            fontWeight: "700",
-            fontSize: "14px",
-            cursor: "pointer",
-            letterSpacing: "1px",
-            transition: "opacity 0.3s",
-          }}
-            onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
-            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-          >
-            START PLANNING
-          </button>
+          {user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{
+                width: '36px', height: '36px', borderRadius: '50%',
+                backgroundColor: theme.primary, color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 'bold', fontSize: '14px', cursor: 'pointer'
+              }} title={user.email}>
+                {user.email.charAt(0).toUpperCase()}
+              </div>
+              <button 
+                onClick={() => logout()}
+                style={{
+                  background: 'transparent', border: `1px solid ${theme.primary}55`,
+                  padding: "8px 16px", borderRadius: "25px", color: theme.text,
+                  fontWeight: "600", fontSize: "13px", cursor: "pointer", transition: "all 0.3s",
+                }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = `${theme.primary}22`}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
+              >
+                LOGOUT
+              </button>
+            </div>
+          ) : (
+            <button 
+            onClick={() => navigate('/login')}
+            style={{
+              background: theme.primary,
+              border: "none",
+              padding: "10px 24px",
+              borderRadius: "25px",
+              color: "#fff",
+              fontWeight: "700",
+              fontSize: "14px",
+              cursor: "pointer",
+              letterSpacing: "1px",
+              transition: "opacity 0.3s",
+            }}
+              onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
+              onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+            >
+              LOG IN
+            </button>
+          )}
         </div>
       )}
 
@@ -154,28 +176,39 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
               {item}
             </span>
           ))}
-          <button
-          onClick={() => {
-    const searchBar = document.getElementById("hero-search")
-    if (searchBar) {
-      searchBar.scrollIntoView({ behavior: "smooth", block: "center" })
-      setTimeout(() => searchBar.focus(), 600)
-    }
-  }}
-           style={{
-            background: theme.primary,
-            border: "none",
-            padding: "14px 24px",
-            borderRadius: "25px",
-            color: "#fff",
-            fontWeight: "700",
-            fontSize: "15px",
-            cursor: "pointer",
-            letterSpacing: "1px",
-            marginTop: "8px",
-          }}>
-            START PLANNING
-          </button>
+          {user ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+              <div style={{ color: theme.text, fontSize: '14px', fontWeight: '500' }}>
+                Logged in as {user.email}
+              </div>
+              <button
+                onClick={() => { logout(); setMenuOpen(false); }}
+                style={{
+                  background: 'transparent', border: `1px solid ${theme.primary}55`,
+                  padding: "12px 24px", borderRadius: "25px", color: theme.text,
+                  fontWeight: "600", fontSize: "14px", cursor: "pointer",
+                }}>
+                LOGOUT
+              </button>
+            </div>
+          ) : (
+            <button
+            onClick={() => { navigate('/login'); setMenuOpen(false); }}
+             style={{
+              background: theme.primary,
+              border: "none",
+              padding: "14px 24px",
+              borderRadius: "25px",
+              color: "#fff",
+              fontWeight: "700",
+              fontSize: "15px",
+              cursor: "pointer",
+              letterSpacing: "1px",
+              marginTop: "8px",
+            }}>
+              LOG IN
+            </button>
+          )}
         </div>
       )}
 
