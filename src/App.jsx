@@ -149,7 +149,7 @@ function App() {
   }
 
   const handleBack = () => {
-    navigate("/")
+    navigate("/app")
     resetToSeason()
   }
   
@@ -163,41 +163,51 @@ function App() {
     }}>
       <Routes>
         <Route path="/dev" element={<DevAdminPage theme={theme} setLocationTheme={setLocationTheme} />} />
-        <Route path="/" element={
-          <>
-            <Navbar theme={theme} isMobile={isMobile} 
-            onAbout={() => setShowAbout(true)}
-            onExplore={() => setShowExplore(true)}
-            onBudget={() => setShowBudget(true)}
-            onPlanTrip={() => setShowPlanTrip(true)}
-            onBusLovers={() => setShowBusLovers(true)}
-            />
-            <Hero
-              theme={theme}
-              setLocationTheme={handleThemeOnly}
-              onExplore={handleExplore}
-              isMobile={isMobile}
-            />
-            {/* Season section — only when no location searched */}
-            {!spotlightLocation && (
-              <SeasonSection
-                theme={theme}
-                isMobile={isMobile}
-                onLocationClick={(name) => {
-                  handleExplore(name)
-                }}
+        
+        {/* New Marketing Landing Page */}
+        <Route path="/" element={<LandingPage theme={theme} isMobile={isMobile} />} />
+        
+        {/* Login Page */}
+        <Route path="/login" element={<AuthPage theme={theme} />} />
+
+        {/* Protected Dashboard / Search App */}
+        <Route path="/app" element={
+          <ProtectedRoute>
+            <>
+              <Navbar theme={theme} isMobile={isMobile} 
+              onAbout={() => setShowAbout(true)}
+              onExplore={() => setShowExplore(true)}
+              onBudget={() => setShowBudget(true)}
+              onPlanTrip={() => setShowPlanTrip(true)}
+              onBusLovers={() => setShowBusLovers(true)}
               />
-            )}
-            {/* Location spotlight — only when a location IS searched */}
-            {spotlightLocation && (
-              <LocationSpotlight
+              <Hero
                 theme={theme}
+                setLocationTheme={handleThemeOnly}
+                onExplore={handleExplore}
                 isMobile={isMobile}
-                activeLocation={spotlightLocation}
-                locationData={locationData}
               />
-            )}
-          </>
+              {/* Season section — only when no location searched */}
+              {!spotlightLocation && (
+                <SeasonSection
+                  theme={theme}
+                  isMobile={isMobile}
+                  onLocationClick={(name) => {
+                    handleExplore(name)
+                  }}
+                />
+              )}
+              {/* Location spotlight — only when a location IS searched */}
+              {spotlightLocation && (
+                <LocationSpotlight
+                  theme={theme}
+                  isMobile={isMobile}
+                  activeLocation={spotlightLocation}
+                  locationData={locationData}
+                />
+              )}
+            </>
+          </ProtectedRoute>
         } />
         <Route path="/trip/:locationId" element={
           <TripPageWrapper theme={theme} onBack={handleBack} setLocationTheme={setLocationTheme} />
