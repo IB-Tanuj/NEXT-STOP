@@ -19,4 +19,3 @@
 **Core User Journey 2** = Step-by-step: User wants to estimate trip costs. They go to Home -> click "Budget" in the Navbar -> fill out the budget calculation form in the overlay -> view their estimated expenses.
 
 
-**for bus** = terified_data.json
