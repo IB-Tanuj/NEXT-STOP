@@ -14,12 +14,8 @@
 
 **Auth Flow** = 
 
-**Core User Journey 1** = Step-by-step: User wants to explore a specific location. They go to Home -> enter a location in the search bar or click a suggested card -> they are redirected to the Trip Page where they can view detailed location highlights and maps.
+**Core User Journey 1** = Step-by-step: User wants to explore a specific location. They go to Home -> enter a location in the search bar or click a suggested card -> they are redirected to the Trip Page where they can view detailed location  and maps.
 
 **Core User Journey 2** = Step-by-step: User wants to estimate trip costs. They go to Home -> click "Budget" in the Navbar -> fill out the budget calculation form in the overlay -> view their estimated expenses.
 
-**Empty States** = 
 
-**Error States** = 
-
-**Redirects** = 
