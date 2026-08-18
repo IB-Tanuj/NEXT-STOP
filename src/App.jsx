@@ -1,6 +1,6 @@
 // Wrap your app in an error boundary or check console
 import { useState, useEffect } from "react"
-import { Routes, Route, useNavigate, useParams } from "react-router-dom"
+import { Routes, Route, useNavigate, useParams, Navigate } from "react-router-dom"
 import { useTheme } from "./hooks/useTheme"
 import Navbar from "./components/Navbar"
 import Hero from "./components/Hero"
@@ -17,6 +17,16 @@ import BusLoversPage from "./components/BusLoversPage"
 import DevAdminPage from "./components/DevAdminPage"
 
 import { allIndiaLocations } from "./data/allLocations"
+import LandingPage from "./components/LandingPage"
+import AuthPage from "./components/AuthPage"
+import { useAuth } from "./context/AuthContext"
+
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return null; // Wait until session is checked
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
+}
 
 function TripPageWrapper({ theme, onBack, setLocationTheme }) {
   const { locationId } = useParams();
