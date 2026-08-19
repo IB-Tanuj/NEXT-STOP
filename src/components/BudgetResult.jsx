@@ -22,40 +22,43 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   // ── Spot Info Data (Dynamic via Gemini API) ─────────
   const [spotInfos, setSpotInfos] = useState({})
   const [spotLoading, setSpotLoading] = useState(true)
+  const [spotError, setSpotError] = useState(null)
   const [removedSpots, setRemovedSpots] = useState([])
   const [expandedSpots, setExpandedSpots] = useState({}) // Tracks which spots are expanded
 
   const activeActivities = preferences.activities?.filter(a => !removedSpots.includes(a)) || []
 
-  useEffect(() => {
+  const fetchAllSpots = async () => {
     if (!preferences.activities?.length) {
       setSpotLoading(false)
       return
     }
-
-    const fetchAllSpots = async () => {
-      setSpotLoading(true)
+    setSpotLoading(true)
+    setSpotError(null)
+    
+    try {
+      const res = await fetch('/api/spots/info-batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ spots: preferences.activities, locationName: location?.name })
+      })
       
-      try {
-        const res = await fetch('/api/spots/info-batch', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ spots: preferences.activities, locationName: location?.name })
-        })
-        
-        if (res.ok) {
-          const data = await res.json()
-          setSpotInfos(data)
-        } else {
-          console.error("Batch spot fetch failed:", res.status)
-        }
-      } catch (err) {
-        console.error("Failed to fetch spot info batch", err)
+      if (res.ok) {
+        const data = await res.json()
+        setSpotInfos(data)
+      } else {
+        console.error("Batch spot fetch failed:", res.status)
+        setSpotError(res.status)
       }
-
-      setSpotLoading(false)
+    } catch (err) {
+      console.error("Failed to fetch spot info batch", err)
+      setSpotError(500)
     }
 
+    setSpotLoading(false)
+  }
+
+  useEffect(() => {
     fetchAllSpots()
   }, [preferences.activities, location?.name])
 
@@ -703,7 +706,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
 
         <EntryTicketsCard 
           theme={theme} activeActivities={activeActivities} removedSpots={removedSpots} setRemovedSpots={setRemovedSpots}
-          spotLoading={spotLoading} spotInfos={spotInfos} preferences={preferences}
+          spotLoading={spotLoading} spotError={spotError} retryFetchSpots={fetchAllSpots} spotInfos={spotInfos} preferences={preferences}
           entryBreakdown={entryBreakdown} totalEntryCost={totalEntryCost}
           expandedSpots={expandedSpots} setExpandedSpots={setExpandedSpots}
           isGroup={isGroup} groupSize={groupSize}

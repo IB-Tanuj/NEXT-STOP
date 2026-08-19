@@ -71,11 +71,14 @@ Format:
   "Spot Name 2": { ... }
 }`;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-3.6-flash',
-            contents: prompt,
-            config: { temperature: 0.2 }
-        });
+        const response = await Promise.race([
+            ai.models.generateContent({
+                model: 'gemini-3.6-flash',
+                contents: prompt,
+                config: { temperature: 0.2 }
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_ERROR')), 12000))
+        ]);
 
         const text = response.text || "";
         const clean = text.replace(/```json|```/g, "").trim();
@@ -101,10 +104,13 @@ Format:
         res.setHeader('X-Cache', 'MISS');
         res.json(results);
     } catch (error) {
-        console.error("Error fetching batch spot info:", error.message);
-        res.status(500).json({
-            error: "Failed to generate AI spot info.",
-            details: error.message
-        });
+        console.error("Error fetching spot info batch:", error.message);
+        if (error.message === 'TIMEOUT_ERROR') {
+            return res.status(504).json({ error: "Gemini API timed out." });
+        }
+        if (error.status === 503) {
+            return res.status(503).json({ error: "Gemini API is temporarily unavailable." });
+        }
+        res.status(500).json({ error: "Failed to fetch spot info", details: error.message });
     }
 };
