@@ -7,6 +7,8 @@ export const EntryTicketsCard = React.memo(({
   removedSpots,
   setRemovedSpots,
   spotLoading,
+  spotError,
+  retryFetchSpots,
   spotInfos,
   preferences,
   entryBreakdown,
@@ -20,6 +22,27 @@ export const EntryTicketsCard = React.memo(({
 
   return card(theme, <>
     {sectionLabel(theme, `🎯 ENTRY TICKETS & SPOT INFO ${isGroup ? `(× ${groupSize} people)` : ""}`)}
+
+    {(spotError === 503 || spotError === 504) && !spotLoading && (
+      <div style={{
+        background: `${theme.primary}22`,
+        border: `1px solid ${theme.primary}`,
+        borderRadius: "12px",
+        padding: "16px",
+        marginBottom: "16px",
+        textAlign: "center"
+      }}>
+        <div style={{ color: theme.text, fontSize: "14px", marginBottom: "8px" }}>
+          ⚠️ The AI service is temporarily busy.
+        </div>
+        <button onClick={retryFetchSpots} style={{
+          background: theme.primary, color: "#fff", border: "none",
+          padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontWeight: "600"
+        }}>
+          🔄 Try Again
+        </button>
+      </div>
+    )}
     
     {spotLoading && Object.keys(spotInfos).length < preferences.activities.length ? (
       <div style={{ color: theme.subtext, textAlign: "center", padding: "20px" }}>
