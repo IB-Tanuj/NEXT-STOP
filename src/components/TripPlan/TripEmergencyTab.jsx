@@ -1,5 +1,5 @@
 import React from "react";
-import { card, sectionLabel, comingSoon } from "./SharedUI"
+import { card, sectionLabel, comingSoon, ShimmerSkeleton } from "./SharedUI"
 
 export const TripEmergencyTab = React.memo(({ theme, locationName, aiLoading, aiData }) => {
   return (
@@ -34,9 +34,7 @@ export const TripEmergencyTab = React.memo(({ theme, locationName, aiLoading, ai
       {card(theme, <>
         {sectionLabel(theme, `🆘 LOCAL EMERGENCY — ${locationName.toUpperCase()}`)}
         {aiLoading ? (
-          <div style={{ color: theme.subtext, textAlign: "center", padding: "20px" }}>
-            🤖 AI is finding local contacts...
-          </div>
+          <ShimmerSkeleton />
         ) : aiData?.localEmergency?.length > 0 ? (
           aiData.localEmergency.map((item, i) => (
             <div key={i} style={{

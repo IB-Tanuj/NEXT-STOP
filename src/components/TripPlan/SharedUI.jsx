@@ -1,5 +1,15 @@
+import React from "react";
+
+export const ShimmerSkeleton = () => (
+  <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "10px 0" }}>
+    <div className="skeleton-box" style={{ height: "24px", width: "60%" }}></div>
+    <div className="skeleton-box" style={{ height: "14px", width: "100%" }}></div>
+    <div className="skeleton-box" style={{ height: "14px", width: "80%" }}></div>
+  </div>
+)
+
 export const card = (theme, children, extra = {}) => (
-  <div style={{
+  <div className="hover-card" style={{
     background: theme.card,
     borderRadius: "16px",
     padding: "24px",
