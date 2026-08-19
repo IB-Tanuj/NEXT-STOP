@@ -49,6 +49,7 @@ JSON SCHEMA:
                 max_tokens: 2000,
             },
             {
+                timeout: 12000,
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${apiKey}`,
@@ -67,7 +68,8 @@ JSON SCHEMA:
         res.json(parsedData);
     } catch (error) {
         console.error("Error generating trip plan:", error.response?.data || error.message);
-        res.status(error.response?.status || 500).json({
+        const status = error.code === 'ECONNABORTED' ? 504 : (error.response?.status || 500);
+        res.status(status).json({
             error: "Failed to generate AI trip plan.",
             details: error.response?.data || error.message
         });
@@ -142,6 +144,7 @@ Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. 
                 max_tokens: 3000,
             },
             {
+                timeout: 12000,
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${apiKey}`,
@@ -166,7 +169,8 @@ Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. 
         res.json(parsedData);
     } catch (error) {
         console.error("Error generating itinerary:", error.response?.data || error.message);
-        res.status(error.response?.status || 500).json({
+        const status = error.code === 'ECONNABORTED' ? 504 : (error.response?.status || 500);
+        res.status(status).json({
             error: "Failed to generate AI itinerary.",
             details: error.response?.data || error.message
         });
