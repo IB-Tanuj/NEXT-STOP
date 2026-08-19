@@ -1,7 +1,7 @@
 import React from "react";
 import { useState } from "react"
 import { localPhrases } from "../../data/localPhrases"
-import { card, sectionLabel, comingSoon } from "./SharedUI"
+import { card, sectionLabel, comingSoon, ShimmerSkeleton } from "./SharedUI"
 
 const PhraseCategory = ({ category, theme }) => {
   const [expanded, setExpanded] = useState(false)
@@ -166,9 +166,7 @@ export const TripOverviewTab = React.memo(({
       {card(theme, <>
         {sectionLabel(theme, `🍽️ POPULAR FOOD IN ${locationName.toUpperCase()}`)}
         {aiLoading ? (
-          <div style={{ color: theme.subtext, textAlign: "center", padding: "20px" }}>
-            🤖 AI is generating food recommendations...
-          </div>
+          <ShimmerSkeleton />
         ) : aiData?.foodRecommendations?.length > 0 ? (
           aiData.foodRecommendations.map((food, i) => (
             <div key={i} style={{

@@ -1,5 +1,5 @@
 export const card = (theme, children, extra = {}) => (
-  <div style={{
+  <div className="hover-card" style={{
     background: theme.card,
     borderRadius: "16px",
     padding: "24px",

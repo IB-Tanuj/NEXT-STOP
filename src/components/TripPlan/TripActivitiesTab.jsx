@@ -1,6 +1,6 @@
 import React from "react";
 import { useState } from "react"
-import { card, sectionLabel, comingSoon } from "./SharedUI"
+import { card, sectionLabel, comingSoon, ShimmerSkeleton } from "./SharedUI"
 
 export const TripActivitiesTab = React.memo(({ theme, locationName, aiLoading, aiData }) => {
   const [liveData, setLiveData] = useState({}) // { "activity_ScubaDiving": { loading, data, error } }
@@ -107,9 +107,7 @@ export const TripActivitiesTab = React.memo(({ theme, locationName, aiLoading, a
           Popular activities — tap "Get Live Price" for real pricing
         </div>
         {aiLoading ? (
-          <div style={{ color: theme.subtext, textAlign: "center", padding: "20px" }}>
-            🤖 AI is finding activities...
-          </div>
+          <ShimmerSkeleton />
         ) : aiData?.activities?.length > 0 ? (
           aiData.activities.map((activity, i) => (
             <div
@@ -141,9 +139,7 @@ export const TripActivitiesTab = React.memo(({ theme, locationName, aiLoading, a
           Upcoming festivals — tap "Get Live Data" for details
         </div>
         {aiLoading ? (
-          <div style={{ color: theme.subtext, textAlign: "center", padding: "20px" }}>
-            🤖 AI is finding festivals...
-          </div>
+          <ShimmerSkeleton />
         ) : aiData?.festivals?.length > 0 ? (
           aiData.festivals.map((festival, i) => (
             <div
