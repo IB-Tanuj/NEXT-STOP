@@ -1,24 +1,24 @@
 // Wrap your app in an error boundary or check console
-import { useState, useEffect } from "react"
+import React, { useState, useEffect, lazy, Suspense } from "react"
 import { Routes, Route, useNavigate, useParams, Navigate } from "react-router-dom"
 import { useTheme } from "./hooks/useTheme"
 import Navbar from "./components/Navbar"
 import Hero from "./components/Hero"
-import TripPage from "./components/TripPage"
+const TripPage = lazy(() => import("./components/TripPage"))
 import SeasonSection from "./components/SeasonSection"
 import LocationSpotlight from "./components/LocationSpotlight"
-import { locationData } from "./components/TripPage"
+import { locationData } from "./data/locationData"
 import useScreenSize from "./hooks/useScreenSize"
-import AboutPage from "./components/AboutPage"
-import ExploreSidebar from "./components/ExploreSidebar"
-import BudgetPage from "./components/BudgetPage"
-import PlanTripPage from "./components/PlanTripPage"
-import BusLoversPage from "./components/BusLoversPage"
-import DevAdminPage from "./components/DevAdminPage"
+const AboutPage = lazy(() => import("./components/AboutPage"))
+const ExploreSidebar = lazy(() => import("./components/ExploreSidebar"))
+const BudgetPage = lazy(() => import("./components/BudgetPage"))
+const PlanTripPage = lazy(() => import("./components/PlanTripPage"))
+const BusLoversPage = lazy(() => import("./components/BusLoversPage"))
+const DevAdminPage = lazy(() => import("./components/DevAdminPage"))
 
 import { allIndiaLocations } from "./data/allLocations"
 import LandingPage from "./components/LandingPage"
-import AuthPage from "./components/AuthPage"
+const AuthPage = lazy(() => import("./components/AuthPage"))
 import { useAuth } from "./context/AuthContext"
 
 function ProtectedRoute({ children }) {
@@ -39,6 +39,13 @@ function TripPageWrapper({ theme, onBack, setLocationTheme }) {
 
   return <TripPage location={locationId} theme={theme} onBack={onBack} />;
 }
+
+
+const FallbackSpinner = ({ theme }) => (
+  <div style={{ height: "100vh", width: "100%", display: "flex", justifyContent: "center", alignItems: "center", background: theme?.bg || "#000" }}>
+    <div style={{ color: theme?.primary || "#fff", fontSize: "24px", animation: "pulse 1.5s infinite" }}>⏳ Loading...</div>
+  </div>
+);
 
 function App() {
   const { theme, setLocationTheme, resetToSeason } = useTheme()
@@ -161,6 +168,7 @@ function App() {
       fontFamily: "var(--sans)",
       transition: "all 0.8s ease",
     }}>
+      <Suspense fallback={<FallbackSpinner theme={theme} />}>
       <Routes>
         <Route path="/dev" element={<DevAdminPage theme={theme} setLocationTheme={setLocationTheme} />} />
         
@@ -213,12 +221,13 @@ function App() {
           <TripPageWrapper theme={theme} onBack={handleBack} setLocationTheme={setLocationTheme} />
         } />
       </Routes>
+      </Suspense>
       {showAbout && (
-  <AboutPage
-    theme={theme}
-    onClose={() => setShowAbout(false)}
-  />
+  <Suspense fallback={null}>
+  <AboutPage theme={theme} onClose={() => setShowAbout(false)} />
+  </Suspense>
 )}
+<Suspense fallback={null}>
 <ExploreSidebar
   theme={theme}
   isOpen={showExplore}
@@ -227,39 +236,24 @@ function App() {
     handleThemeOnly(locationKey)
     handleExplore(locationKey)
   }}
-  
 />
+</Suspense>
 {showBudget && (
-  <BudgetPage
-    theme={theme}
-    onClose={() => setShowBudget(false)}
-    onLocationSelect={(locationKey) => {
-      setShowBudget(false)
-      handleThemeOnly(locationKey)
-      handleExplore(locationKey)
-    }}
-  />
+  <Suspense fallback={null}>
+  <BudgetPage theme={theme} onClose={() => setShowBudget(false)} onLocationSelect={(locationKey) => { setShowBudget(false); handleThemeOnly(locationKey); handleExplore(locationKey); }} />
+  </Suspense>
 )}
 
 {showPlanTrip && (
-  <PlanTripPage
-    theme={theme}
-    onClose={() => setShowPlanTrip(false)}
-    onStartPlanning={() => {
-      const searchBar = document.getElementById("hero-search")
-      if (searchBar) {
-        searchBar.scrollIntoView({ behavior: "smooth", block: "center" })
-        setTimeout(() => searchBar.focus(), 600)
-      }
-    }}
-  />
+  <Suspense fallback={null}>
+  <PlanTripPage theme={theme} onClose={() => setShowPlanTrip(false)} onStartPlanning={() => { const searchBar = document.getElementById("hero-search"); if (searchBar) { searchBar.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => searchBar.focus(), 600); } }} />
+  </Suspense>
 )}
 
 {showBusLovers && (
-  <BusLoversPage
-    theme={theme}
-    onClose={() => setShowBusLovers(false)}
-  />
+  <Suspense fallback={null}>
+  <BusLoversPage theme={theme} onClose={() => setShowBusLovers(false)} />
+  </Suspense>
 )}
     </div>
   )

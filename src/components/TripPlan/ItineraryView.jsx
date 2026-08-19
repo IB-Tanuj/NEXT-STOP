@@ -1,7 +1,8 @@
+import React from "react";
 import { useState, useEffect } from "react"
 import { fetchItineraryData, buildItineraryCacheKey } from "../../utils/tripPlanUtils"
 
-export const ItineraryView = ({ theme, locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals, onBack }) => {
+export const ItineraryView = React.memo(({ theme, locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals, onBack }) => {
   const [itineraryData, setItineraryData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -182,4 +183,4 @@ export const ItineraryView = ({ theme, locationName, days, budget, stayType, tra
       `}</style>
     </div>
   )
-}
+});

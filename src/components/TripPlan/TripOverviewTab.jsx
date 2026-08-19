@@ -1,3 +1,4 @@
+import React from "react";
 import { useState } from "react"
 import { localPhrases } from "../../data/localPhrases"
 import { card, sectionLabel, comingSoon } from "./SharedUI"
@@ -68,7 +69,7 @@ const PhraseCategory = ({ category, theme }) => {
   )
 }
 
-export const TripOverviewTab = ({
+export const TripOverviewTab = React.memo(({
   theme,
   locationName,
   days,
@@ -196,4 +197,4 @@ export const TripOverviewTab = ({
       </>)}
     </div>
   )
-}
+});

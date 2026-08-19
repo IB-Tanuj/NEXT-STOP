@@ -1,7 +1,8 @@
+import React from "react";
 import { card, sectionLabel, bookingLink } from "./SharedUI"
 import { getTransportLinks, getStayLinks } from "../../utils/tripPlanUtils"
 
-export const TripBookingTab = ({ theme, transport, stayType, locationName }) => {
+export const TripBookingTab = React.memo(({ theme, transport, stayType, locationName }) => {
   const transportLinks = getTransportLinks(transport, locationName)
   const stayLinks = getStayLinks(stayType)
 
@@ -20,4 +21,4 @@ export const TripBookingTab = ({ theme, transport, stayType, locationName }) => 
       </>)}
     </div>
   )
-}
+});
