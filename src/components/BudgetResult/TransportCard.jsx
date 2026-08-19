@@ -1,6 +1,7 @@
+import React from "react";
 import { card, sectionLabel, selectableRow } from "./SharedUI";
 
-export const TransportCard = ({
+export const TransportCard = React.memo(({
   theme,
   location,
   planData,
@@ -241,4 +242,4 @@ export const TransportCard = ({
       </>)}
     </>
   );
-};
+});

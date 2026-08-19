@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { seasonGetaways, getCurrentSeason } from "../data/homepageData"
-import { locationData } from "./TripPage"
+import { locationData } from "../data/locationData"
 import { fetchImagesWithCache, getCachedImages } from "../utils/imageCache"
 
 // ── Shimmer Skeleton ────────────────────────────────────

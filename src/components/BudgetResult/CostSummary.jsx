@@ -1,6 +1,7 @@
+import React from "react";
 import { card, sectionLabel } from "./SharedUI";
 
-export const CostSummary = ({
+export const CostSummary = React.memo(({
   theme,
   stayCost,
   transportCost,
@@ -50,4 +51,4 @@ export const CostSummary = ({
       </div>
     </div>
   </>);
-};
+});

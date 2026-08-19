@@ -1,6 +1,7 @@
+import React from "react";
 import { card, sectionLabel } from "./SharedUI";
 
-export const PersonalVehicleCard = ({
+export const PersonalVehicleCard = React.memo(({
   theme,
   vehicleLoading,
   liveVehicleData,
@@ -79,4 +80,4 @@ export const PersonalVehicleCard = ({
       </div>
     ))}
   </>);
-};
+});

@@ -1,4 +1,5 @@
-export const BudgetStatus = ({ foodBuffer, theme }) => (
+import React from "react";
+export const BudgetStatus = React.memo(({ foodBuffer, theme }) => (
   <div style={{
     background: foodBuffer >= 0 ? `${theme.primary}22` : "#ff6b6b22",
     border: `2px solid ${foodBuffer >= 0 ? theme.primary : "#ff6b6b"}`,
@@ -14,4 +15,4 @@ export const BudgetStatus = ({ foodBuffer, theme }) => (
         : "Reduce stay days, share rooms or pick cheaper transport"}
     </div>
   </div>
-);
+));

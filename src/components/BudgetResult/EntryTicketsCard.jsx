@@ -1,6 +1,7 @@
+import React from "react";
 import { card, sectionLabel } from "./SharedUI";
 
-export const EntryTicketsCard = ({
+export const EntryTicketsCard = React.memo(({
   theme,
   activeActivities,
   removedSpots,
@@ -189,4 +190,4 @@ export const EntryTicketsCard = ({
       </>
     )}
   </>);
-};
+});
