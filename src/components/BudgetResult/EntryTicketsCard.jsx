@@ -23,7 +23,7 @@ export const EntryTicketsCard = React.memo(({
   return card(theme, <>
     {sectionLabel(theme, `🎯 ENTRY TICKETS & SPOT INFO ${isGroup ? `(× ${groupSize} people)` : ""}`)}
 
-    {(spotError === 503 || spotError === 504) && !spotLoading && (
+    {((spotError === 503 || spotError === 504) || entryBreakdown.some(item => item.error)) && !spotLoading && (
       <div style={{
         background: `${theme.primary}22`,
         border: `1px solid ${theme.primary}`,
@@ -33,13 +33,13 @@ export const EntryTicketsCard = React.memo(({
         textAlign: "center"
       }}>
         <div style={{ color: theme.text, fontSize: "14px", marginBottom: "8px" }}>
-          ⚠️ The AI service is temporarily busy.
+          {spotError ? "⚠️ The AI service is temporarily busy." : "⚠️ Some spots failed to load due to high AI traffic."}
         </div>
         <button onClick={retryFetchSpots} style={{
           background: theme.primary, color: "#fff", border: "none",
           padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontWeight: "600"
         }}>
-          🔄 Try Again
+          🔄 {spotError ? "Try Again" : "Try Fetching Failed Spots"}
         </button>
       </div>
     )}
@@ -78,6 +78,11 @@ export const EntryTicketsCard = React.memo(({
                       {info.openingHours?.closedOn && <span style={{ color: "#ff6b6b" }}> (Closed {info.openingHours.closedOn})</span>}
                     </div>
                   )}
+                  {item.error && (
+                    <div style={{ color: "#ff6b6b", fontSize: "12px", marginTop: "4px" }}>
+                       ⚠️ Failed to fetch details.
+                    </div>
+                  )}
                 </div>
                 
                 <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
@@ -94,13 +99,17 @@ export const EntryTicketsCard = React.memo(({
                     ✕ Remove
                   </button>
                   
-                  <div style={{ color: item.cost === 0 ? "#A8E6CF" : theme.primary, fontWeight: "800", fontSize: "15px" }}>
-                    {item.cost === 0 ? "FREE" : `₹${item.cost}${isGroup ? ` × ${groupSize}` : ""}`}
-                  </div>
-                  {isGroup && item.cost > 0 && (
-                    <div style={{ color: theme.subtext, fontSize: "11px" }}>
-                      Total: ₹{(item.cost * groupSize).toLocaleString("en-IN")}
-                    </div>
+                  {!item.error && (
+                    <>
+                      <div style={{ color: item.cost === 0 ? "#A8E6CF" : theme.primary, fontWeight: "800", fontSize: "15px" }}>
+                        {item.cost === 0 ? "FREE" : `₹${item.cost}${isGroup ? ` × ${groupSize}` : ""}`}
+                      </div>
+                      {isGroup && item.cost > 0 && (
+                        <div style={{ color: theme.subtext, fontSize: "11px" }}>
+                          Total: ₹{(item.cost * groupSize).toLocaleString("en-IN")}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
