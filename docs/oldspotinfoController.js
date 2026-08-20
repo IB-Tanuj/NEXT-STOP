@@ -22,7 +22,7 @@ export const getSpotInfoBatch = async (req, res) => {
             const cleanSpot = spot.toLowerCase().replace(/[^a-z0-9]+/g, '_');
             const cacheKey = `spotinfo:${cleanSpot}:${cleanLoc}`;
             const cached = await spotCache.get(cacheKey);
-            
+
             if (cached) {
                 results[spot] = cached;
             } else {
@@ -48,8 +48,7 @@ export const getSpotInfoBatch = async (req, res) => {
 
         const ai = new GoogleGenAI({ apiKey: apiKey });
 
-        const fetchSpotInfoBatch = async () => {
-            const prompt = `You are a travel expert for India. Provide detailed, accurate visitor information for the following tourist spots located in ${locationName}, India.
+        const prompt = `You are a travel expert for India. Provide detailed, accurate visitor information for the following tourist spots located in ${locationName}, India.
 
 SPOTS TO ANALYZE:
 ${missingSpots.map((s, i) => `${i + 1}. ${s}`).join('\n')}
@@ -72,24 +71,21 @@ Format:
   "Spot Name 2": { ... }
 }`;
 
-            const response = await Promise.race([
-                ai.models.generateContent({
-                    model: 'gemini-3.6-flash',
-                    contents: prompt,
-                    config: { temperature: 0.2 }
-                }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_ERROR')), 15000))
-            ]);
+        const response = await Promise.race([
+            ai.models.generateContent({
+                model: 'gemini-3.6-flash',
+                contents: prompt,
+                config: { temperature: 0.2 }
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_ERROR')), 12000))
+        ]);
 
-            const text = response.text || "";
-            const clean = text.replace(/```json|```/g, "").trim();
+        const text = response.text || "";
+        const clean = text.replace(/```json|```/g, "").trim();
 
-            if (!clean) throw new Error("Gemini returned an empty response.");
+        if (!clean) throw new Error("Gemini returned an empty response.");
 
-            return JSON.parse(clean);
-        };
-
-        const parsedData = await fetchSpotInfoBatch();
+        const parsedData = JSON.parse(clean);
 
         // 4. Cache the new results and merge into final response
         for (const spot of missingSpots) {
@@ -100,6 +96,7 @@ Format:
                 await spotCache.set(cacheKey, data, CACHE_TTL);
                 results[spot] = data;
             } else {
+                // Gemini didn't return data for this spot for some reason
                 results[spot] = { error: true, reason: "Not found in Gemini response" };
             }
         }
