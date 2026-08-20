@@ -1,8 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 import { AsyncCache } from '../utils/cache.js';
 
-// Cache for 30 days
-const CACHE_TTL = 30 * 24 * 60 * 60 * 1000;
+// Cache for 40 days
+const CACHE_TTL = 40 * 24 * 60 * 60 * 1000;
 const spotCache = new AsyncCache('cache_spot_info');
 
 export const getSpotInfoBatch = async (req, res) => {
@@ -38,21 +38,32 @@ export const getSpotInfoBatch = async (req, res) => {
             return res.json(results);
         }
 
-        // 3. Call Gemini for the missing spots in ONE batch
+        // 3. Call Gemini for the missing spots in chunks
         console.log(`[Spot Info Batch] Calling Gemini for missing spots: ${missingSpots.join(', ')}`);
 
-        const apiKey = process.env.GEMINI_KEY;
-        if (!apiKey) {
-            return res.status(500).json({ error: "GEMINI API key missing" });
+        const apiKeys = [
+            process.env.GEMINI_KEY_1,
+            process.env.GEMINI_KEY_2,
+            process.env.GEMINI_KEY_3,
+            process.env.GEMINI_KEY
+        ].filter(Boolean);
+
+        if (apiKeys.length === 0) {
+            return res.status(500).json({ error: "GEMINI API keys missing" });
         }
 
-        const ai = new GoogleGenAI({ apiKey: apiKey });
+        const chunkSize = 2;
+        const chunks = [];
+        for (let i = 0; i < missingSpots.length; i += chunkSize) {
+            chunks.push(missingSpots.slice(i, i + chunkSize));
+        }
 
-        const fetchSpotInfoBatch = async () => {
+        const fetchChunk = async (chunkSpots, apiKey) => {
+            const ai = new GoogleGenAI({ apiKey: apiKey });
             const prompt = `You are a travel expert for India. Provide detailed, accurate visitor information for the following tourist spots located in ${locationName}, India.
 
 SPOTS TO ANALYZE:
-${missingSpots.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+${chunkSpots.map((s, i) => `${i + 1}. ${s}`).join('\n')}
 
 Return ONLY a valid JSON object where the keys are the EXACT spot names listed above, and the value is the spot info object. NO markdown formatting, NO backticks. Ensure prices are in INR (₹).
 
@@ -68,8 +79,7 @@ Format:
     "photographyPolicy": { "allowed": boolean, "fee": number (or null), "dronesAllowed": boolean },
     "accessibility": "string",
     "tips": ["string array of 2 tips"]
-  },
-  "Spot Name 2": { ... }
+  }
 }`;
 
             const response = await Promise.race([
@@ -89,18 +99,40 @@ Format:
             return JSON.parse(clean);
         };
 
-        const parsedData = await fetchSpotInfoBatch();
+        const chunkPromises = chunks.map((chunkSpots, index) => {
+            const key = apiKeys[index % apiKeys.length];
+            return fetchChunk(chunkSpots, key).catch(err => {
+                console.error(`[Spot Info Batch] Error fetching chunk ${index}:`, err.message);
+                return null; // Return null so Promise.all still resolves and we can handle partial failure
+            });
+        });
 
-        // 4. Cache the new results and merge into final response
+        const chunkResults = await Promise.all(chunkPromises);
+
+        // 4. Merge results and cache successful spots
+        chunkResults.forEach((parsedData, index) => {
+            const chunkSpots = chunks[index];
+            if (parsedData) {
+                for (const spot of chunkSpots) {
+                    if (parsedData[spot]) {
+                        results[spot] = parsedData[spot];
+                    } else {
+                        results[spot] = { error: true, reason: "Not found in Gemini response" };
+                    }
+                }
+            } else {
+                for (const spot of chunkSpots) {
+                    results[spot] = { error: true, reason: "Fetch failed for this chunk" };
+                }
+            }
+        });
+
         for (const spot of missingSpots) {
-            const data = parsedData[spot];
-            if (data) {
+            const data = results[spot];
+            if (data && !data.error) {
                 const cleanSpot = spot.toLowerCase().replace(/[^a-z0-9]+/g, '_');
                 const cacheKey = `spotinfo:${cleanSpot}:${cleanLoc}`;
                 await spotCache.set(cacheKey, data, CACHE_TTL);
-                results[spot] = data;
-            } else {
-                results[spot] = { error: true, reason: "Not found in Gemini response" };
             }
         }
 
@@ -108,12 +140,6 @@ Format:
         res.json(results);
     } catch (error) {
         console.error("Error fetching spot info batch:", error.message);
-        if (error.message === 'TIMEOUT_ERROR') {
-            return res.status(504).json({ error: "Gemini API timed out." });
-        }
-        if (error.status === 503) {
-            return res.status(503).json({ error: "Gemini API is temporarily unavailable." });
-        }
         res.status(500).json({ error: "Failed to fetch spot info", details: error.message });
     }
 };

@@ -27,35 +27,34 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
 
   const activeActivities = preferences.activities?.filter(a => !removedSpots.includes(a)) || []
 
-  useEffect(() => {
+  const fetchAllSpots = async () => {
     if (!preferences.activities?.length) {
       setSpotLoading(false)
       return
     }
-
-    const fetchAllSpots = async () => {
-      setSpotLoading(true)
+    setSpotLoading(true)
+    
+    try {
+      const res = await fetch('/api/spots/info-batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ spots: preferences.activities, locationName: location?.name })
+      })
       
-      try {
-        const res = await fetch('/api/spots/info-batch', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ spots: preferences.activities, locationName: location?.name })
-        })
-        
-        if (res.ok) {
-          const data = await res.json()
-          setSpotInfos(data)
-        } else {
-          console.error("Batch spot fetch failed:", res.status)
-        }
-      } catch (err) {
-        console.error("Failed to fetch spot info batch", err)
+      if (res.ok) {
+        const data = await res.json()
+        setSpotInfos(data)
+      } else {
+        console.error("Batch spot fetch failed:", res.status)
       }
-
-      setSpotLoading(false)
+    } catch (err) {
+      console.error("Failed to fetch spot info batch", err)
     }
 
+    setSpotLoading(false)
+  }
+
+  useEffect(() => {
     fetchAllSpots()
   }, [preferences.activities, location?.name])
 
@@ -706,7 +705,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
           spotLoading={spotLoading} spotInfos={spotInfos} preferences={preferences}
           entryBreakdown={entryBreakdown} totalEntryCost={totalEntryCost}
           expandedSpots={expandedSpots} setExpandedSpots={setExpandedSpots}
-          isGroup={isGroup} groupSize={groupSize}
+          isGroup={isGroup} groupSize={groupSize} retryFetchSpots={fetchAllSpots}
         />
 
         <CostSummary 
