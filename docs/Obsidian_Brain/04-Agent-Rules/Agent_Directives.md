@@ -7,5 +7,6 @@ These are the core rules the AI Agent must follow for future extensions of this 
 3. **No Placeholders**: When building new features, do not leave "TODO" comments. Build fully robust solutions.
 4. **Resilient APIs**: All external API calls MUST be wrapped in explicit timeouts (e.g. 15s) and must fail gracefully with human-readable UI states or retry buttons.
 5. **Modern Aesthetics**: Always push for premium UI design—use shimmer skeletons instead of text loaders, add subtle hover micro-animations, and utilize cubic-bezier transitions.
+6. **Theme Consistency**: When using theme colors, strictly adhere to the defined palette. Do not introduce new colors or gradients unless explicitly requested.
 
 Tags: #ai #rules #preferences
