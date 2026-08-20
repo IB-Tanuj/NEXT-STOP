@@ -48,55 +48,59 @@ export const getSpotInfoBatch = async (req, res) => {
 
         const ai = new GoogleGenAI({ apiKey: apiKey });
 
-        const fetchSpotInfo = async (spot) => {
-            const prompt = `You are a travel expert for India. Provide detailed, accurate visitor information for the tourist spot "${spot}" located in ${locationName}, India.
+        const fetchSpotInfoBatch = async () => {
+            const prompt = `You are a travel expert for India. Provide detailed, accurate visitor information for the following tourist spots located in ${locationName}, India.
 
-Return ONLY a valid JSON object. NO markdown formatting, NO backticks. Ensure prices are in INR (₹).
+SPOTS TO ANALYZE:
+${missingSpots.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+
+Return ONLY a valid JSON object where the keys are the EXACT spot names listed above, and the value is the spot info object. NO markdown formatting, NO backticks. Ensure prices are in INR (₹).
 
 Format:
 {
-  "entryPrice": { "adult": number (or null), "child": number (or null), "free": boolean },
-  "openingHours": { "open": "string", "close": "string", "closedOn": "string (or null)", "note": "string (or null)" },
-  "rules": ["string array of rules"],
-  "permit": { "required": boolean, "details": "string (or null)", "cost": number (or null) },
-  "ageRestrictions": { "hasRestriction": boolean, "details": "string (or null)" },
-  "recommendedDuration": "string",
-  "photographyPolicy": { "allowed": boolean, "fee": number (or null), "dronesAllowed": boolean },
-  "accessibility": "string",
-  "tips": ["string array of 2 tips"]
+  "Spot Name 1": {
+    "entryPrice": { "adult": number (or null), "child": number (or null), "free": boolean },
+    "openingHours": { "open": "string", "close": "string", "closedOn": "string (or null)", "note": "string (or null)" },
+    "rules": ["string array of rules"],
+    "permit": { "required": boolean, "details": "string (or null)", "cost": number (or null) },
+    "ageRestrictions": { "hasRestriction": boolean, "details": "string (or null)" },
+    "recommendedDuration": "string",
+    "photographyPolicy": { "allowed": boolean, "fee": number (or null), "dronesAllowed": boolean },
+    "accessibility": "string",
+    "tips": ["string array of 2 tips"]
+  },
+  "Spot Name 2": { ... }
 }`;
-            
-            const response = await ai.models.generateContent({
-                model: 'gemini-1.5-flash',
-                contents: prompt,
-                config: { temperature: 0.2 }
-            });
+
+            const response = await Promise.race([
+                ai.models.generateContent({
+                    model: 'gemini-3.6-flash',
+                    contents: prompt,
+                    config: { temperature: 0.2 }
+                }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_ERROR')), 15000))
+            ]);
+
             const text = response.text || "";
             const clean = text.replace(/```json|```/g, "").trim();
-            if (!clean) throw new Error(`Empty response for ${spot}`);
+
+            if (!clean) throw new Error("Gemini returned an empty response.");
+
             return JSON.parse(clean);
         };
 
-        const fetchPromises = missingSpots.map(spot => 
-            fetchSpotInfo(spot)
-                .then(data => ({ spot, data }))
-                .catch(err => ({ spot, error: true, reason: err.message }))
-        );
-
-        const parallelResults = await Promise.race([
-            Promise.all(fetchPromises),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_ERROR')), 15000))
-        ]);
+        const parsedData = await fetchSpotInfoBatch();
 
         // 4. Cache the new results and merge into final response
-        for (const res of parallelResults) {
-            if (!res.error && res.data) {
-                const cleanSpot = res.spot.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        for (const spot of missingSpots) {
+            const data = parsedData[spot];
+            if (data) {
+                const cleanSpot = spot.toLowerCase().replace(/[^a-z0-9]+/g, '_');
                 const cacheKey = `spotinfo:${cleanSpot}:${cleanLoc}`;
-                await spotCache.set(cacheKey, res.data, CACHE_TTL);
-                results[res.spot] = res.data;
+                await spotCache.set(cacheKey, data, CACHE_TTL);
+                results[spot] = data;
             } else {
-                results[res.spot] = { error: true, reason: res.reason || "Not found in Gemini response" };
+                results[spot] = { error: true, reason: "Not found in Gemini response" };
             }
         }
 
