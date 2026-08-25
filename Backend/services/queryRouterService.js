@@ -1,40 +1,41 @@
-import axios from 'axios';
+import { GoogleGenAI } from '@google/genai';
 
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GEMINI_MODEL = "gemini-3.6-flash";
 
 /**
- * Step 1: Router — Ask Groq to generate the perfect search query
- * Uses very few tokens (~50) because the output is just a short search string
+ * Helper: get or create a shared Gemini client using GEMINI_EXTRA key.
  */
-export async function generateSearchQuery({ type, name, location }) {
-    const apiKey = process.env.GROQ_API_KEY;
+function getGeminiClient() {
+    const apiKey = process.env.GEMINI_EXTRA;
     if (!apiKey) {
-        throw new Error("GROQ_API_KEY is not defined.");
+        throw new Error("GEMINI_EXTRA is not defined in environment variables.");
     }
-
-    const prompt = `Generate a single Google search query to find the current ${type} for "${name}" in ${location}, India. Return ONLY the search query string. Nothing else. No quotes.`;
-
-    const response = await axios.post(
-        GROQ_API_URL,
-        {
-            model: "llama-3.3-70b-versatile",
-            messages: [{ role: "user", content: prompt }],
-            temperature: 0.3,
-            max_tokens: 50,
-        },
-        {
-            headers: {
-                "Authorization": `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-            }
-        }
-    );
-
-    return response.data.choices[0].message.content.trim().replace(/^["']|["']$/g, '');
+    return new GoogleGenAI({ apiKey });
 }
 
 /**
- * Stay-specific search query — hardcoded template, no Groq tokens burned.
+ * Step 1: Router — Ask Gemini to generate the perfect search query
+ * Uses very few tokens (~50) because the output is just a short search string
+ */
+export async function generateSearchQuery({ type, name, location }) {
+    const ai = getGeminiClient();
+
+    const prompt = `Generate a single Google search query to find the current ${type} for "${name}" in ${location}, India. Return ONLY the search query string. Nothing else. No quotes.`;
+
+    const response = await ai.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: prompt,
+        config: {
+            temperature: 0.3,
+            maxOutputTokens: 50,
+        },
+    });
+
+    return response.text.trim().replace(/^["']|["']$/g, '');
+}
+
+/**
+ * Stay-specific search query — hardcoded template, no Gemini tokens burned.
  * Targets real booking sites for actual hotel names and prices.
  */
 export function generateStaySearchQuery(location, stayType) {
@@ -50,7 +51,7 @@ export function generateStaySearchQuery(location, stayType) {
 }
 
 /**
- * Bus-specific search query — hardcoded template, no Groq tokens burned.
+ * Bus-specific search query — hardcoded template, no Gemini tokens burned.
  * Targets aggregators and booking sites for bus schedules.
  */
 export function generateBusSearchQuery(from, to) {
@@ -58,7 +59,7 @@ export function generateBusSearchQuery(from, to) {
 }
 
 /**
- * Flight-specific search query — hardcoded template, no Groq tokens burned.
+ * Flight-specific search query — hardcoded template, no Gemini tokens burned.
  * Targets airline booking sites and flight aggregators.
  */
 export function generateFlightSearchQuery(from, to) {
@@ -66,24 +67,23 @@ export function generateFlightSearchQuery(from, to) {
 }
 
 /**
- * Step 4: Cleaner — Ask Groq to extract structured data from raw web content
+ * Step 4: Cleaner — Ask Gemini to extract structured data from raw web content
  * Strips all URLs. Returns clean JSON matching the provided schema.
- * Uses the default GROQ_API_KEY.
+ * Uses the GEMINI_EXTRA key.
  */
 export async function cleanWebData(rawText, outputSchema, extractionGoal) {
-    return cleanWebDataWithKey(rawText, outputSchema, extractionGoal, process.env.GROQ_API_KEY);
+    return cleanWebDataWithKey(rawText, outputSchema, extractionGoal);
 }
 
 /**
- * Step 4 (with custom key): Cleaner using a specified API key.
- * Used by the stay search pipeline with GROQ_PROMPT_CLEANING_KEY.
+ * Step 4 (with custom key): Cleaner using Gemini.
+ * The apiKey parameter is kept for backward compatibility but ignored —
+ * all calls now use GEMINI_EXTRA via getGeminiClient().
  */
-export async function cleanWebDataWithKey(rawText, outputSchema, extractionGoal, apiKey) {
-    if (!apiKey) {
-        throw new Error("Groq API key is not defined for cleaning.");
-    }
+export async function cleanWebDataWithKey(rawText, outputSchema, extractionGoal, _apiKey) {
+    const ai = getGeminiClient();
 
-    // Truncate raw text to 10000 chars to save tokens (approx 3000 tokens) while keeping enough data for top 5 hotels
+    // Truncate raw text to 10000 chars to save tokens while keeping enough data for top 5 hotels
     const truncated = rawText.substring(0, 10000);
 
     const prompt = `${extractionGoal}
@@ -101,36 +101,27 @@ RULES:
 Web content:
 ${truncated}`;
 
-    const response = await axios.post(
-        GROQ_API_URL,
-        {
-            model: "llama-3.3-70b-versatile",
-            messages: [
-                { role: "system", content: "Return ONLY valid JSON. Never include URLs or links. Never invent data that is not in the provided text. No markdown." },
-                { role: "user", content: prompt }
-            ],
+    const response = await ai.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: prompt,
+        config: {
             temperature: 0.2,
-            max_tokens: 800,
+            maxOutputTokens: 800,
+            systemInstruction: "Return ONLY valid JSON. Never include URLs or links. Never invent data that is not in the provided text. No markdown.",
         },
-        {
-            headers: {
-                "Authorization": `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-            }
-        }
-    );
+    });
 
-    const text = response.data.choices[0].message.content.trim();
+    const text = response.text.trim();
     // Remove markdown code blocks if present
     const clean = text.replace(/```json|```/g, "").trim();
 
     try {
         return JSON.parse(clean);
     } catch (err) {
-        console.error("❌ Groq returned invalid JSON:");
+        console.error("❌ Gemini returned invalid JSON:");
         console.error("--- RAW TEXT ---");
         console.error(text);
         console.error("----------------");
-        throw new Error("Groq returned invalid JSON. Try searching again.");
+        throw new Error("Gemini returned invalid JSON. Try searching again.");
     }
 }
