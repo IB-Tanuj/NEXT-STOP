@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { buildCacheKey, bucketize, get as cacheGet, set as cacheSet, getStats } from '../utils/itineraryCache.js';
-import { saveGeminiResult } from '../utils/geminiLogger.js';
+import { saveGeminiResult, getGeminiResult } from '../utils/geminiLogger.js';
 
 const GEMINI_MODEL = "gemini-3.6-flash";
 
@@ -18,6 +18,15 @@ export const generateTripPlan = async (req, res) => {
 
         if (!location) {
             return res.status(400).json({ error: "Location is required" });
+        }
+
+        const cacheKey = `trip_plan:${location.toLowerCase()}:${days || 3}:${bucketize(Number(budget) || 0)}:${stayType || 'budget'}:${transport || 'train'}`;
+        
+        // Check permanent cache in Supabase
+        const cachedGemini = await getGeminiResult(cacheKey);
+        if (cachedGemini && cachedGemini.output_result) {
+            console.log(`[Gemini Permanent Cache] HIT for trip plan: ${cacheKey}`);
+            return res.json(cachedGemini.output_result);
         }
 
         const prompt = `Generate a JSON trip plan for:
@@ -60,7 +69,7 @@ JSON SCHEMA:
         // Permanently save to gemini_results
         saveGeminiResult('trip_plan', prompt, parsedData, null, {
             location, days: days || 3, budget: budget || 0, stayType: stayType || 'budget', transport: transport || 'train',
-        });
+        }, cacheKey);
 
         res.json(parsedData);
     } catch (error) {
@@ -87,12 +96,21 @@ export const generateItinerary = async (req, res) => {
 
         console.log(`[Itinerary Cache] Key: ${cacheKey}`);
 
-        // ── Check backend cache ──
+        // ── Check backend in-memory cache ──
         const cached = cacheGet(cacheKey);
         if (cached) {
-            console.log(`[Itinerary Cache] HIT — returning cached result (0 tokens)`);
+            console.log(`[Itinerary Cache] HIT — returning in-memory cached result (0 tokens)`);
             res.setHeader('X-Cache', 'HIT');
             return res.json(cached);
+        }
+
+        // ── Check permanent cache in Supabase ──
+        const cachedGemini = await getGeminiResult(`itinerary:${cacheKey}`);
+        if (cachedGemini && cachedGemini.output_result) {
+            console.log(`[Gemini Permanent Cache] HIT for itinerary: itinerary:${cacheKey}`);
+            cacheSet(cacheKey, cachedGemini.output_result); // populate in-memory cache
+            res.setHeader('X-Cache', 'HIT');
+            return res.json(cachedGemini.output_result);
         }
 
         console.log(`[Itinerary Cache] MISS — calling Gemini API`);
@@ -141,7 +159,7 @@ Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. 
         // Permanently save to gemini_results
         saveGeminiResult('itinerary', prompt, parsedData, null, {
             location, days: days || 3, budget: bucketedBudget, stayType: stayType || 'budget', transport: transport || 'train',
-        });
+        }, `itinerary:${cacheKey}`);
 
         // ── Store in backend cache ──
         cacheSet(cacheKey, parsedData);
