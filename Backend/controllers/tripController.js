@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { buildCacheKey, bucketize, get as cacheGet, set as cacheSet, getStats } from '../utils/itineraryCache.js';
+import { saveGeminiResult } from '../utils/geminiLogger.js';
 
 const GEMINI_MODEL = "gemini-3.6-flash";
 
@@ -55,6 +56,12 @@ JSON SCHEMA:
         }
 
         const parsedData = JSON.parse(clean);
+
+        // Permanently save to gemini_results
+        saveGeminiResult('trip_plan', prompt, parsedData, null, {
+            location, days: days || 3, budget: budget || 0, stayType: stayType || 'budget', transport: transport || 'train',
+        });
+
         res.json(parsedData);
     } catch (error) {
         console.error("Error generating trip plan:", error.message);
@@ -130,6 +137,11 @@ Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. 
         }
 
         const parsedData = JSON.parse(clean);
+
+        // Permanently save to gemini_results
+        saveGeminiResult('itinerary', prompt, parsedData, null, {
+            location, days: days || 3, budget: bucketedBudget, stayType: stayType || 'budget', transport: transport || 'train',
+        });
 
         // ── Store in backend cache ──
         cacheSet(cacheKey, parsedData);

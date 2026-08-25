@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { saveGeminiResult } from '../utils/geminiLogger.js';
 
 const GEMINI_MODEL = "gemini-3.6-flash";
 
@@ -31,7 +32,12 @@ export async function generateSearchQuery({ type, name, location }) {
         },
     });
 
-    return response.text.trim().replace(/^["']|["']$/g, '');
+    const result = response.text.trim().replace(/^["']|["']$/g, '');
+
+    // Permanently save to gemini_results
+    saveGeminiResult('search_query', prompt, null, result, { type, name, location });
+
+    return result;
 }
 
 /**
@@ -116,7 +122,12 @@ ${truncated}`;
     const clean = text.replace(/```json|```/g, "").trim();
 
     try {
-        return JSON.parse(clean);
+        const parsed = JSON.parse(clean);
+
+        // Permanently save to gemini_results
+        saveGeminiResult('web_cleaning', extractionGoal, parsed, null, { promptLength: prompt.length });
+
+        return parsed;
     } catch (err) {
         console.error("❌ Gemini returned invalid JSON:");
         console.error("--- RAW TEXT ---");
