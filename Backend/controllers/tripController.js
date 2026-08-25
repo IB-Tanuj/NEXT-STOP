@@ -97,7 +97,7 @@ export const generateItinerary = async (req, res) => {
         console.log(`[Itinerary Cache] Key: ${cacheKey}`);
 
         // ── Check backend in-memory cache ──
-        const cached = cacheGet(cacheKey);
+        const cached = await cacheGet(cacheKey);
         if (cached) {
             console.log(`[Itinerary Cache] HIT — returning in-memory cached result (0 tokens)`);
             res.setHeader('X-Cache', 'HIT');
