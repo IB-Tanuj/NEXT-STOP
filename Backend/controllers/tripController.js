@@ -1,5 +1,15 @@
-import axios from 'axios';
+import { GoogleGenAI } from '@google/genai';
 import { buildCacheKey, bucketize, get as cacheGet, set as cacheSet, getStats } from '../utils/itineraryCache.js';
+
+const GEMINI_MODEL = "gemini-3.6-flash";
+
+function getGeminiClient() {
+    const apiKey = process.env.GEMINI_EXTRA;
+    if (!apiKey) {
+        throw new Error("GEMINI_EXTRA is not defined in environment variables.");
+    }
+    return new GoogleGenAI({ apiKey });
+}
 
 export const generateTripPlan = async (req, res) => {
     try {
@@ -25,53 +35,33 @@ JSON SCHEMA:
   "localEmergency": [{"label": "", "number": ""}]
 }`;
 
-        const apiKey = process.env.GROQ_API_KEY;
-        if (!apiKey) {
-            console.error("GROQ_API_KEY is not defined in backend environment variables.");
-            return res.status(500).json({ error: "Backend configuration error: GROQ API key missing" });
-        }
+        const ai = getGeminiClient();
 
-        const response = await axios.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            {
-                model: "llama-3.3-70b-versatile",
-                messages: [
-                    {
-                        role: "system",
-                        content: "Return ONLY valid JSON. Do not include markdown or explanations."
-                    },
-                    {
-                        role: "user",
-                        content: prompt
-                    }
-                ],
+        const response = await ai.models.generateContent({
+            model: GEMINI_MODEL,
+            contents: prompt,
+            config: {
                 temperature: 0.7,
-                max_tokens: 2000,
+                maxOutputTokens: 2000,
+                systemInstruction: "Return ONLY valid JSON. Do not include markdown or explanations.",
             },
-            {
-                timeout: 12000,
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${apiKey}`,
-                }
-            }
-        );
+        });
 
-        const text = response.data?.choices?.[0]?.message?.content || "";
+        const text = response.text || "";
         const clean = text.replace(/```json|```/g, "").trim();
 
         if (!clean) {
-            throw new Error("Groq returned an empty response.");
+            throw new Error("Gemini returned an empty response.");
         }
 
         const parsedData = JSON.parse(clean);
         res.json(parsedData);
     } catch (error) {
-        console.error("Error generating trip plan:", error.response?.data || error.message);
-        const status = error.code === 'ECONNABORTED' ? 504 : (error.response?.status || 500);
+        console.error("Error generating trip plan:", error.message);
+        const status = error.code === 'ECONNABORTED' ? 504 : 500;
         res.status(status).json({
             error: "Failed to generate AI trip plan.",
-            details: error.response?.data || error.message
+            details: error.message
         });
     }
 };
@@ -98,7 +88,7 @@ export const generateItinerary = async (req, res) => {
             return res.json(cached);
         }
 
-        console.log(`[Itinerary Cache] MISS — calling Groq API`);
+        console.log(`[Itinerary Cache] MISS — calling Gemini API`);
 
         const activitiesText = selectedActivities?.length > 0 ? selectedActivities.map(a => a.name).join(", ") : "none specified";
         const festivalsText = selectedFestivals?.length > 0 ? selectedFestivals.map(f => f.name).join(", ") : "none specified";
@@ -120,43 +110,23 @@ Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. 
   ]
 }`;
 
-        const apiKey = process.env.GROQ_ITINERARY_API_KEY || process.env.GROQ_API_KEY;
-        if (!apiKey) {
-            console.error("GROQ API key is not defined in backend environment variables.");
-            return res.status(500).json({ error: "Backend configuration error: GROQ API key missing" });
-        }
+        const ai = getGeminiClient();
 
-        const response = await axios.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            {
-                model: "llama-3.3-70b-versatile",
-                messages: [
-                    {
-                        role: "system",
-                        content: "Return ONLY valid JSON. Do not include markdown or explanations."
-                    },
-                    {
-                        role: "user",
-                        content: prompt
-                    }
-                ],
+        const response = await ai.models.generateContent({
+            model: GEMINI_MODEL,
+            contents: prompt,
+            config: {
                 temperature: 0.7,
-                max_tokens: 3000,
+                maxOutputTokens: 3000,
+                systemInstruction: "Return ONLY valid JSON. Do not include markdown or explanations.",
             },
-            {
-                timeout: 12000,
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${apiKey}`,
-                }
-            }
-        );
+        });
 
-        const text = response.data?.choices?.[0]?.message?.content || "";
+        const text = response.text || "";
         const clean = text.replace(/```json|```/g, "").trim();
 
         if (!clean) {
-            throw new Error("Groq returned an empty response.");
+            throw new Error("Gemini returned an empty response.");
         }
 
         const parsedData = JSON.parse(clean);
@@ -168,12 +138,13 @@ Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. 
         res.setHeader('X-Cache', 'MISS');
         res.json(parsedData);
     } catch (error) {
-        console.error("Error generating itinerary:", error.response?.data || error.message);
-        const status = error.code === 'ECONNABORTED' ? 504 : (error.response?.status || 500);
+        console.error("Error generating itinerary:", error.message);
+        const status = error.code === 'ECONNABORTED' ? 504 : 500;
         res.status(status).json({
             error: "Failed to generate AI itinerary.",
-            details: error.response?.data || error.message
+            details: error.message
         });
     }
 };
+
 
