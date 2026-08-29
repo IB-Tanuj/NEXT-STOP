@@ -116,7 +116,7 @@ export const generateItinerary = async (req, res) => {
         console.log(`[Itinerary Cache] MISS — calling Gemini API`);
 
         const activitiesText = selectedActivities?.length > 0 ? selectedActivities.map(a => a.name).join(", ") : "none specified";
-        const festivalsText = selectedFestivals?.length > 0 ? selectedFestivals.map(f => f.name).join(", ") : "none specified";
+        const currentMonth = req.body.month || new Date().toLocaleString('default', { month: 'long' });
 
         const prompt = `You are a travel planning expert for India. Generate ONLY a detailed day-by-day itinerary for:
 
@@ -125,8 +125,8 @@ Duration: ${days || 3} days
 Budget: ₹${bucketedBudget}
 Stay type: ${stayType || 'budget'}
 Transport: ${transport || 'train'}
+Travel Month: ${currentMonth} (CRITICAL: Only suggest activities and places that are open and appropriate for this month/season. Ignore off-season events or festivals that do not occur in this month.)
 User has already selected these activities: ${activitiesText}
-User has already selected these festivals: ${festivalsText}
 
 Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. Just raw JSON like this:
 {
