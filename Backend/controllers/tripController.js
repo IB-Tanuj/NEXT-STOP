@@ -20,7 +20,7 @@ export const generateTripPlan = async (req, res) => {
             return res.status(400).json({ error: "Location is required" });
         }
 
-        const cacheKey = `trip_plan:${location.toLowerCase()}:${days || 3}:${bucketize(Number(budget) || 0)}:${stayType || 'budget'}:${transport || 'train'}`;
+        const cacheKey = `trip_plan:${location.toLowerCase()}`;
         
         // Check permanent cache in Supabase
         const cachedGemini = await getGeminiResult(cacheKey);
@@ -30,7 +30,7 @@ export const generateTripPlan = async (req, res) => {
         }
 
         const prompt = `Generate a JSON trip plan for:
-Location: ${location} | ${days || 3} days | Budget: ₹${budget || 0} | Stay: ${stayType || 'budget'} | Transport: ${transport || 'train'} | Spots: ${spots?.join(", ") || "none"}
+Location: ${location}
 
 RULES:
 1. Return ONLY raw JSON. No markdown formatting (\`\`\`). No text before or after.

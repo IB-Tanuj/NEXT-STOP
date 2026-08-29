@@ -49,7 +49,7 @@ export function saveGeminiResult(requestType, inputPrompt, outputResult, outputT
     // Fire-and-forget — don't await, don't block
     supabase
         .from('gemini_results')
-        .insert({
+        .upsert({
             request_type: requestType,
             model: 'gemini-3.6-flash',
             input_prompt: inputPrompt,
@@ -57,7 +57,7 @@ export function saveGeminiResult(requestType, inputPrompt, outputResult, outputT
             output_text: outputText,
             metadata,
             lookup_key: lookupKey
-        })
+        }, { onConflict: 'lookup_key' })
         .then(({ error }) => {
             if (error) {
                 console.error('[GeminiLog] Failed to save result:', error.message);

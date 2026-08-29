@@ -58,8 +58,14 @@ export const ItineraryView = React.memo(({ theme, locationName, days, budget, st
         if (!cancelled) setLoading(false)
       }
     }
-    fetchItinerary()
-    return () => { cancelled = true }
+    const timeoutId = setTimeout(() => {
+      fetchItinerary()
+    }, 300)
+    
+    return () => { 
+      cancelled = true
+      clearTimeout(timeoutId)
+    }
   }, [locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals])
 
   return (
