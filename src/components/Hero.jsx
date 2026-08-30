@@ -175,6 +175,7 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
   const [rightVisible, setRightVisible] = useState(false)
   const [focused, setFocused] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const [stateResults, setStateResults] = useState(null)
   const inputRef = useRef(null)
 
   const subtitle = "Smart trip planning with budget distribution, routes, local phrases and more — all in one place."
@@ -225,11 +226,16 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
   const handleSearch = (e) => {
     e.preventDefault()
     if (search.trim()) {
-      const isValid = onExplore(search.trim())
-      if (!isValid) {
+      const result = onExplore(search.trim())
+      if (!result) {
         setSearchError(true)
+        setStateResults(null)
+      } else if (result && result.type === "state") {
+        setSearchError(false)
+        setStateResults(result)
       } else {
         setSearchError(false)
+        setStateResults(null)
       }
     }
   }
@@ -375,6 +381,7 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
               setSearch(e.target.value); 
               setLocationTheme(e.target.value);
               setSearchError(false); // clear error when typing
+              setStateResults(null); // clear state results when typing
             }}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
@@ -430,56 +437,115 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
           </div>
         )}
 
-        {/* Quick Suggestions */}
-        <div style={{
-          display: "flex",
-          gap: "10px",
-          flexWrap: "wrap",
-          justifyContent: "center",
-          alignItems: "center",
-        }}>
-          <span style={{
-            color: theme.subtext,
-            fontSize: "13px",
-            marginRight: "4px",
-            opacity: loaded ? 0.7 : 0,
-            transition: "opacity 0.4s ease 0.8s",
+        {/* State Results Grid or Quick Suggestions */}
+        {stateResults ? (
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+            gap: "12px",
+            width: "100%",
+            maxWidth: "600px",
+            marginTop: "10px",
+            animation: "fadeInUp 0.5s ease both",
           }}>
-            Try:
-          </span>
-          {suggestions.map((place, i) => (
-            <span
-              key={place}
-              onClick={() => { setSearch(place); setLocationTheme(place) }}
-              style={{
-                backgroundColor: `${theme.primary}15`,
-                border: `1px solid ${theme.primary}35`,
-                borderRadius: "20px",
-                padding: "6px 16px",
-                color: theme.primary,
-                fontSize: "13px",
-                cursor: "pointer",
-                fontWeight: "600",
-                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                animation: loaded
-                  ? `popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.9 + i * 0.1}s both`
-                  : "none",
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.backgroundColor = `${theme.primary}30`
-                e.currentTarget.style.transform = "translateY(-2px)"
-                e.currentTarget.style.boxShadow = `0 4px 12px ${theme.glowColor || 'transparent'}`
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.backgroundColor = `${theme.primary}15`
-                e.currentTarget.style.transform = "translateY(0)"
-                e.currentTarget.style.boxShadow = "none"
-              }}
-            >
-              {place}
+            <div style={{
+              gridColumn: "1 / -1",
+              color: theme.text,
+              fontSize: "16px",
+              fontWeight: "600",
+              textAlign: "center",
+              marginBottom: "8px"
+            }}>
+              Destinations in {stateResults.stateName}
+            </div>
+            {stateResults.cities.map((city, i) => (
+              <div
+                key={city.locationKey}
+                onClick={() => {
+                  setSearch(city.name);
+                  onExplore(city.locationKey);
+                }}
+                style={{
+                  backgroundColor: `${theme.card}cc`,
+                  border: `1px solid ${theme.primary}40`,
+                  borderRadius: "12px",
+                  padding: "12px",
+                  cursor: "pointer",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "6px",
+                  backdropFilter: "blur(10px)",
+                  transition: "all 0.3s ease",
+                  animation: `popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 0.05}s both`,
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.backgroundColor = `${theme.primary}20`
+                  e.currentTarget.style.transform = "translateY(-3px)"
+                  e.currentTarget.style.boxShadow = `0 6px 16px ${theme.glowColor || 'rgba(0,0,0,0.1)'}`
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.backgroundColor = `${theme.card}cc`
+                  e.currentTarget.style.transform = "translateY(0)"
+                  e.currentTarget.style.boxShadow = "none"
+                }}
+              >
+                <span style={{ fontSize: "24px" }}>{city.emoji}</span>
+                <span style={{ color: theme.text, fontWeight: "600", fontSize: "14px", textAlign: "center" }}>{city.name}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{
+            display: "flex",
+            gap: "10px",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            alignItems: "center",
+          }}>
+            <span style={{
+              color: theme.subtext,
+              fontSize: "13px",
+              marginRight: "4px",
+              opacity: loaded ? 0.7 : 0,
+              transition: "opacity 0.4s ease 0.8s",
+            }}>
+              Try:
             </span>
-          ))}
-        </div>
+            {suggestions.map((place, i) => (
+              <span
+                key={place}
+                onClick={() => { setSearch(place); setLocationTheme(place) }}
+                style={{
+                  backgroundColor: `${theme.primary}15`,
+                  border: `1px solid ${theme.primary}35`,
+                  borderRadius: "20px",
+                  padding: "6px 16px",
+                  color: theme.primary,
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  animation: loaded
+                    ? `popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.9 + i * 0.1}s both`
+                    : "none",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.backgroundColor = `${theme.primary}30`
+                  e.currentTarget.style.transform = "translateY(-2px)"
+                  e.currentTarget.style.boxShadow = `0 4px 12px ${theme.glowColor || 'transparent'}`
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.backgroundColor = `${theme.primary}15`
+                  e.currentTarget.style.transform = "translateY(0)"
+                  e.currentTarget.style.boxShadow = "none"
+                }}
+              >
+                {place}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Scroll Indicator ── */}
