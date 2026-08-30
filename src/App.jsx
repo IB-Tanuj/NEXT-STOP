@@ -83,58 +83,63 @@ function App() {
         if (match) {
           resolvedKey = match.locationKey;
         } else {
-          // 3. Exact match on state (map to its main built city/entry)
+          // 3. Exact match on state
           const stateMatches = allIndiaLocations.filter(l => l.state.toLowerCase() === clean);
           if (stateMatches.length > 0) {
-            const exactStateMatch = stateMatches.find(l => l.name.toLowerCase() === clean);
-            resolvedKey = exactStateMatch ? exactStateMatch.locationKey : stateMatches[0].locationKey;
+            return { type: "state", stateName: stateMatches[0].state, cities: stateMatches };
           } else {
             // 4. StartsWith match on name or state (minimum length 3)
             if (clean.length >= 3) {
-              const startsWithMatch = allIndiaLocations.find(l => 
-                l.name.toLowerCase().startsWith(clean) || l.state.toLowerCase().startsWith(clean)
-              );
-              if (startsWithMatch) {
-                resolvedKey = startsWithMatch.locationKey;
+              const startsWithNameMatch = allIndiaLocations.find(l => l.name.toLowerCase().startsWith(clean));
+              if (startsWithNameMatch) {
+                resolvedKey = startsWithNameMatch.locationKey;
               } else {
-                // 5. Includes / substring match on name or state
-                const includesMatch = allIndiaLocations.find(l => 
-                  l.name.toLowerCase().includes(clean) || l.state.toLowerCase().includes(clean)
-                );
-                if (includesMatch) {
-                  resolvedKey = includesMatch.locationKey;
+                const startsWithStateMatches = allIndiaLocations.filter(l => l.state.toLowerCase().startsWith(clean));
+                if (startsWithStateMatches.length > 0) {
+                  return { type: "state", stateName: startsWithStateMatches[0].state, cities: startsWithStateMatches };
                 } else {
-                  // 6. Common misspellings fallback (e.g. "maharastra" -> "mumbai")
-                  const misspellings = {
-                    maharastra: "mumbai",
-                    maharashtra: "mumbai",
-                    "west bengal": "kolkata",
-                    westbengal: "kolkata",
-                    up: "varanasi",
-                    "uttar pradesh": "varanasi",
-                    uttarpradesh: "varanasi",
-                    mp: "indore",
-                    "madhya pradesh": "indore",
-                    madhyapradesh: "indore",
-                    ap: "vizag",
-                    "andhra pradesh": "vizag",
-                    andhrapradesh: "vizag",
-                    hp: "shimla",
-                    himachal: "shimla",
-                    "himachal pradesh": "shimla",
-                    himachalpradesh: "shimla",
-                    uk: "rishikesh",
-                    uttarakhand: "rishikesh",
-                    "j&k": "srinagar",
-                    kashmir: "srinagar",
-                    jammu: "srinagar",
-                    "jammu & kashmir": "srinagar",
-                    tn: "chennai",
-                    tamilnadu: "chennai",
-                    "tamil nadu": "chennai",
-                  };
-                  if (misspellings[clean]) {
-                    resolvedKey = misspellings[clean];
+                  // 5. Includes / substring match on name or state
+                  const includesNameMatch = allIndiaLocations.find(l => l.name.toLowerCase().includes(clean));
+                  if (includesNameMatch) {
+                    resolvedKey = includesNameMatch.locationKey;
+                  } else {
+                    const includesStateMatches = allIndiaLocations.filter(l => l.state.toLowerCase().includes(clean));
+                    if (includesStateMatches.length > 0) {
+                      return { type: "state", stateName: includesStateMatches[0].state, cities: includesStateMatches };
+                    } else {
+                      // 6. Common misspellings fallback
+                      const misspellings = {
+                        maharastra: "mumbai",
+                        maharashtra: "mumbai",
+                        "west bengal": "kolkata",
+                        westbengal: "kolkata",
+                        up: "varanasi",
+                        "uttar pradesh": "varanasi",
+                        uttarpradesh: "varanasi",
+                        mp: "indore",
+                        "madhya pradesh": "indore",
+                        madhyapradesh: "indore",
+                        ap: "vizag",
+                        "andhra pradesh": "vizag",
+                        andhrapradesh: "vizag",
+                        hp: "shimla",
+                        himachal: "shimla",
+                        "himachal pradesh": "shimla",
+                        himachalpradesh: "shimla",
+                        uk: "rishikesh",
+                        uttarakhand: "rishikesh",
+                        "j&k": "srinagar",
+                        kashmir: "srinagar",
+                        jammu: "srinagar",
+                        "jammu & kashmir": "srinagar",
+                        tn: "chennai",
+                        tamilnadu: "chennai",
+                        "tamil nadu": "chennai",
+                      };
+                      if (misspellings[clean]) {
+                        resolvedKey = misspellings[clean];
+                      }
+                    }
                   }
                 }
               }
