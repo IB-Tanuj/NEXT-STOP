@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react"
+import { allIndiaLocations } from "../data/allLocations"
 
 const seasonMessages = {
   summer: [
@@ -378,10 +379,35 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
             type="text"
             value={search}
             onChange={(e) => { 
-              setSearch(e.target.value); 
-              setLocationTheme(e.target.value);
-              setSearchError(false); // clear error when typing
-              setStateResults(null); // clear state results when typing
+              const text = e.target.value;
+              setSearch(text); 
+              setLocationTheme(text);
+              setSearchError(false);
+              
+              const clean = text.trim().toLowerCase();
+              if (clean.length >= 3) {
+                const exactStateMatches = allIndiaLocations.filter(l => l.state.toLowerCase() === clean);
+                let matchedState = null;
+                let cities = [];
+                if (exactStateMatches.length > 0) {
+                  matchedState = exactStateMatches[0].state;
+                  cities = exactStateMatches;
+                } else {
+                  const startsWithStateMatches = allIndiaLocations.filter(l => l.state.toLowerCase().startsWith(clean));
+                  if (startsWithStateMatches.length > 0) {
+                    matchedState = startsWithStateMatches[0].state;
+                    cities = startsWithStateMatches;
+                  }
+                }
+                
+                if (matchedState) {
+                  setStateResults({ stateName: matchedState, cities });
+                } else {
+                  setStateResults(null);
+                }
+              } else {
+                setStateResults(null);
+              }
             }}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
@@ -463,7 +489,8 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
                 key={city.locationKey}
                 onClick={() => {
                   setSearch(city.name);
-                  onExplore(city.locationKey);
+                  setLocationTheme(city.locationKey);
+                  setStateResults(null);
                 }}
                 style={{
                   backgroundColor: `${theme.card}cc`,
@@ -490,7 +517,6 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
                   e.currentTarget.style.boxShadow = "none"
                 }}
               >
-                <span style={{ fontSize: "24px" }}>{city.emoji}</span>
                 <span style={{ color: theme.text, fontWeight: "600", fontSize: "14px", textAlign: "center" }}>{city.name}</span>
               </div>
             ))}
