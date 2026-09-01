@@ -78,7 +78,23 @@ const useSeasonTimer = () => {
   }, [])
 
   return {
-    timerCard: <div>dummy</div>,
+    timerCard: (
+      <div className="timer-card" role="timer" aria-live="polite">
+        <p className="timer-label">
+          Season shifts to <span id="nextSeasonName">{seasonInfo.nextName} {seasonInfo.nextEmoji}</span> in
+        </p>
+        <div className="timer-grid">
+          <div className="time-box"><span>00</span><small>days</small></div>
+          <span className="colon">:</span>
+          <div className="time-box"><span>00</span><small>hours</small></div>
+          <span className="colon">:</span>
+          <div className="time-box"><span>00</span><small>minutes</small></div>
+          <span className="colon">:</span>
+          <div className="time-box"><span>00</span><small>seconds</small></div>
+        </div>
+        <p className="timer-note">Catch the {seasonInfo.currentName.toLowerCase()} vibe before the timer hits zero.</p>
+      </div>
+    ),
     seasonBadge: `${seasonInfo.currentEmoji} ${seasonInfo.currentName}`,
     seasonEmoji: seasonInfo.currentEmoji,
     seasonName: seasonInfo.currentName,
