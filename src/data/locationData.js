@@ -526,6 +526,7 @@ export const locationData = {
   },
   alleppey: {
     name: "Alleppey",
+    boundaryQueryName: "Alappuzha",
     coords: [9.4981, 76.3388],
     zoom: 12,
     spots: [
@@ -749,6 +750,7 @@ export const locationData = {
   },
   pondicherry: {
     name: "Pondicherry",
+    boundaryQueryName: "Puducherry",
     coords: [11.9416, 79.8083],
     zoom: 13,
     spots: [
@@ -770,6 +772,7 @@ export const locationData = {
   },
   ooty: {
     name: "Ooty",
+    boundaryQueryName: "Udhagamandalam",
     coords: [11.4102, 76.6950],
     zoom: 13,
     spots: [

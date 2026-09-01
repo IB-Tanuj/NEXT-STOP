@@ -15,7 +15,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 })
 
-const LocationBoundary = ({ coords, zoom, theme, locationName, customBoundary }) => {
+const LocationBoundary = ({ coords, zoom, theme, locationName, boundaryQueryName, customBoundary }) => {
   const map = useMap()
 
   useEffect(() => {
@@ -58,7 +58,8 @@ const LocationBoundary = ({ coords, zoom, theme, locationName, customBoundary })
 
     // Fetch boundary from Nominatim with smart fallbacks
     const fetchBoundary = async () => {
-      const encodedName = encodeURIComponent(locationName)
+      const qName = boundaryQueryName || locationName;
+      const encodedName = encodeURIComponent(qName)
 
       // Query strategies — stop at first one that returns a polygon
       const queries = [
@@ -86,13 +87,26 @@ const LocationBoundary = ({ coords, zoom, theme, locationName, customBoundary })
         await new Promise(r => setTimeout(r, 1100))
       }
 
-      console.log(`No Nominatim polygon found for "${locationName}"`)
+      console.log(`No Nominatim polygon found for "${qName}". Using circle fallback.`)
+      
+      // Fallback: Draw a circle if no polygon is found
+      // Radius decreases as zoom increases to match scale reasonably well
+      const fallbackRadius = Math.max(3000, 150000 / Math.pow(2, zoom - 8));
+      const circle = L.circle(coords, {
+        ...boundaryStyle,
+        radius: fallbackRadius
+      });
+      layerGroup.addLayer(circle);
+      const bounds = circle.getBounds();
+      if (bounds && bounds.isValid()) {
+        map.fitBounds(bounds.pad(0.2));
+      }
     }
 
     fetchBoundary()
 
     return () => { layerGroup.remove() }
-  }, [locationName])
+  }, [locationName, boundaryQueryName, coords, zoom, theme, customBoundary])
 
   return null
 }
@@ -246,14 +260,15 @@ const TripPage = ({ location, theme, onBack }) => {
             zoomControl={true}
           >
             <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              attribution="© OpenStreetMap © CARTO"
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution="© OpenStreetMap contributors"
             />
             <LocationBoundary
               coords={loc.coords}
               zoom={loc.zoom}
               theme={theme}
               locationName={loc.name}
+              boundaryQueryName={loc.boundaryQueryName}
               customBoundary={loc.customBoundary || null}
             />
             {loc.spots.map((spot) => (

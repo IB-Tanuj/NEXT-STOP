@@ -1,6 +1,50 @@
+// ── Indian 6-Season (Ritu) System ───────────────────────
+// Shishir  ☃️  Jan 15 – Mar 14  (Late Winter / Dew)
+// Vasant   🌸  Mar 15 – May 14  (Spring)
+// Grishma  ☀️  May 15 – Jul 14  (Summer)
+// Varsha   🌧️  Jul 15 – Sep 14  (Monsoon)
+// Sharad   🍁  Sep 15 – Nov 14  (Autumn)
+// Hemant   ❄️  Nov 15 – Jan 14  (Early Winter)
+
 export const themes = {
-  summer: {
-    name: "summer",
+  shishir: {
+    name: "shishir",
+    label: "Shishir",
+    emoji: "☃️",
+    bg: "#060a10",
+    primary: "#94a3b8",
+    secondary: "#cbd5e1",
+    accent: "#64748b",
+    text: "#FFFFFF",
+    subtext: "#cbd5e1",
+    card: "#0f1520",
+    gradient: "linear-gradient(135deg, #64748b 0%, #94a3b8 50%, #cbd5e1 100%)",
+    heroGradient: "linear-gradient(180deg, #060a10 0%, #0f1520 100%)",
+    glowColor: "rgba(148, 163, 184, 0.35)",
+    particleColor: "#94a3b8",
+    orbColors: ["#64748b", "#94a3b8", "#cbd5e1"],
+  },
+  vasant: {
+    name: "vasant",
+    label: "Vasant",
+    emoji: "🌸",
+    bg: "#0a0208",
+    primary: "#f472b6",
+    secondary: "#fb7185",
+    accent: "#e11d48",
+    text: "#FFFFFF",
+    subtext: "#fda4af",
+    card: "#1a0a14",
+    gradient: "linear-gradient(135deg, #e11d48 0%, #f472b6 50%, #fb7185 100%)",
+    heroGradient: "linear-gradient(180deg, #0a0208 0%, #1a0a14 100%)",
+    glowColor: "rgba(244, 114, 182, 0.35)",
+    particleColor: "#f472b6",
+    orbColors: ["#e11d48", "#f472b6", "#fb7185"],
+  },
+  grishma: {
+    name: "grishma",
+    label: "Grishma",
+    emoji: "☀️",
     bg: "#0a0a0a",
     primary: "#FF6B00",
     secondary: "#FFB347",
@@ -14,8 +58,10 @@ export const themes = {
     particleColor: "#FF6B00",
     orbColors: ["#FF6B00", "#FF4500", "#FFB347"],
   },
-  monsoon: {
-    name: "monsoon",
+  varsha: {
+    name: "varsha",
+    label: "Varsha",
+    emoji: "🌧️",
     bg: "#050a0f",
     primary: "#00B4D8",
     secondary: "#48CAE4",
@@ -29,8 +75,10 @@ export const themes = {
     particleColor: "#00B4D8",
     orbColors: ["#0077B6", "#00B4D8", "#48CAE4"],
   },
-  autumn: {
-    name: "autumn",
+  sharad: {
+    name: "sharad",
+    label: "Sharad",
+    emoji: "🍁",
     bg: "#0a0600",
     primary: "#E85D04",
     secondary: "#F48C06",
@@ -44,8 +92,10 @@ export const themes = {
     particleColor: "#E85D04",
     orbColors: ["#DC2F02", "#E85D04", "#F48C06"],
   },
-  winter: {
-    name: "winter",
+  hemant: {
+    name: "hemant",
+    label: "Hemant",
+    emoji: "❄️",
     bg: "#030a1a",
     primary: "#4CC9F0",
     secondary: "#7DF9FF",
@@ -58,21 +108,6 @@ export const themes = {
     glowColor: "rgba(76, 201, 240, 0.35)",
     particleColor: "#4CC9F0",
     orbColors: ["#3A86FF", "#4CC9F0", "#7DF9FF"],
-  },
-  spring: {
-    name: "spring",
-    bg: "#020a00",
-    primary: "#70E000",
-    secondary: "#9EF01A",
-    accent: "#38B000",
-    text: "#FFFFFF",
-    subtext: "#CCFF33",
-    card: "#0a1a00",
-    gradient: "linear-gradient(135deg, #38B000 0%, #70E000 50%, #9EF01A 100%)",
-    heroGradient: "linear-gradient(180deg, #020a00 0%, #0a1a00 100%)",
-    glowColor: "rgba(112, 224, 0, 0.35)",
-    particleColor: "#70E000",
-    orbColors: ["#38B000", "#70E000", "#9EF01A"],
   },
 }
 
@@ -393,11 +428,28 @@ export const locationThemes = {
   agatti: t("agatti", "#040608", "#38bdf8", "#f8fafc", "#0284c7", "#0e141a"), // White sand / light blue
 }
 
-export const getSeasonTheme = () => {
-  const month = new Date().getMonth() + 1
-  if (month >= 3 && month <= 6) return themes.summer
-  if (month >= 7 && month <= 9) return themes.monsoon
-  if (month >= 10 && month <= 11) return themes.autumn
-  if (month === 12 || month <= 2) return themes.winter
-  return themes.summer
+// ── Indian 6-Season date logic ──────────────────────────
+// Uses day-of-year boundaries at the 15th of each bi-monthly period
+const SEASON_BOUNDARIES = [
+  { season: "shishir",  month: 0,  day: 15 }, // Jan 15
+  { season: "vasant",   month: 2,  day: 15 }, // Mar 15
+  { season: "grishma",  month: 4,  day: 15 }, // May 15
+  { season: "varsha",   month: 6,  day: 15 }, // Jul 15
+  { season: "sharad",   month: 8,  day: 15 }, // Sep 15
+  { season: "hemant",   month: 10, day: 15 }, // Nov 15
+]
+
+export const getSeasonKey = () => {
+  const now = new Date()
+  const m = now.getMonth()
+  const d = now.getDate()
+  // Walk backwards through boundaries to find current season
+  for (let i = SEASON_BOUNDARIES.length - 1; i >= 0; i--) {
+    const b = SEASON_BOUNDARIES[i]
+    if (m > b.month || (m === b.month && d >= b.day)) return b.season
+  }
+  // Before Jan 15 → still Hemant (from previous year)
+  return "hemant"
 }
+
+export const getSeasonTheme = () => themes[getSeasonKey()]
