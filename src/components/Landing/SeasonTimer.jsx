@@ -84,13 +84,13 @@ const useSeasonTimer = () => {
           Season shifts to <span id="nextSeasonName">{seasonInfo.nextName} {seasonInfo.nextEmoji}</span> in
         </p>
         <div className="timer-grid">
-          <div className="time-box"><span>00</span><small>days</small></div>
+          <div className="time-box"><span>{time.days}</span><small>days</small></div>
           <span className="colon">:</span>
-          <div className="time-box"><span>00</span><small>hours</small></div>
+          <div className="time-box"><span>{time.hours}</span><small>hours</small></div>
           <span className="colon">:</span>
-          <div className="time-box"><span>00</span><small>minutes</small></div>
+          <div className="time-box"><span>{time.mins}</span><small>minutes</small></div>
           <span className="colon">:</span>
-          <div className="time-box"><span>00</span><small>seconds</small></div>
+          <div className="time-box"><span>{time.secs}</span><small>seconds</small></div>
         </div>
         <p className="timer-note">Catch the {seasonInfo.currentName.toLowerCase()} vibe before the timer hits zero.</p>
       </div>
