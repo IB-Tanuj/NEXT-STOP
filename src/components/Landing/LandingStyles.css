@@ -1,0 +1,658 @@
+/* ══════════════════════════════════════════════════════════
+   NEXT·STOP Landing Page Styles
+   Scoped under .landing-page to avoid global conflicts
+   ══════════════════════════════════════════════════════════ */
+
+.landing-page {
+  --bg-deep: #07130e;
+  --bg-panel: #0d211a;
+  --ink: #eef7f1;
+  --mist: #b8d4c6;
+  --mint: #57d9a3;
+  --mint-strong: #2fbf85;
+  --line: rgba(255, 255, 255, 0.14);
+  --glass: rgba(10, 30, 22, 0.55);
+  --radius-lg: 26px;
+  --radius-md: 18px;
+
+  font-family: "Sora", system-ui, sans-serif;
+  background: var(--bg-deep);
+  color: var(--ink);
+  overflow-x: hidden;
+}
+
+/* ── Background Scene ───────────────────────────────── */
+
+.landing-page .bg-scene {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: var(--bg-deep);
+}
+
+.landing-page .bg-scene img {
+  display: block;
+  width: 100%;
+  height: 185vh;
+  object-fit: cover;
+  will-change: transform;
+}
+
+.landing-page .bg-scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(4, 14, 10, 0) 42%, rgba(4, 14, 10, 0.5) 100%),
+    linear-gradient(rgba(4, 14, 10, 0.5), rgba(4, 14, 10, 0.76));
+}
+
+.landing-page .bg-scene::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #050f0b;
+  opacity: 0;
+  animation: lp-fogLift 2.4s ease-out 0.15s backwards;
+  pointer-events: none;
+}
+
+/* ── Hero ────────────────────────────────────────────── */
+
+.landing-page .hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.landing-page .topbar {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px clamp(20px, 5vw, 64px);
+  flex-wrap: wrap;
+}
+
+.landing-page .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.landing-page .brand-mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #05231a;
+  background: linear-gradient(135deg, var(--mint), #a9f0cf);
+  box-shadow: 0 6px 24px rgba(87, 217, 163, 0.35);
+}
+
+.landing-page .brand-name {
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  font-size: 0.98rem;
+}
+
+.landing-page .topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.landing-page .season-badge {
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  background: rgba(87, 217, 163, 0.14);
+  border: 1px solid rgba(87, 217, 163, 0.45);
+  backdrop-filter: blur(8px);
+}
+
+/* ── Buttons ─────────────────────────────────────────── */
+
+.landing-page .btn {
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 11px 22px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.landing-page .btn:hover {
+  transform: translateY(-2px);
+}
+
+.landing-page .btn-solid {
+  background: linear-gradient(135deg, var(--mint-strong), var(--mint));
+  color: #04241a;
+  box-shadow: 0 10px 28px rgba(47, 191, 133, 0.35);
+}
+
+.landing-page .btn-outline {
+  border-color: rgba(238, 247, 241, 0.5);
+}
+
+.landing-page .btn-ghost {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--line);
+  backdrop-filter: blur(8px);
+}
+
+.landing-page .btn-lg {
+  padding: 15px 34px;
+  font-size: 1rem;
+}
+
+/* ── Hero Content ────────────────────────────────────── */
+
+.landing-page .hero-content {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 22px;
+  padding: clamp(24px, 5vh, 56px) 20px 90px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.landing-page .hero-content > * {
+  animation: lp-riseIn 1.05s cubic-bezier(0.18, 1.24, 0.42, 1) both;
+}
+
+.landing-page .hero-content > .season-line { animation-delay: 0.5s; }
+.landing-page .hero-content > .logo { animation-delay: 0.62s; }
+.landing-page .hero-content > .tagline { animation-delay: 0.76s; }
+.landing-page .hero-content > .description { animation-delay: 0.9s; }
+.landing-page .hero-content > .hero-actions { animation-delay: 1.04s; }
+.landing-page .hero-content > .timer-card { animation-delay: 1.18s; }
+
+.landing-page .season-line {
+  font-family: "Playfair Display", serif;
+  font-style: italic;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: var(--mist);
+}
+
+.landing-page .season-line strong {
+  color: var(--mint);
+  letter-spacing: 0.06em;
+}
+
+.landing-page .logo {
+  font-size: clamp(3rem, 9vw, 6.2rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-shadow: 0 8px 40px rgba(0, 0, 0, 0.55);
+}
+
+.landing-page .logo-dash {
+  color: var(--mint);
+}
+
+.landing-page .tagline {
+  font-size: clamp(1rem, 2.2vw, 1.3rem);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.landing-page .description {
+  max-width: 720px;
+  font-size: 0.98rem;
+  line-height: 1.75;
+  font-weight: 300;
+  color: var(--mist);
+}
+
+.landing-page .hero-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+/* ── Timer Card ──────────────────────────────────────── */
+
+.landing-page .timer-card {
+  margin-top: 18px;
+  padding: 22px clamp(18px, 4vw, 42px) 20px;
+  border-radius: var(--radius-lg);
+  background: var(--glass);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+.landing-page .timer-label {
+  font-size: 0.92rem;
+  color: var(--mist);
+  margin-bottom: 14px;
+}
+
+.landing-page .timer-label span {
+  color: var(--mint);
+  font-weight: 600;
+}
+
+.landing-page .timer-grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.landing-page .time-box {
+  min-width: 76px;
+  padding: 12px 10px 9px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+}
+
+.landing-page .time-box span {
+  display: block;
+  font-size: clamp(1.5rem, 4vw, 2.1rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.landing-page .time-box small {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--mist);
+}
+
+.landing-page .colon {
+  font-size: 1.4rem;
+  color: var(--mint);
+  animation: lp-blink 1s steps(1) infinite;
+}
+
+.landing-page .timer-note {
+  margin-top: 14px;
+  font-size: 0.78rem;
+  color: var(--mist);
+  opacity: 0.85;
+}
+
+/* ── Scroll Hint ─────────────────────────────────────── */
+
+.landing-page .scroll-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--ink);
+  font-size: 1.1rem;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(8px);
+  animation: lp-bob 1.8s ease-in-out 2.6s infinite, lp-hintIn 0.9s ease 1.5s both;
+}
+
+/* ── Sections ────────────────────────────────────────── */
+
+.landing-page .destinations,
+.landing-page .features {
+  padding: clamp(64px, 9vh, 110px) clamp(20px, 6vw, 80px);
+}
+
+.landing-page .section-head {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto clamp(36px, 6vh, 60px);
+}
+
+.landing-page .eyebrow {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--mint);
+  margin-bottom: 12px;
+}
+
+.landing-page .section-head h2 {
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.landing-page .section-head .sub {
+  color: var(--mist);
+  font-weight: 300;
+  line-height: 1.7;
+}
+
+/* ── Destination Grid ────────────────────────────────── */
+
+.landing-page .destination-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(18px, 3vw, 32px);
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.landing-page .dest-card {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.landing-page .dest-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 26px 64px rgba(0, 0, 0, 0.5);
+}
+
+.landing-page .dest-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.landing-page .dest-card:hover img {
+  transform: scale(1.06);
+}
+
+.landing-page .dest-info {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 46px 20px 18px;
+  background: linear-gradient(to top, rgba(4, 14, 10, 0.92), transparent);
+}
+
+.landing-page .dest-tag {
+  display: inline-block;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--mint);
+  background: rgba(87, 217, 163, 0.12);
+  border: 1px solid rgba(87, 217, 163, 0.4);
+  border-radius: 999px;
+  padding: 5px 12px;
+  margin-bottom: 8px;
+}
+
+.landing-page .dest-info h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.landing-page .dest-info p {
+  margin-top: 4px;
+  font-size: 0.86rem;
+  font-weight: 300;
+  color: var(--mist);
+}
+
+.landing-page .plan-btn {
+  display: inline-block;
+  margin-top: 14px;
+}
+
+/* ── 3D Carousel ─────────────────────────────────────── */
+
+.landing-page .carousel {
+  position: relative;
+  max-width: 1180px;
+  height: clamp(380px, 48vw, 460px);
+  margin: 0 auto;
+  perspective: 1300px;
+  perspective-origin: 50% 42%;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.landing-page .carousel.dragging {
+  cursor: grabbing;
+}
+
+.landing-page .carousel-ring {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.landing-page .feature-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(180px, 24vw, 280px);
+  padding: 26px 22px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+.landing-page .feature-card.is-front {
+  border-color: rgba(87, 217, 163, 0.65);
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.55);
+}
+
+.landing-page .f-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  font-size: 1.4rem;
+  border-radius: 14px;
+  background: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  filter: grayscale(1) brightness(1.7);
+  margin-bottom: 16px;
+}
+
+.landing-page .feature-card h3 {
+  color: #ffffff;
+  font-size: 1.12rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.landing-page .feature-card p {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.88rem;
+  line-height: 1.65;
+  font-weight: 300;
+}
+
+.landing-page .carousel-hint {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--mist);
+  opacity: 0.75;
+}
+
+/* ── Scroll Reveal ───────────────────────────────────── */
+
+.landing-page .reveal {
+  opacity: 0;
+}
+
+.landing-page .reveal.revealed {
+  opacity: 1;
+  animation: lp-riseIn 0.95s cubic-bezier(0.18, 1.24, 0.42, 1) backwards;
+}
+
+/* ── Footer ──────────────────────────────────────────── */
+
+.landing-page .footer {
+  padding: 40px 20px 46px;
+  text-align: center;
+  border-top: 1px solid var(--line);
+  background: rgba(4, 11, 8, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+.landing-page .footer strong {
+  letter-spacing: 0.14em;
+}
+
+.landing-page .footer p + p {
+  margin-top: 10px;
+}
+
+.landing-page .footer-seasons {
+  font-size: 0.82rem;
+  color: var(--mist);
+  font-weight: 300;
+}
+
+/* ── Rain Sound Toggle ───────────────────────────────── */
+
+.landing-page .rain-sound-toggle {
+  position: fixed;
+  right: clamp(16px, 3vw, 28px);
+  bottom: clamp(16px, 3vw, 28px);
+  z-index: 60;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  font-size: 1.05rem;
+  border-radius: 50%;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease, opacity 0.18s ease;
+}
+
+.landing-page .rain-sound-toggle:hover {
+  transform: translateY(-2px);
+  background: rgba(87, 217, 163, 0.16);
+}
+
+.landing-page .rain-sound-toggle:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 2px;
+}
+
+/* ── Z-Index Layering ────────────────────────────────── */
+
+.landing-page .features,
+.landing-page .destinations,
+.landing-page .footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+
+@media (max-width: 720px) {
+  .landing-page .topbar {
+    justify-content: center;
+  }
+
+  .landing-page .destination-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-page .time-box {
+    min-width: 58px;
+  }
+
+  .landing-page .rain-sound-toggle {
+    width: 42px;
+    height: 42px;
+    font-size: 0.95rem;
+  }
+}
+
+/* ── Reduced Motion ──────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page .bg-scene::before,
+  .landing-page .hero-content > *,
+  .landing-page .scroll-hint,
+  .landing-page .reveal.revealed {
+    animation: none;
+  }
+
+  .landing-page .reveal {
+    opacity: 1;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   Landing-Page Keyframes (prefixed to avoid global clash)
+   ══════════════════════════════════════════════════════════ */
+
+@keyframes lp-riseIn {
+  from { opacity: 0; transform: translateY(72px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes lp-fogLift {
+  from { opacity: 1; }
+}
+
+@keyframes lp-blink {
+  50% { opacity: 0.25; }
+}
+
+@keyframes lp-bob {
+  0%, 100% { transform: translate(-50%, 0); }
+  50%      { transform: translate(-50%, 8px); }
+}
+
+@keyframes lp-hintIn {
+  from { opacity: 0; }
+}
