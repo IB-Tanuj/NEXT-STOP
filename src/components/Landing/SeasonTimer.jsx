@@ -39,7 +39,7 @@ function pad(n) {
   return String(n).padStart(2, "0")
 }
 
-const SeasonTimer = () => {
+const useSeasonTimer = () => {
   const [time, setTime] = useState({ days: "00", hours: "00", mins: "00", secs: "00" })
   const [seasonInfo, setSeasonInfo] = useState(() => {
     const info = getSeasonInfo(new Date())
@@ -101,4 +101,4 @@ const SeasonTimer = () => {
   }
 }
 
-export default SeasonTimer
+export default useSeasonTimer

@@ -168,7 +168,7 @@ function App() {
 
   return (
     <div style={{
-      backgroundColor: theme.bg,
+      backgroundColor: theme?.bg || "#060a10",
       minHeight: "100vh",
       fontFamily: "var(--sans)",
       transition: "all 0.8s ease",
@@ -178,7 +178,7 @@ function App() {
         <Route path="/dev" element={<DevAdminPage theme={theme} setLocationTheme={setLocationTheme} />} />
         
         {/* New Marketing Landing Page */}
-        <Route path="/" element={<LandingPage theme={theme} isMobile={isMobile} />} />
+        <Route path="/" element={<LandingPage />} />
         
         {/* Login Page */}
         <Route path="/login" element={<AuthPage theme={theme} />} />
