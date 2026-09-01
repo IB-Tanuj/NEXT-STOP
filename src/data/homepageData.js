@@ -1,10 +1,39 @@
-// ── Season-specific getaway data (no image imports — fetched from API) ──
+// ── Season-specific getaway data — Indian 6-Season (Ritu) system ──
+// No image imports — fetched from API at runtime
 
 export const seasonGetaways = {
-  summer: {
+  shishir: {
+    emoji: "☃️",
+    label: "Dew & Frost",
+    title: "Shishir — Late Winter Retreats",
+    subtitle: "Crisp mornings, misty horizons — the quiet beauty before spring.",
+    spots: [
+      { name: "Rann of Kutch", locationKey: "kutch", state: "Gujarat", tagline: "White salt desert under winter stars", temp: "8°C – 22°C" },
+      { name: "Goa", locationKey: "goa", state: "Goa", tagline: "Peak season, golden sunsets", temp: "20°C – 32°C" },
+      { name: "Hampi", locationKey: "hampi", state: "Karnataka", tagline: "Boulder country in perfect light", temp: "16°C – 28°C" },
+      { name: "Pondicherry", locationKey: "pondicherry", state: "Tamil Nadu", tagline: "French Quarter & café mornings", temp: "20°C – 30°C" },
+      { name: "Varanasi", locationKey: "varanasi", state: "Uttar Pradesh", tagline: "Ghats draped in winter fog", temp: "6°C – 18°C" },
+      { name: "Jaisalmer", locationKey: "jaisalmer", state: "Rajasthan", tagline: "Golden desert, starry nights", temp: "8°C – 24°C" },
+    ],
+  },
+  vasant: {
+    emoji: "🌸",
+    label: "Bloom Season",
+    title: "Vasant — Spring Awakens",
+    subtitle: "Flowers bloom, festivals stir — India comes alive in colour.",
+    spots: [
+      { name: "Valley of Flowers", locationKey: "valleyofflowers", state: "Uttarakhand", tagline: "Alpine meadows in full bloom", temp: "8°C – 18°C" },
+      { name: "Shillong", locationKey: "shillong", state: "Meghalaya", tagline: "Cherry blossoms & living root bridges", temp: "12°C – 22°C" },
+      { name: "Munnar", locationKey: "munnar", state: "Kerala", tagline: "Neelakurinji season approaches", temp: "14°C – 24°C" },
+      { name: "Darjeeling", locationKey: "darjeeling", state: "West Bengal", tagline: "Tea gardens with Kanchenjunga views", temp: "10°C – 20°C" },
+      { name: "Kodaikanal", locationKey: "kodaikanal", state: "Tamil Nadu", tagline: "Princess of hill stations", temp: "12°C – 22°C" },
+      { name: "Srinagar", locationKey: "srinagar", state: "Jammu & Kashmir", tagline: "Tulip gardens & shikara rides", temp: "8°C – 20°C" },
+    ],
+  },
+  grishma: {
     emoji: "☀️",
     label: "Beat The Heat",
-    title: "Summer Getaways To Escape To",
+    title: "Grishma — Summer Escapes",
     subtitle: "It's hot out there — here's where India is running off to right now.",
     spots: [
       { name: "Manali", locationKey: "manali", state: "Himachal Pradesh", tagline: "Snow-capped peaks & cool valleys", temp: "12°C – 22°C" },
@@ -15,10 +44,10 @@ export const seasonGetaways = {
       { name: "Gulmarg", locationKey: "gulmarg", state: "Jammu & Kashmir", tagline: "Meadows of flowers, gondola rides", temp: "8°C – 20°C" },
     ],
   },
-  monsoon: {
+  varsha: {
     emoji: "🌧️",
     label: "Chase The Rains",
-    title: "Monsoon Escapes You'll Love",
+    title: "Varsha — Monsoon Magic",
     subtitle: "The rains make everything magical — here's where to go.",
     spots: [
       { name: "Coorg", locationKey: "coorg", state: "Karnataka", tagline: "Coffee estates drenched in mist", temp: "15°C – 25°C" },
@@ -29,10 +58,10 @@ export const seasonGetaways = {
       { name: "Wayanad", locationKey: "wayanad", state: "Kerala", tagline: "Lush green spice plantations", temp: "18°C – 26°C" },
     ],
   },
-  autumn: {
-    emoji: "🍂",
+  sharad: {
+    emoji: "🍁",
     label: "Golden Trails",
-    title: "Autumn Adventures Calling",
+    title: "Sharad — Autumn Adventures",
     subtitle: "Cool weather, golden light — India's best kept travel secret.",
     spots: [
       { name: "Rajasthan", locationKey: "rajasthan", state: "Rajasthan", tagline: "Forts glow in autumn light", temp: "20°C – 30°C" },
@@ -43,29 +72,41 @@ export const seasonGetaways = {
       { name: "Jodhpur", locationKey: "jodhpur", state: "Rajasthan", tagline: "The Blue City awakens", temp: "20°C – 32°C" },
     ],
   },
-  winter: {
+  hemant: {
     emoji: "❄️",
     label: "Winter Wonders",
-    title: "Winter Escapes Across India",
+    title: "Hemant — Early Winter Escapes",
     subtitle: "From snow-capped peaks to warm beaches — pick your vibe.",
     spots: [
       { name: "Goa", locationKey: "goa", state: "Goa", tagline: "Peak season, perfect weather", temp: "20°C – 32°C" },
       { name: "Kerala", locationKey: "kerala", state: "Kerala", tagline: "Backwaters in perfect weather", temp: "22°C – 32°C" },
       { name: "Jaisalmer", locationKey: "jaisalmer", state: "Rajasthan", tagline: "Golden desert, starry nights", temp: "8°C – 24°C" },
       { name: "Auli", locationKey: "auli", state: "Uttarakhand", tagline: "India's skiing paradise", temp: "−5°C – 10°C" },
-      { name: "Pondicherry", locationKey: "pondicherry", state: "Tamil Nadu", tagline: "French Quarter & beaches", temp: "20°C – 30°C" },
       { name: "Manali", locationKey: "manali", state: "Himachal Pradesh", tagline: "Snowfall & cozy cafes", temp: "−2°C – 10°C" },
+      { name: "Shimla", locationKey: "shimla", state: "Himachal Pradesh", tagline: "First snow on the ridge", temp: "0°C – 12°C" },
     ],
   },
 }
 
-// Helper to detect current season key
+// Helper to detect current Indian season key
 export const getCurrentSeason = () => {
-  const month = new Date().getMonth() + 1
-  if (month >= 3 && month <= 6) return "summer"
-  if (month >= 7 && month <= 9) return "monsoon"
-  if (month >= 10 && month <= 11) return "autumn"
-  return "winter"
+  const now = new Date()
+  const m = now.getMonth()
+  const d = now.getDate()
+  // Walk backwards through season boundaries (15th of bi-monthly periods)
+  const boundaries = [
+    { season: "shishir",  month: 0,  day: 15 },
+    { season: "vasant",   month: 2,  day: 15 },
+    { season: "grishma",  month: 4,  day: 15 },
+    { season: "varsha",   month: 6,  day: 15 },
+    { season: "sharad",   month: 8,  day: 15 },
+    { season: "hemant",   month: 10, day: 15 },
+  ]
+  for (let i = boundaries.length - 1; i >= 0; i--) {
+    const b = boundaries[i]
+    if (m > b.month || (m === b.month && d >= b.day)) return b.season
+  }
+  return "hemant" // Before Jan 15 → still Hemant
 }
 
 // ── Static fallback images for 4 built locations ────────
