@@ -181,3 +181,8 @@ input::placeholder {
   animation: shimmer 1.5s infinite;
   border-radius: 8px;
 }
+
+/* Apply dark mode filter to default map tiles */
+.leaflet-tile {
+    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
