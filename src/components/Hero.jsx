@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react"
 import { getCurrentSeason } from "../data/homepageData"
 import { themes } from "../themes"
+import { allIndiaLocations } from "../data/allLocations"
 
 const seasonMessages = {
   shishir: [
@@ -192,12 +193,9 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
   const { displayed: typedSubtitle, done: typingDone } = useTypewriter(subtitle, 25)
 
   const [seasonLabel, seasonKey] = useState(() => {
-    const month = new Date().getMonth() + 1
-    if (month >= 3 && month <= 6) return ["☀️ Summer", "summer"]
-    if (month >= 7 && month <= 9) return ["🌧️ Monsoon", "monsoon"]
-    if (month >= 10 && month <= 11) return ["🍂 Autumn", "autumn"]
-    if (month === 12 || month <= 2) return ["❄️ Winter", "winter"]
-    return ["🌸 Spring", "spring"]
+    const key = getCurrentSeason()
+    const t = themes[key]
+    return [`${t.emoji} ${t.label}`, key]
   })
 
   const getRandomMsg = (exclude) => {
