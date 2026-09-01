@@ -1,8 +1,25 @@
 import { useState, useEffect, useRef, useMemo } from "react"
-import { allIndiaLocations } from "../data/allLocations"
+import { getCurrentSeason } from "../data/homepageData"
+import { themes } from "../themes"
 
 const seasonMessages = {
-  summer: [
+  shishir: [
+    "Frosty mornings, warm chai ☃️",
+    "Dew-kissed trails await 🌫️",
+    "Crisp air, clear skies ✨",
+    "Pack a shawl and go 🧣",
+    "Winter's quiet beauty 🏔️",
+    "Perfect light for photos 📸",
+  ],
+  vasant: [
+    "Flowers and new destinations 🌸",
+    "Fresh season, fresh adventure 🌱",
+    "Spring is the best time! 🌺",
+    "Bloom where you travel 🌼",
+    "New beginnings, new places ✨",
+    "Nature's calling you out 🦋",
+  ],
+  grishma: [
     "Isn't it too hot? 🥵",
     "Wanna go someplace chill? ❄️",
     "Escape the heat! 🌊",
@@ -10,7 +27,7 @@ const seasonMessages = {
     "Too hot to stay home 🔥",
     "Find your cool spot 🏔️",
   ],
-  monsoon: [
+  varsha: [
     "Perfect weather to travel 🌧️",
     "Rain makes everything beautiful 💚",
     "Chase the waterfalls 🌊",
@@ -18,29 +35,21 @@ const seasonMessages = {
     "Monsoon magic awaits 🌿",
     "Get drenched in adventure 💧",
   ],
-  autumn: [
-    "Golden season, golden trips 🍂",
+  sharad: [
+    "Golden season, golden trips 🍁",
     "Best time to explore India 🗺️",
     "Cool breeze, warm memories 🌅",
     "Pack light, travel far 🎒",
-    "Autumn calls for adventure 🍁",
+    "Autumn calls for adventure 🍂",
     "Perfect weather, perfect trip ✨",
   ],
-  winter: [
+  hemant: [
     "Bundle up and hit the road 🧣",
     "Snow is calling! ❄️",
     "Winter wanderlust activated 🏔️",
     "Cold outside, warm memories 🔥",
     "Best chai at hill stations ☕",
     "Find your winter escape 🌨️",
-  ],
-  spring: [
-    "Flowers and new destinations 🌸",
-    "Fresh season, fresh adventure 🌱",
-    "Spring is the best time! 🌺",
-    "Bloom where you travel 🌼",
-    "New beginnings, new places ✨",
-    "Nature's calling you out 🦋",
   ],
 }
 
