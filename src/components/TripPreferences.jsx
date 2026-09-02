@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import BudgetResult from "./BudgetResult"
-import { getStationsByCity, getNearbyStations } from "../data/stations"
+import { getStationsByCity, getNearbyStations, haversineDistance } from "../data/stations"
 import { getAirportsByCity, getNearbyAirports } from "../data/airports"
 
 const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
@@ -17,14 +17,28 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
   const [availableStations, setAvailableStations] = useState([])
   const [availableAirports, setAvailableAirports] = useState([])
 
-  const longDistanceLocations = ["goa", "kerala"]
-  const isLongDistance = longDistanceLocations.includes(location?.name?.toLowerCase())
+  const locName = location?.name?.toLowerCase() || "";
+  const isIsland = locName.includes("andaman") || locName.includes("nicobar") || locName.includes("lakshadweep") || locName.includes("havelock");
+
+  let distance = 0;
+  if (planData?.originCoords && location?.coords) {
+    distance = haversineDistance(planData.originCoords.lat, planData.originCoords.lng, location.coords[0], location.coords[1]);
+  } else if (planData?.originCity && location?.coords) {
+    const originStations = getStationsByCity(planData.originCity);
+    if (originStations.length > 0) {
+      distance = haversineDistance(originStations[0].lat, originStations[0].lng, location.coords[0], location.coords[1]);
+    }
+  }
+  
+  // Disable bus if distance > 1000km
+  const isLongDistance = distance > 1000;
 
   const transportOptions = [
-    !isLongDistance && { id: "bus", label: "Bus", emoji: "🚌", desc: "Affordable, scenic route" },
-    { id: "train", label: "Train", emoji: "🚂", desc: "Comfortable, most popular" },
+    (!isLongDistance && !isIsland) && { id: "bus", label: "Bus", emoji: "🚌", desc: "Affordable, scenic route" },
+    !isIsland && { id: "train", label: "Train", emoji: "🚂", desc: "Comfortable, most popular" },
     { id: "flight", label: "Flight", emoji: "✈️", desc: "Fastest, higher cost" },
-    { id: "personal", label: "Personal Vehicle", emoji: "🚗", desc: "Own car/bike, flexible — any distance!" },
+    !isIsland && { id: "personal", label: "Personal Vehicle", emoji: "🚗", desc: "Own car/bike, flexible" },
+    isIsland && { id: "ship", label: "Ship / Ferry", emoji: "🚢", desc: "Ocean journey to the islands" },
   ].filter(Boolean)
 
   const stayOptions = [
