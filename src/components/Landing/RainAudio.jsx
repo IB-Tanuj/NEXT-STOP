@@ -2,8 +2,8 @@ import { useRef, useEffect, useState, useCallback } from "react"
 
 const AUDIO_FILES = ["/landing/rain.mp3"]
 const LOOP_SECONDS = 40
-const FILE_LEVEL = 0.35
-const SYNTH_LEVEL = 0.14
+const FILE_LEVEL = 1.0
+const SYNTH_LEVEL = 0.5
 const FADE_MS = 1200
 const MUTED_KEY = "nextstop-rain-muted"
 
@@ -165,14 +165,16 @@ const RainAudio = ({ enabled = true }) => {
     }
   }, [enabled, audioSupported])
 
-  // First gesture listener
+  // Gesture listeners for autoplay
   useEffect(() => {
     if (!enabled || !audioSupported) return
     const onGesture = () => {
-      events.forEach(e => window.removeEventListener(e, onGesture))
-      if (!muted) startAudio()
+      if (!muted) {
+        // If it hasn't started properly or was paused by browser block, try again
+        startAudio()
+      }
     }
-    const events = ["pointerdown", "keydown", "touchstart"]
+    const events = ["pointerdown", "keydown", "touchstart", "wheel", "scroll"]
     events.forEach(e => window.addEventListener(e, onGesture, { passive: true }))
     return () => events.forEach(e => window.removeEventListener(e, onGesture))
   }, [enabled, audioSupported, muted, startAudio])
