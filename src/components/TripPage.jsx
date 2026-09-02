@@ -33,8 +33,25 @@ const LocationBoundary = ({ coords, zoom, theme, locationName, boundaryQueryName
     }
 
     // Try to find a polygon result from a Nominatim response array
-    const findPolygonResult = (data) =>
-      data.find(d => d.geojson && (d.geojson.type === 'Polygon' || d.geojson.type === 'MultiPolygon'))
+    const findPolygonResult = (data) => {
+      // Filter only those with polygon data
+      const polys = data.filter(d => d.geojson && (d.geojson.type === 'Polygon' || d.geojson.type === 'MultiPolygon'))
+      if (!polys.length) return null;
+      
+      // Try to find a major administrative boundary first
+      const adminTypes = ['city', 'municipality', 'district', 'county', 'state', 'administrative', 'town', 'suburb']
+      for (const t of adminTypes) {
+        const match = polys.find(p => p.addresstype === t || p.type === 'administrative')
+        if (match) return match
+      }
+      
+      // Fallback to the one with the largest bounding box area to avoid tiny buildings
+      return polys.sort((a, b) => {
+        const areaA = (a.boundingbox[1] - a.boundingbox[0]) * (a.boundingbox[3] - a.boundingbox[2])
+        const areaB = (b.boundingbox[1] - b.boundingbox[0]) * (b.boundingbox[3] - b.boundingbox[2])
+        return areaB - areaA
+      })[0]
+    }
 
     const addGeoJSON = (geojson) => {
       const geoLayer = L.geoJSON(geojson, { style: boundaryStyle })
@@ -836,8 +853,9 @@ const TripPage = ({ location, theme, onBack }) => {
               {/* Continue Button */}
               <button
                 onClick={() => {
-                  setShowBestTime(false)
-                  setQuestionsVisible(true)
+                  // TEMPORARY FIX: Bypass questions page for beta launch
+                  setSelectedChoice("explore")
+                  setPlanningVisible(true)
                 }}
                 style={{
                   width: "100%",

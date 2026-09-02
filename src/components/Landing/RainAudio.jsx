@@ -100,6 +100,10 @@ const RainAudio = ({ enabled = true }) => {
   const startAudio = useCallback(() => {
     if (startedRef.current) {
       if (audioCtxRef.current?.state === "suspended") audioCtxRef.current.resume()
+      const el = fileRef.current
+      if (el && el.paused && !muted) {
+        el.play().catch(() => {})
+      }
       return
     }
     startedRef.current = true
