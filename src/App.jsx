@@ -180,8 +180,8 @@ function App() {
         {/* New Marketing Landing Page */}
         <Route path="/" element={<LandingPage />} />
         
-        {/* Login Page */}
-        <Route path="/login" element={<AuthPage theme={theme} />} />
+        {/* Login Page Redirects to Drawer on Landing */}
+        <Route path="/login" element={<Navigate to="/?auth=login" replace />} />
 
         {/* Protected Dashboard / Search App */}
         <Route path="/app" element={
