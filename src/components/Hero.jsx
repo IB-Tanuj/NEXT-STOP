@@ -199,7 +199,7 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
   })
 
   const getRandomMsg = (exclude) => {
-    const msgs = seasonMessages[seasonKey[1]] || seasonMessages.summer
+    const msgs = seasonMessages[seasonLabel[1]] || seasonMessages.varsha
     const available = msgs.filter(m => m !== exclude)
     return available[Math.floor(Math.random() * available.length)]
   }
