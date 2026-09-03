@@ -148,6 +148,9 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
             }}
             onMouseLeave={e => {
               e.currentTarget.style.background = "transparent"
+              e.currentTarget.style.color = theme.primary
+            }}
+          >
             Itinerary
           </button>
         </div>
