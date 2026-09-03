@@ -79,32 +79,46 @@ export const TripOverviewTab = React.memo(({
   stayType,
   transport,
   foodBuffer,
+  budgetData,
   aiLoading,
   aiData
 }) => {
+  const stayCost = budgetData?.stayCost || 0;
+  const transportCost = budgetData?.transportCost || 0;
+  const entryCost = budgetData?.totalEntryCost || 0;
+  const hasMissingEntryCosts = budgetData?.hasMissingEntryCosts || false;
+
+  const summaryItems = [
+    { label: "📍 Destination", value: locationName },
+    { label: "📅 Duration", value: `${days} days` },
+    { label: "👤 Traveler", value: isGroup ? `Group of ${groupSize}` : "Solo" },
+    { label: "💰 Total Budget", value: `₹${Number(budget).toLocaleString("en-IN")}` },
+    { label: "🏨 Stay", value: stayCost ? `${stayType} (₹${stayCost.toLocaleString("en-IN")})` : stayType },
+    { label: "🚌 Transport", value: transportCost ? `${transport} (₹${transportCost.toLocaleString("en-IN")})` : transport },
+    entryCost > 0 ? { label: "🎟️ Activities", value: `₹${entryCost.toLocaleString("en-IN")}${hasMissingEntryCosts ? " (Partial)" : ""}` } : null,
+    { label: "🍽️ Food Buffer", value: `₹${foodBuffer.toLocaleString("en-IN")}` },
+  ].filter(Boolean)
+
   return (
     <div style={{ animation: "fadeIn 0.3s ease" }}>
       {/* Trip Summary */}
       {card(theme, <>
         {sectionLabel(theme, "📋 TRIP SUMMARY")}
-        {[
-          { label: "📍 Destination", value: locationName },
-          { label: "📅 Duration", value: `${days} days` },
-          { label: "👤 Traveler", value: isGroup ? `Group of ${groupSize}` : "Solo" },
-          { label: "💰 Total Budget", value: `₹${Number(budget).toLocaleString("en-IN")}` },
-          { label: "🏨 Stay", value: stayType },
-          { label: "🚌 Transport", value: transport },
-          { label: "🍽️ Food Buffer", value: `₹${foodBuffer.toLocaleString("en-IN")}` },
-        ].map((item, i) => (
+        {summaryItems.map((item, i) => (
           <div key={i} style={{
             display: "flex", justifyContent: "space-between",
             padding: "10px 0",
-            borderBottom: i < 6 ? `1px solid ${theme.primary}22` : "none",
+            borderBottom: i < summaryItems.length - 1 ? `1px solid ${theme.primary}22` : "none",
           }}>
-            <span style={{ color: theme.subtext, fontSize: "14px" }}>{item.label}</span>
-            <span style={{ color: theme.text, fontWeight: "700", fontSize: "14px", textTransform: "capitalize" }}>{item.value}</span>
+            <span style={{ color: theme.subtext, fontSize: "14px", flexShrink: 0, marginRight: "12px" }}>{item.label}</span>
+            <span style={{ color: theme.text, fontWeight: "700", fontSize: "14px", textTransform: "capitalize", textAlign: "right" }}>{item.value}</span>
           </div>
         ))}
+        {hasMissingEntryCosts && (
+          <div style={{ marginTop: "12px", fontSize: "11px", color: theme.subtext, fontStyle: "italic", textAlign: "center" }}>
+            *Some activity ticket prices were unavailable and have been absorbed into the food buffer.
+          </div>
+        )}
       </>)}
 
       {/* Local Phrases */}
