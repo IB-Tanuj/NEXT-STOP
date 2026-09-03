@@ -148,20 +148,8 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
             }}
             onMouseLeave={e => {
               e.currentTarget.style.background = "transparent"
-              e.currentTarget.style.color = theme.primary
-            }}
-          >
             Itinerary
           </button>
-          <div style={{
-            color: theme.subtext,
-            fontSize: "10px",
-            textAlign: "center",
-            marginTop: "6px",
-            lineHeight: "1.2",
-          }}>
-            cached results load instantly ⚡ — only new combos use tokens
-          </div>
         </div>
       </div>
 
