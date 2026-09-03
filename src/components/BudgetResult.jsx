@@ -732,21 +732,45 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
         
 
       </div>
-      {showTripPlan && (
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 4000,
-          background: theme.bg, overflowY: "auto",
-        }}>
-          <TripPlan
-            location={location}
-            theme={theme}
-            planData={planData}
-            preferences={preferences}
-            budgetData={{ foodBuffer }}
-            onBack={() => setShowTripPlan(false)}
-          />
-        </div>
-      )}
+      {showTripPlan && (() => {
+        const getDetailedTransportName = () => {
+          if (transportMedium === "personal") return "Personal Vehicle"
+          if (isMultiLeg && selectedStation) {
+            return `Train (${selectedTrainClass}) + ${selectedTransferType === "bus" ? `Bus (${selectedTransferClass})` : "Taxi"}`
+          }
+          if (isDirect) {
+            if (transportMedium === "flight") return `Flight (${selectedDirectClass})`
+            if (transportMedium === "bus") return `Bus (${selectedDirectClass})`
+            if (transportMedium === "train") return `Train (${selectedDirectClass})`
+          }
+          if (isFlightMultiLeg) {
+            return `Flight (${selectedFlightClass}) + Transfer`
+          }
+          return preferences.transport
+        }
+
+        const detailedPreferences = {
+          ...preferences,
+          stayType: stayOptions[selectedStayIndex]?.name || preferences.stayType,
+          transport: getDetailedTransportName()
+        }
+
+        return (
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 4000,
+            background: theme.bg, overflowY: "auto",
+          }}>
+            <TripPlan
+              location={location}
+              theme={theme}
+              planData={planData}
+              preferences={detailedPreferences}
+              budgetData={{ foodBuffer }}
+              onBack={() => setShowTripPlan(false)}
+            />
+          </div>
+        )
+      })()}
 
       <style>{`
         @keyframes fadeIn {
