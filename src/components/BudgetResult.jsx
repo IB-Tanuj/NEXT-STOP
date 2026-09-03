@@ -354,15 +354,17 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   // ── Entry Tickets (Dynamic) ──────────────────────────────
   const entryBreakdown = []
   let entryPerPerson = 0
+  let hasMissingEntryCosts = false
   
   activeActivities.forEach(activity => {
     const info = spotInfos[activity]
-    if (info && !info.error) {
+    if (info && !info.error && info.entryPrice !== undefined) {
       const cost = info.entryPrice?.adult || 0
       entryPerPerson += cost
       entryBreakdown.push({ name: activity, cost, info })
-    } else if (info && info.error) {
+    } else {
       entryBreakdown.push({ name: activity, cost: 0, info, error: true })
+      hasMissingEntryCosts = true
     }
   })
   
@@ -765,7 +767,14 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
               theme={theme}
               planData={planData}
               preferences={detailedPreferences}
-              budgetData={{ foodBuffer }}
+              budgetData={{ 
+                foodBuffer, 
+                stayCost, 
+                transportCost, 
+                totalEntryCost, 
+                hasMissingEntryCosts,
+                totalBudget
+              }}
               onBack={() => setShowTripPlan(false)}
             />
           </div>

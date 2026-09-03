@@ -251,6 +251,7 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
             stayType={stayType}
             transport={transport}
             foodBuffer={foodBuffer}
+            budgetData={budgetData}
             aiLoading={aiLoading}
             aiData={aiData}
           />
