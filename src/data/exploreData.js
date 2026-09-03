@@ -148,7 +148,7 @@ export const exploreCategories = [
     label: "Beaches",
     description: "India's most beautiful coastlines",
     locations: [
-      { name: "Radhanagar Beach", state: "Andaman", desc: "Asia's best beach — turquoise water and white sand", tags: ["Beach", "Tropical"], available: true, locationKey: "havelock" },
+      { name: "Radhanagar Beach", state: "Andaman", desc: "Asia's best beach — turquoise water and white sand", tags: ["Beach", "Tropical"], available: false, locationKey: "havelock" },
       { name: "Varkala", state: "Kerala", desc: "Cliff beach with natural springs and laid-back vibe", tags: ["Beach", "Scenic"], available: true, locationKey: "varkala" },
       { name: "Goa Beaches", state: "Goa", desc: "From party beaches to quiet coves — something for everyone", tags: ["Beach", "Nightlife"], available: true, locationKey: "goa" },
       { name: "Puri Beach", state: "Odisha", desc: "Jagannath temple town with sacred and scenic beaches", tags: ["Beach", "Spiritual"], available: true, locationKey: "puri" },
@@ -156,12 +156,12 @@ export const exploreCategories = [
       { name: "Gokarna", state: "Karnataka", desc: "Om Beach and Half Moon Beach — backpacker paradise", tags: ["Beach", "Offbeat"], available: true, locationKey: "gokarna" },
       { name: "Tarkarli", state: "Maharashtra", desc: "Crystal clear water perfect for scuba diving and snorkeling", tags: ["Beach", "Scuba"], available: true, locationKey: "konkan" },
       { name: "Mandrem Beach", state: "Goa", desc: "Quietest and most pristine beach in North Goa", tags: ["Beach", "Peaceful"], available: true, locationKey: "goa" },
-      { name: "Neil Island", state: "Andaman", desc: "Untouched coral beaches with bioluminescent plankton", tags: ["Beach", "Tropical"], available: true, locationKey: "neilisland" },
+      { name: "Neil Island", state: "Andaman", desc: "Untouched coral beaches with bioluminescent plankton", tags: ["Beach", "Tropical"], available: false, locationKey: "neilisland" },
       { name: "Dhanushkodi", state: "Tamil Nadu", desc: "Ghost town at the tip of India where two seas meet", tags: ["Beach", "Unique"], available: true, locationKey: "rameswaram" },
       { name: "Marari Beach", state: "Kerala", desc: "Quiet fishing village beach away from tourist crowds", tags: ["Beach", "Peaceful"], available: true, locationKey: "alleppey" },
       { name: "Agonda Beach", state: "Goa", desc: "Most peaceful beach in South Goa — turtle nesting site", tags: ["Beach", "Nature"], available: true, locationKey: "goa" },
-      { name: "Bangaram Island", state: "Lakshadweep", desc: "Uninhabited coral island with lagoon and marine life", tags: ["Beach", "Tropical"], available: true, locationKey: "bangaram" },
-      { name: "Havelock Island", state: "Andaman", desc: "Elephanta Beach and Radhanagar — world class snorkeling", tags: ["Beach", "Scuba"], available: true, locationKey: "havelock" },
+      { name: "Bangaram Island", state: "Lakshadweep", desc: "Uninhabited coral island with lagoon and marine life", tags: ["Beach", "Tropical"], available: false, locationKey: "bangaram" },
+      { name: "Havelock Island", state: "Andaman", desc: "Elephanta Beach and Radhanagar — world class snorkeling", tags: ["Beach", "Scuba"], available: false, locationKey: "havelock" },
     ]
   },
   {
@@ -194,7 +194,7 @@ export const exploreCategories = [
       { name: "Rishikesh", state: "Uttarakhand", desc: "White water rafting, bungee jumping and zip lining", tags: ["Rafting", "Bungee"], available: true, locationKey: "rishikesh" },
       { name: "Manali", state: "Himachal Pradesh", desc: "Paragliding, skiing, trekking and river rafting", tags: ["Paragliding", "Skiing"], available: true, locationKey: "manali" },
       { name: "Goa", state: "Goa", desc: "Scuba diving, parasailing and jet skiing", tags: ["Scuba", "Water Sports"], available: true, locationKey: "goa" },
-      { name: "Andaman", state: "Andaman & Nicobar", desc: "World class scuba diving and snorkeling", tags: ["Scuba", "Diving"], available: true, locationKey: "portblair" },
+      { name: "Andaman", state: "Andaman & Nicobar", desc: "World class scuba diving and snorkeling", tags: ["Scuba", "Diving"], available: false, locationKey: "portblair" },
       { name: "Auli", state: "Uttarakhand", desc: "Skiing on Himalayan slopes with Nanda Devi views", tags: ["Skiing", "Mountains"], available: true, locationKey: "auli" },
       { name: "Gulmarg", state: "Jammu & Kashmir", desc: "Asia's best skiing and highest gondola ride", tags: ["Skiing", "Adventure"], available: true, locationKey: "gulmarg" },
       { name: "Bir Billing", state: "Himachal Pradesh", desc: "Paragliding capital of India — world class thermals", tags: ["Paragliding", "Adventure"], available: true, locationKey: "birbilling" },
