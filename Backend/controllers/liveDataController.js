@@ -6,7 +6,7 @@ import { AsyncCache } from '../utils/cache.js';
 // Global cache for stay searches
 const stayCache = new AsyncCache('cache_stays');
 const pendingStayRequests = new Map();
-const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+const CACHE_TTL = 90 * 60 * 1000; // 90 minutes
 
 /**
  * POST /api/live/activity-price

@@ -2,7 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import { AsyncCache } from '../utils/cache.js';
 
 // Cache for 40 days
-const CACHE_TTL = 40 * 24 * 60 * 60 * 1000;
+const CACHE_TTL = 90 * 24 * 60 * 60 * 1000; // 90 days (3 months)
 const spotCache = new AsyncCache('cache_spot_info');
 
 export const getSpotInfoBatch = async (req, res) => {
