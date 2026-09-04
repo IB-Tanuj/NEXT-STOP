@@ -92,3 +92,24 @@ graph TD
 
 ### ✨ Micro-Animations
 - **The Decision**: Instead of standard text "Loading...", we use beautiful `ShimmerSkeleton` components. All clickable cards utilize a standard `.hover-card` global CSS class to ensure tactile, cubic-bezier hover states across the entire application.
+
+---
+
+## 5. Recent Fixes & Features (September 2026)
+
+### 🚀 Search Flow & UI Reductions
+- **Redesigned Search Flow**: Streamlined the location selection flow. Previously required multiple enter clicks. Now: `State Name -> Auto-filters Cities (real-time) -> Click City -> Map`. Gives users more room to scroll and view city photos.
+- **Questions Page Disabled**: Temporarily disabled and bypassed the "Questions" questionnaire section for the upcoming beta launch as it currently serves no critical purpose.
+
+### 🗺️ Geographical & Map Fixes
+- **City Boundaries Fallback**: Addressed an issue where several cities had no geographical polygon boundaries in our dataset. Implemented a fallback mechanism to render a clean, round circle boundary for any city lacking strict coordinate data.
+- **Island Disablement**: Hard-disabled island locations (Andaman & Nicobar, Lakshadweep) by setting `built: false` and `available: false` in the dataset. Decided to postpone island logistics (ferries/ships) research until after the beta launch.
+
+### 🚌 Transport & Budget Logic
+- **Global Transport Distance Logic**: Fixed a bug where the "Bus" option was only being hidden for Goa. Deployed a global `haversineDistance` calculation: if the straight-line distance from origin to destination exceeds 1000km, the Bus option is automatically disabled for *all* locations.
+- **Granular Trip Summary**: Upgraded the `TripOverviewTab` UI. It now proudly displays the exact selected hotel name (e.g., *Taj Mahal Palace*) and detailed transport class (e.g., *Train (SL)*) instead of generic categories.
+- **Budget Distribution**: Overhauled the Trip Summary to display precise budget slices. 
+  - Stay and Transport now display their specific allocated cost inline. 
+  - Added a new **🎟️ Activities** row for spot ticket prices.
+  - **Graceful Failure (The Missing Ticket Price Problem)**: If the Gemini API fails to fetch the ticket price for any selected spot, that cost is gracefully absorbed into the flexible `Food Buffer`. The UI flags the Activities cost as `(Partial)` and appends a polite italicized disclaimer at the bottom explaining the data fallback.
+- **UI Cleanup**: Removed the "cached results load instantly ⚡" text from the itinerary footer to keep the UI spotless.
