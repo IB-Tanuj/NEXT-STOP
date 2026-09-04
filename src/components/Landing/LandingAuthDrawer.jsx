@@ -173,7 +173,7 @@ const LandingAuthDrawer = ({ isOpen, onClose, initialMode = 'login' }) => {
             {/* Name field — signup only */}
             {!isLogin && (
               <div className="auth-field">
-                <label className="auth-label" htmlFor="auth-name">Full Name</label>
+                <label className="auth-label" htmlFor="auth-name">Name</label>
                 <input
                   id="auth-name"
                   className="auth-input"
