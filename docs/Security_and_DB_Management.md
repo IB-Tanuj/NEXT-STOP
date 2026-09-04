@@ -75,6 +75,33 @@ RLS is enabled on **all** public tables with **zero public policies**. This mean
 
 ---
 
+## 💾 Caching Strategy & Storage Limits
+
+### Supabase Free Tier Limit
+- **Database Size Limit:** 500 MB
+- **Current Mitigation:** Data is cached in DB tables with specific Time-To-Live (TTL) values.
+
+### Current TTL Configuration
+| Data Type | Cache Table | TTL | Notes |
+|---|---|---|---|
+| Flixbus Search | `cache_flixbus` | 10 minutes | Highly dynamic |
+| Bus (Redbus/etc) | `cache_buses` | 30 minutes | Highly dynamic |
+| Live Stays | `cache_stays` | 90 minutes | Pricing changes often |
+| Hotel Pricing | `cache_hotels` | 90 minutes | Rate-limited API, dynamic pricing |
+| Flight | `cache_flights` | 3 hours | Standard expiry |
+| Train | `cache_trains` | 3 hours | Standard expiry |
+| Spot Info | `cache_spot_info` | 90 days | Wikipedia data, ticket prices |
+| AI Trip Plans | `gemini_results` | Permanent | Contains itinerary, food, activities |
+| Images | `cache_images` | Permanent (10 years) | Rarely changes |
+| Location IDs | `cache_hotels` (loc:*) | Permanent (10 years) | API destination IDs |
+
+### Lazy Deletion Mechanics
+- Expired cache entries are **not** automatically deleted from the database.
+- They are deleted **lazily** (only when a user searches for that exact same route/data again and triggers a cache miss).
+- This means expired rows (e.g., in `cache_trains` and `cache_flights`) will remain in the DB indefinitely if they are never queried again, consuming part of the 500 MB limit.
+
+---
+
 ## ⚠️ Pre-Launch Action Items
 
 ### 🔴 Critical (Before Launch)
@@ -90,6 +117,8 @@ RLS is enabled on **all** public tables with **zero public policies**. This mean
   - Get free site key from [Cloudflare Turnstile](https://dash.cloudflare.com/sign-up?to=/:account/turnstile)
   - Configure in Supabase Dashboard → Authentication → Bot Protection
   - Add `<Turnstile>` widget to auth drawer
+
+- [ ] **Write Database Cleanup Script (Cron Job)** — Because of "Lazy Deletion", expired cache rows sit in the DB forever if never queried again. Create a simple daily cron job (or server-side script) to sweep all `cache_*` tables and `DELETE FROM table WHERE expires_at < NOW()`.
 
 ### 🟡 Post-Launch
 
@@ -109,3 +138,4 @@ RLS is enabled on **all** public tables with **zero public policies**. This mean
 | 2026-09-04 | RLS enabled on all tables | All 14 public tables locked down. Zero public policies = anon key fully blocked. |
 | 2026-09-04 | SMTP reminder logged | Must add custom SMTP (Resend/Brevo) before launch to remove email rate limits. |
 | 2026-09-04 | Bot protection planned | Cloudflare Turnstile to be added pre-launch. Email verification covers beta phase. |
+| 2026-09-05 | Cache TTL updated | Adjusted live hotel (90m) and spot info (90d) TTLs. Documented lazy deletion behavior. |
