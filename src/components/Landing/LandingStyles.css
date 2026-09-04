@@ -729,49 +729,178 @@
   color: var(--mint-strong);
 }
 
-.auth-drawer-buttons {
+/* ── Auth Form ── */
+
+.auth-form {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 18px;
 }
 
-.auth-btn {
+.auth-field {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.auth-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--mist);
+}
+
+.auth-input {
   width: 100%;
-  padding: 14px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(87, 217, 163, 0.2);
+  padding: 13px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   color: var(--ink);
   font-size: 15px;
-  font-weight: 500;
+  font-family: inherit;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.auth-input::placeholder {
+  color: rgba(184, 212, 198, 0.4);
+}
+
+.auth-input:focus {
+  border-color: rgba(87, 217, 163, 0.55);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 3px rgba(87, 217, 163, 0.1);
+}
+
+.auth-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Password field wrapper */
+.auth-password-wrapper {
+  position: relative;
+}
+
+.auth-password-wrapper .auth-input {
+  padding-right: 48px;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--mist);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.auth-password-toggle:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Submit button */
+.auth-submit-btn {
+  width: 100%;
+  padding: 14px;
+  margin-top: 6px;
+  background: linear-gradient(135deg, var(--mint-strong), var(--mint));
+  border: none;
+  border-radius: 12px;
+  color: #04241a;
+  font-size: 16px;
+  font-weight: 700;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.25s ease;
-}
-
-.auth-btn:hover {
-  background: rgba(87, 217, 163, 0.1);
-  border-color: rgba(87, 217, 163, 0.4);
-  transform: translateY(-1px);
-}
-
-.auth-btn-icon {
-  margin-right: 12px;
-  font-weight: 800;
-  font-size: 16px;
-}
-
-.auth-btn-icon-svg {
-  margin-right: 12px;
-}
-
-.auth-btn-group {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+  box-shadow: 0 8px 24px rgba(47, 191, 133, 0.3);
   display: flex;
-  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+}
+
+.auth-submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(47, 191, 133, 0.4);
+}
+
+.auth-submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.auth-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Loading spinner */
+.auth-spinner {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border: 3px solid rgba(4, 36, 26, 0.3);
+  border-top-color: #04241a;
+  border-radius: 50%;
+  animation: lp-authSpin 0.7s linear infinite;
+}
+
+@keyframes lp-authSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error message */
+.auth-error-msg {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(255, 80, 80, 0.1);
+  border: 1px solid rgba(255, 80, 80, 0.3);
+  border-radius: 12px;
+  color: #ff8a8a;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  text-align: left;
+  margin-bottom: 4px;
+}
+
+.auth-error-msg svg {
+  flex-shrink: 0;
+}
+
+/* Success message */
+.auth-success-msg {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(87, 217, 163, 0.1);
+  border: 1px solid rgba(87, 217, 163, 0.3);
+  border-radius: 12px;
+  color: var(--mint);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  text-align: left;
+  margin-bottom: 4px;
+}
+
+.auth-success-msg svg {
+  flex-shrink: 0;
 }
 
 .auth-drawer-footer {

@@ -18,7 +18,6 @@ const DevAdminPage = lazy(() => import("./components/DevAdminPage"))
 
 import { allIndiaLocations } from "./data/allLocations"
 import LandingPage from "./components/LandingPage"
-const AuthPage = lazy(() => import("./components/AuthPage"))
 import { useAuth } from "./context/AuthContext"
 
 function ProtectedRoute({ children }) {
@@ -26,6 +25,67 @@ function ProtectedRoute({ children }) {
   if (loading) return null; // Wait until session is checked
   if (!user) return <Navigate to="/login" replace />;
   return children;
+}
+
+function EmailVerificationBanner({ theme }) {
+  const { emailVerified, resendVerification, user } = useAuth();
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
+
+  if (!user || emailVerified) return null;
+
+  const handleResend = async () => {
+    setResending(true);
+    try {
+      await resendVerification();
+      setResent(true);
+      setTimeout(() => setResent(false), 5000);
+    } catch (err) {
+      console.error('Failed to resend verification:', err);
+    } finally {
+      setResending(false);
+    }
+  };
+
+  return (
+    <div style={{
+      position: 'sticky',
+      top: 0,
+      zIndex: 100,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '12px',
+      padding: '10px 20px',
+      background: `linear-gradient(135deg, ${theme?.primary || '#57d9a3'}22, ${theme?.primary || '#57d9a3'}11)`,
+      borderBottom: `1px solid ${theme?.primary || '#57d9a3'}33`,
+      backdropFilter: 'blur(12px)',
+      fontSize: '14px',
+      color: theme?.text || '#eef7f1',
+      fontFamily: 'var(--sans)',
+    }}>
+      <span>📬 Check your inbox to verify your email</span>
+      <button
+        onClick={handleResend}
+        disabled={resending || resent}
+        style={{
+          background: 'none',
+          border: `1px solid ${theme?.primary || '#57d9a3'}66`,
+          borderRadius: '8px',
+          padding: '4px 14px',
+          fontSize: '13px',
+          fontWeight: '600',
+          color: theme?.primary || '#57d9a3',
+          cursor: resending || resent ? 'default' : 'pointer',
+          opacity: resending || resent ? 0.6 : 1,
+          fontFamily: 'inherit',
+          transition: 'all 0.2s ease',
+        }}
+      >
+        {resent ? '✓ Sent!' : resending ? 'Sending...' : 'Resend'}
+      </button>
+    </div>
+  );
 }
 
 function TripPageWrapper({ theme, onBack, setLocationTheme }) {
@@ -187,6 +247,7 @@ function App() {
         <Route path="/app" element={
           <ProtectedRoute>
             <>
+              <EmailVerificationBanner theme={theme} />
               <Navbar theme={theme} isMobile={isMobile} 
               onAbout={() => setShowAbout(true)}
               onExplore={() => setShowExplore(true)}
