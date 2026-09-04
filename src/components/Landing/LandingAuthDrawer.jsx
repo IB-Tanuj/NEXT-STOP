@@ -1,16 +1,33 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const LandingAuthDrawer = ({ isOpen, onClose, initialMode = 'login' }) => {
-  const [isLogin, setIsLogin] = React.useState(initialMode === 'login');
-  const { login } = useAuth();
+  const [isLogin, setIsLogin] = useState(initialMode === 'login');
+  const { signUp, signIn } = useAuth();
   const navigate = useNavigate();
 
-  // Reset to initialMode when opened
+  // Form fields
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  // UI state
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
+  // Reset form when drawer opens/closes or mode changes
   useEffect(() => {
     if (isOpen) {
       setIsLogin(initialMode === 'login');
+      setName('');
+      setEmail('');
+      setPassword('');
+      setError('');
+      setSuccessMessage('');
+      setShowPassword(false);
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -18,9 +35,82 @@ const LandingAuthDrawer = ({ isOpen, onClose, initialMode = 'login' }) => {
     return () => { document.body.style.overflow = 'unset'; };
   }, [isOpen, initialMode]);
 
-  const handleProviderLogin = async (provider) => {
-    await login(provider);
-    navigate('/app');
+  // Clear error when switching modes
+  const toggleMode = () => {
+    setIsLogin(!isLogin);
+    setError('');
+    setSuccessMessage('');
+    setPassword('');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+
+    // Basic validation
+    if (!email.trim()) {
+      setError('Email is required');
+      return;
+    }
+    if (!password) {
+      setError('Password is required');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      if (isLogin) {
+        // ── LOGIN ──
+        await signIn(email.trim(), password);
+        navigate('/app');
+      } else {
+        // ── SIGN UP ──
+        if (!name.trim()) {
+          setError('Name is required');
+          setIsSubmitting(false);
+          return;
+        }
+
+        const data = await signUp(email.trim(), password, name.trim());
+
+        // If Supabase requires email confirmation and the user hasn't confirmed yet,
+        // data.user exists but data.session may be null.
+        // If email confirmation is OFF, session is returned immediately.
+        if (data.session) {
+          // Logged in immediately — navigate to app
+          navigate('/app');
+        } else {
+          // Email confirmation is ON — show success message
+          setSuccessMessage(
+            'Account created! Check your inbox to verify your email, then log in.'
+          );
+          setIsLogin(true);
+          setPassword('');
+        }
+      }
+    } catch (err) {
+      // Map Supabase error messages to user-friendly text
+      const msg = err.message || 'Something went wrong';
+      if (msg.includes('Invalid login credentials')) {
+        setError('Wrong email or password');
+      } else if (msg.includes('User already registered')) {
+        setError('An account with this email already exists. Try logging in.');
+      } else if (msg.includes('Email rate limit exceeded')) {
+        setError('Too many attempts. Please wait a minute and try again.');
+      } else if (msg.includes('Password should be at least')) {
+        setError('Password must be at least 6 characters');
+      } else {
+        setError(msg);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -45,47 +135,122 @@ const LandingAuthDrawer = ({ isOpen, onClose, initialMode = 'login' }) => {
           </div>
 
           <h2 className="auth-drawer-title">
-            {isLogin ? 'Log Into NEXT STOP' : 'Sign Up for NEXT STOP'}
+            {isLogin ? 'Welcome back' : 'Create your account'}
           </h2>
           
           <p className="auth-drawer-subtitle">
-            {isLogin ? 'New to NEXT STOP? ' : 'Already have an account? '}
-            <span 
-              onClick={() => setIsLogin(!isLogin)}
-              className="auth-drawer-toggle"
-            >
-              {isLogin ? 'Sign up for free' : 'Log in'}
+            {isLogin ? "Don't have an account? " : 'Already have an account? '}
+            <span onClick={toggleMode} className="auth-drawer-toggle">
+              {isLogin ? 'Sign up' : 'Log in'}
             </span>
           </p>
 
-          <div className="auth-drawer-buttons">
-            <button className="auth-btn" onClick={() => handleProviderLogin('google')}>
-              <span className="auth-btn-icon">G</span> {isLogin ? 'Log in' : 'Sign up'} with Google
-            </button>
-
-            <button className="auth-btn" onClick={() => handleProviderLogin('microsoft')}>
-              <span className="auth-btn-icon">M</span> {isLogin ? 'Log in' : 'Sign up'} with Microsoft
-            </button>
-
-            <button className="auth-btn" onClick={() => handleProviderLogin('phone')}>
-              <svg className="auth-btn-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-              </svg> 
-              {isLogin ? 'Log in' : 'Sign up'} with Phone
-            </button>
-
-            <div className="auth-btn-group">
-              <button className="auth-btn" onClick={() => handleProviderLogin('email')}>
-                Email
-              </button>
-              <button className="auth-btn" onClick={() => handleProviderLogin('sso')}>
-                SSO
-              </button>
+          {/* Success Message */}
+          {successMessage && (
+            <div className="auth-success-msg">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              {successMessage}
             </div>
-          </div>
-          
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="auth-error-msg">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+              {error}
+            </div>
+          )}
+
+          {/* Auth Form */}
+          <form className="auth-form" onSubmit={handleSubmit} noValidate>
+            {/* Name field — signup only */}
+            {!isLogin && (
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="auth-name">Full Name</label>
+                <input
+                  id="auth-name"
+                  className="auth-input"
+                  type="text"
+                  placeholder="What should we call you?"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  autoComplete="name"
+                  disabled={isSubmitting}
+                />
+              </div>
+            )}
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="auth-email">Email</label>
+              <input
+                id="auth-email"
+                className="auth-input"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="auth-password">Password</label>
+              <div className="auth-password-wrapper">
+                <input
+                  id="auth-password"
+                  className="auth-input"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder={isLogin ? 'Enter your password' : 'At least 6 characters'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={isLogin ? 'current-password' : 'new-password'}
+                  disabled={isSubmitting}
+                />
+                <button
+                  type="button"
+                  className="auth-password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="auth-submit-btn"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <span className="auth-spinner" />
+              ) : (
+                isLogin ? 'Log In' : 'Create Account'
+              )}
+            </button>
+          </form>
+
           <div className="auth-drawer-footer">
-            By clicking continue, you agree to our Terms of Service and Privacy Policy.
+            By continuing, you agree to our Terms of Service and Privacy Policy.
           </div>
         </div>
       </div>
