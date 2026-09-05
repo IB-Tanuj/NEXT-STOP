@@ -12,6 +12,7 @@ import imageRoutes from "./routes/imageRoutes.js";
 import hotelRoutes from "./routes/hotelRoutes.js";
 import bestTimeRoutes from "./routes/bestTimeRoutes.js";
 import spotInfoRoutes from "./routes/spotInfoRoutes.js";
+import savedTripRoutes from "./routes/savedTripRoutes.js";
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use("/api/images", imageRoutes);
 app.use("/api/hotels", hotelRoutes);
 app.use("/api/best-time", bestTimeRoutes);
 app.use("/api/spots", spotInfoRoutes);
+app.use("/api/saved-trips", savedTripRoutes);
 
 app.get("/", (req, res) => {
   res.json({
