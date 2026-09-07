@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import LiquidCityAnimation from './LiquidCityAnimation';
+import { useAuth } from '../../context/AuthContext';
 
 const SavingsPlannerTab = ({ trip, onUpdate }) => {
+    const { session } = useAuth();
     const wallets = trip.trip_wallets || [];
     
     // Sort wallets to have a consistent order (transport, stay, food, buffer)
@@ -25,20 +27,18 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
 
         setIsSaving(true);
         try {
-            // Note: In real app, we need the user auth token
-            const userStr = localStorage.getItem('sb-yatra-auth-token'); // Check how token is stored
-            const token = userStr ? JSON.parse(userStr)?.access_token : ''; // Rough guess, better to pass user token via props/context
+            const token = session?.access_token || '';
 
-            // For now we will mock the local update to make UI instantly responsive
-            // A real fetch would look like:
-            /*
-            await fetch('/api/saved-trips/savings', {
+            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/saved-trips/savings`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${token}` 
+                },
                 body: JSON.stringify({ trip_id: trip.id, wallet_type: wallet.wallet_type, amount: Number(fundingAmount) })
             });
-            */
-            
+
+            if (!res.ok) throw new Error('Failed to save to backend');
             const newWallets = wallets.map(w => {
                 if (w.id === wallet.id) {
                     return { ...w, saved_amount: Number(w.saved_amount) + Number(fundingAmount) };
@@ -97,7 +97,7 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                                             {wallet.wallet_type === 'buffer' && '💰'}
                                         </span>
                                         <span className="wallet-name">{wallet.wallet_type.toUpperCase()}</span>
-                                        <span className="wallet-amount">₹{wSaved} / ₹{wTarget}</span>
+                                        <span className="wallet-amount">₹{wSaved.toLocaleString()} of ₹{wTarget.toLocaleString()}</span>
                                     </div>
                                     <div className="progress-bar-bg">
                                         <div className="progress-bar-fill" style={{ width: `${wPercent}%`, background: wPercent >= 100 ? '#2ecc71' : '#3498db' }}></div>
