@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import TripDetailsTab from './TripDetailsTab';
 import SavingsPlannerTab from './SavingsPlannerTab';
+import ProfileTab from './ProfileTab';
 import './Dashboard.css';
 
 const PersonalDashboard = () => {
-    const { user } = useAuth();
+    const { section } = useParams();
+    const { user, session } = useAuth();
     const [trips, setTrips] = useState([]);
     const [selectedTrip, setSelectedTrip] = useState(null);
-    const [activeTab, setActiveTab] = useState('details'); // 'details' | 'savings'
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -21,9 +23,9 @@ const PersonalDashboard = () => {
             try {
                 // We assume there's an API route /api/saved-trips 
                 // Alternatively, we could fetch directly from supabase here
-                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/saved-trips`, {
+                const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/saved-trips`, {
                     headers: {
-                        'Authorization': `Bearer ${user.session?.access_token || ''}`
+                        'Authorization': `Bearer ${session?.access_token || ''}`
                     }
                 });
                 
@@ -42,64 +44,64 @@ const PersonalDashboard = () => {
         fetchTrips();
     }, [user]);
 
-    if (!user) return <div className="dashboard-container"><h2>Please log in to view your dashboard.</h2></div>;
-    if (loading) return <div className="dashboard-container"><div className="loader"></div></div>;
-    if (error) return <div className="dashboard-container"><p className="error">{error}</p></div>;
-    if (trips.length === 0) return (
-        <div className="dashboard-container empty-state">
-            <h2>Your Travel Passport</h2>
-            <p>You haven't saved any trips yet. Head over to the Budget Calculator to plan your next adventure!</p>
-        </div>
-    );
+    if (!user) return <div className="dashboard-container" style={{ paddingTop: '100px' }}><h2>Please log in to view your dashboard.</h2></div>;
+    if (loading) return <div className="dashboard-container" style={{ paddingTop: '100px' }}><div className="loader"></div></div>;
+    if (error) return <div className="dashboard-container" style={{ paddingTop: '100px' }}><p className="error">{error}</p></div>;
 
     const handleUpdateTrip = (updatedTrip) => {
         setTrips(trips.map(t => t.id === updatedTrip.id ? updatedTrip : t));
         setSelectedTrip(updatedTrip);
     };
 
-    return (
-        <div className="dashboard-container">
-            <header className="dashboard-header">
-                <h2>Your Travel Passport</h2>
-                
-                <div className="trip-selector">
-                    <label>Select Trip: </label>
-                    <select 
-                        value={selectedTrip?.id || ''} 
-                        onChange={(e) => setSelectedTrip(trips.find(t => t.id === e.target.value))}
-                    >
-                        {trips.map(trip => (
-                            <option key={trip.id} value={trip.id}>
-                                {trip.destination} ({new Date(trip.created_at).toLocaleDateString()})
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                
-                <div className="dashboard-tabs">
-                    <button 
-                        className={`tab-btn ${activeTab === 'details' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('details')}
-                    >
-                        Logistics & Itinerary
-                    </button>
-                    <button 
-                        className={`tab-btn ${activeTab === 'savings' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('savings')}
-                    >
-                        Savings Planner
-                    </button>
-                </div>
-            </header>
+    const renderContent = () => {
+        if (section === 'profile') {
+            return <ProfileTab />;
+        }
 
-            <main className="dashboard-content">
-                {activeTab === 'details' && selectedTrip && (
-                    <TripDetailsTab trip={selectedTrip} onUpdate={handleUpdateTrip} />
-                )}
-                {activeTab === 'savings' && selectedTrip && (
-                    <SavingsPlannerTab trip={selectedTrip} onUpdate={handleUpdateTrip} />
-                )}
-            </main>
+        if (trips.length === 0) {
+            return (
+                <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px' }}>
+                    <h2>Your Travel Passport</h2>
+                    <p style={{ color: '#aaa', marginTop: '10px' }}>You haven't saved any trips yet. Head over to the Budget Calculator to plan your next adventure!</p>
+                </div>
+            );
+        }
+
+        return (
+            <>
+                <header className="dashboard-header">
+                    <h2>{section === 'savings' ? 'Savings Track' : 'Saved Trips'}</h2>
+                    
+                    <div className="trip-selector">
+                        <label>Select Trip: </label>
+                        <select 
+                            value={selectedTrip?.id || ''} 
+                            onChange={(e) => setSelectedTrip(trips.find(t => t.id === e.target.value))}
+                        >
+                            {trips.map(trip => (
+                                <option key={trip.id} value={trip.id}>
+                                    {trip.destination} ({new Date(trip.created_at).toLocaleDateString()})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </header>
+
+                <main className="dashboard-content">
+                    {section === 'trips' && selectedTrip && (
+                        <TripDetailsTab trip={selectedTrip} onUpdate={handleUpdateTrip} />
+                    )}
+                    {section === 'savings' && selectedTrip && (
+                        <SavingsPlannerTab trip={selectedTrip} onUpdate={handleUpdateTrip} />
+                    )}
+                </main>
+            </>
+        );
+    };
+
+    return (
+        <div className="dashboard-container" style={{ paddingTop: '100px' }}>
+            {renderContent()}
         </div>
     );
 };

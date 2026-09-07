@@ -10,7 +10,13 @@ import { TransportCard } from "./BudgetResult/TransportCard"
 import { PersonalVehicleCard } from "./BudgetResult/PersonalVehicleCard"
 import { EntryTicketsCard } from "./BudgetResult/EntryTicketsCard"
 import { CostSummary } from "./BudgetResult/CostSummary"
+import { useNavigate } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
+
 const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
+  const navigate = useNavigate()
+  const { user, session } = useAuth()
+  const [isSavingTrip, setIsSavingTrip] = useState(false)
   const [showTripPlan, setShowTripPlan] = useState(false)
   const locationKey = location?.name?.toLowerCase()
   const routeKey = `delhi-${locationKey}` // fallback key for static data
@@ -578,6 +584,56 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const totalSpent = stayCost + totalEntryCost + transportCost
   const foodBuffer = totalBudget - totalSpent
 
+  // ── Save Trip to Dashboard ──────────────────────────────
+  const handleSaveTrip = async () => {
+    if (!user) {
+      alert("Please login to save trips!")
+      return
+    }
+    
+    setIsSavingTrip(true)
+    try {
+      const getDetailedTransportName = () => {
+        if (transportMedium === "personal") return "Personal Vehicle"
+        if (isMultiLeg && selectedStation) return `Train (${selectedTrainClass}) + Bus`
+        if (isDirect) return `${transportMedium} (${selectedDirectClass})`
+        return transportMedium
+      }
+
+      const trip_data = {
+        hotel: { name: stayOptions[selectedStayIndex]?.name || "Not selected", price: stayCost },
+        transport: { name: getDetailedTransportName(), price: transportCost },
+        buffer: foodBuffer,
+        spots: entryBreakdown
+      }
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/saved-trips`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token || ''}`
+        },
+        body: JSON.stringify({
+          destination: location?.name || locationKey,
+          total_budget: totalBudget,
+          trip_data
+        })
+      })
+
+      if (res.ok) {
+        alert("Trip saved successfully! View it in your dashboard.")
+        navigate("/dashboard")
+      } else {
+        throw new Error("Failed to save trip")
+      }
+    } catch (error) {
+      console.error(error)
+      alert("Could not save trip.")
+    } finally {
+      setIsSavingTrip(false)
+    }
+  }
+
   // ── Public Comparison (personal vehicle) ──────────────
   const publicComparison = ["bus", "train", "flight"].map(mode => {
     const m = routeData?.[mode]?.recommended
@@ -714,24 +770,49 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
           theme={theme} stayCost={getStayCost(roomOption)} transportCost={transportCost}
           totalEntryCost={totalEntryCost} totalSpent={totalSpent} foodBuffer={foodBuffer}
         />
-        {/* Next Button */}
-        <button
-         onClick={() => setShowTripPlan(true)}
-          style={{
-            background: theme.primary, border: "none", padding: "18px",
-            borderRadius: "50px", color: "#fff", fontWeight: "800",
-            fontSize: "16px", cursor: "pointer", letterSpacing: "2px",
-            boxShadow: `0 8px 32px ${theme.primary}66`, marginTop: "8px",
-            transition: "transform 0.2s ease",
-          }}
-          onMouseEnter={e => e.currentTarget.style.transform = "scale(1.02)"}
-          onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
-        >
-          SEE FULL TRIP PLAN →
+        {/* Action Buttons */}
+        <div style={{ display: "flex", gap: "12px", marginTop: "8px", flexDirection: "column" }}>
+          <button
+            onClick={() => setShowTripPlan(true)}
+            style={{
+              background: theme.primary, border: "none", padding: "18px",
+              borderRadius: "50px", color: "#fff", fontWeight: "800",
+              fontSize: "16px", cursor: "pointer", letterSpacing: "2px",
+              boxShadow: `0 8px 32px ${theme.primary}66`,
+              transition: "transform 0.2s ease",
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = "scale(1.02)"}
+            onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+          >
+            SEE FULL TRIP PLAN →
+          </button>
           
-        </button>
-       
-        
+          <button
+            onClick={handleSaveTrip}
+            disabled={isSavingTrip}
+            style={{
+              background: "transparent", border: `2px solid ${theme.primary}`, padding: "15px",
+              borderRadius: "50px", color: theme.primary, fontWeight: "700",
+              fontSize: "15px", cursor: "pointer", letterSpacing: "1px",
+              transition: "all 0.2s ease",
+              opacity: isSavingTrip ? 0.6 : 1
+            }}
+            onMouseEnter={e => {
+              if (!isSavingTrip) {
+                e.currentTarget.style.background = `${theme.primary}11`
+                e.currentTarget.style.transform = "scale(1.02)"
+              }
+            }}
+            onMouseLeave={e => {
+              if (!isSavingTrip) {
+                e.currentTarget.style.background = "transparent"
+                e.currentTarget.style.transform = "scale(1)"
+              }
+            }}
+          >
+            {isSavingTrip ? "SAVING..." : "💾 SAVE TO DASHBOARD"}
+          </button>
+        </div>
 
       </div>
       {showTripPlan && (() => {

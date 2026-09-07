@@ -19,6 +19,7 @@ const DevAdminPage = lazy(() => import("./components/DevAdminPage"))
 import { allIndiaLocations } from "./data/allLocations"
 import LandingPage from "./components/LandingPage"
 import { useAuth } from "./context/AuthContext"
+import PersonalDashboard from "./components/Dashboard/PersonalDashboard"
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -283,6 +284,14 @@ function App() {
             </>
           </ProtectedRoute>
         } />
+        
+        <Route path="/dashboard" element={<Navigate to="/dashboard/profile" replace />} />
+        <Route path="/dashboard/:section" element={
+          <ProtectedRoute>
+            <PersonalDashboard />
+          </ProtectedRoute>
+        } />
+        
         <Route path="/trip/:locationId" element={
           <TripPageWrapper theme={theme} onBack={handleBack} setLocationTheme={setLocationTheme} />
         } />

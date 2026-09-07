@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase.js';
+import supabase from '../config/supabase.js';
 
 export const saveTrip = async (req, res) => {
     try {
@@ -29,9 +29,9 @@ export const saveTrip = async (req, res) => {
 
         // 2. Initialize the wallets based on trip_data
         const stayTarget = trip_data.hotel?.price || 0;
-        const transportTarget = (trip_data.flight?.price || 0) + (trip_data.train?.price || 0);
+        const transportTarget = trip_data.transport?.price || 0;
         const bufferTarget = trip_data.buffer || 0;
-        const foodTarget = trip_data.food_budget || 0;
+        const foodTarget = trip_data.food?.price || 0;
 
         const { error: walletsError } = await supabase
             .from('trip_wallets')

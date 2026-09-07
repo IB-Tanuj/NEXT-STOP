@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom"
 
 const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onBusLovers }) => {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
@@ -62,27 +63,87 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
             </span>
           ))}
           {user ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative' }}>
+              <div 
+                onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                style={{
                 width: '36px', height: '36px', borderRadius: '50%',
                 backgroundColor: theme.primary, color: '#fff',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontWeight: 'bold', fontSize: '14px', cursor: 'pointer'
-              }} title={user.email}>
+                fontWeight: 'bold', fontSize: '14px', cursor: 'pointer',
+                transition: "transform 0.2s ease",
+              }} title="Profile Menu"
+              onMouseEnter={e => e.currentTarget.style.transform = "scale(1.1)"}
+              onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+              >
                 {user.email.charAt(0).toUpperCase()}
               </div>
-              <button 
-                onClick={() => logout()}
-                style={{
-                  background: 'transparent', border: `1px solid ${theme.primary}55`,
-                  padding: "8px 16px", borderRadius: "25px", color: theme.text,
-                  fontWeight: "600", fontSize: "13px", cursor: "pointer", transition: "all 0.3s",
-                }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = `${theme.primary}22`}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
-              >
-                LOGOUT
-              </button>
+
+              {profileMenuOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '120%',
+                  right: 0,
+                  background: `${theme.bg}ee`,
+                  backdropFilter: 'blur(20px)',
+                  border: `1px solid ${theme.primary}55`,
+                  borderRadius: '12px',
+                  padding: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  minWidth: '200px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                  animation: 'fadeIn 0.2s ease'
+                }}>
+                  <div style={{ color: theme.subtext, fontSize: '13px', padding: '0 12px 8px', borderBottom: `1px solid ${theme.primary}22`, marginBottom: '4px', wordBreak: 'break-all' }}>
+                    {user.email}
+                  </div>
+                  {[
+                    { label: 'Profile', path: '/dashboard/profile' },
+                    { label: 'Saved Trips', path: '/dashboard/trips' },
+                    { label: 'Savings Track', path: '/dashboard/savings' },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      onClick={() => {
+                        navigate(item.path);
+                        setProfileMenuOpen(false);
+                      }}
+                      style={{
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        borderRadius: '8px',
+                        color: theme.text,
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        transition: 'background 0.2s',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = `${theme.primary}22`}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      {item.label}
+                    </div>
+                  ))}
+                  <div style={{ height: '1px', background: `${theme.primary}22`, margin: '4px 0' }} />
+                  <div
+                    onClick={() => { logout(); setProfileMenuOpen(false); }}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      borderRadius: '8px',
+                      color: '#ff4757',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      transition: 'background 0.2s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#ff475722'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    Logout
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <button 
@@ -181,6 +242,26 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
               <div style={{ color: theme.text, fontSize: '14px', fontWeight: '500' }}>
                 Logged in as {user.email}
               </div>
+              {[
+                { label: 'Profile', path: '/dashboard/profile' },
+                { label: 'Saved Trips', path: '/dashboard/trips' },
+                { label: 'Savings Track', path: '/dashboard/savings' },
+              ].map((item) => (
+                <span
+                  key={item.label}
+                  onClick={() => { navigate(item.path); setMenuOpen(false); }}
+                  style={{
+                    color: theme.primary,
+                    cursor: "pointer",
+                    fontSize: "16px",
+                    letterSpacing: "1px",
+                    fontWeight: "600",
+                    padding: "8px 0",
+                    borderBottom: `1px solid ${theme.primary}22`,
+                  }}>
+                  {item.label}
+                </span>
+              ))}
               <button
                 onClick={() => { logout(); setMenuOpen(false); }}
                 style={{
