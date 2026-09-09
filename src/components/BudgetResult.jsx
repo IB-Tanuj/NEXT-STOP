@@ -656,8 +656,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
       if (res.ok) {
         const { trip } = await res.json()
         setIsSavedLocally(true)
-        alert("Trip saved successfully! View it in your dashboard.")
-        navigate("/dashboard")
+        navigate("/dashboard/trips")
 
         // Background generation if they haven't generated AI data yet
         if (!localAiData) {
