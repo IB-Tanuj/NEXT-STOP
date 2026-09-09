@@ -2,7 +2,7 @@ import React from "react";
 import { useState, useEffect } from "react"
 import { fetchItineraryData, buildItineraryCacheKey } from "../../utils/tripPlanUtils"
 
-export const ItineraryView = React.memo(({ theme, locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals, onBack }) => {
+export const ItineraryView = React.memo(({ theme, locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals, onItineraryLoaded, onBack }) => {
   const [itineraryData, setItineraryData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -25,6 +25,7 @@ export const ItineraryView = React.memo(({ theme, locationName, days, budget, st
           const parsed = JSON.parse(sessionCached)
           if (!cancelled) {
             setItineraryData(parsed)
+            if (onItineraryLoaded) onItineraryLoaded(parsed)
             setCacheSource("session")
             setLoading(false)
           }
@@ -41,6 +42,7 @@ export const ItineraryView = React.memo(({ theme, locationName, days, budget, st
         )
         if (!cancelled) {
           setItineraryData(data)
+          if (onItineraryLoaded) onItineraryLoaded(data)
           setCacheSource(cacheStatus === "HIT" ? "backend" : "api")
           console.log(`[Itinerary Cache] Backend responded with X-Cache: ${cacheStatus}`)
 
@@ -70,30 +72,10 @@ export const ItineraryView = React.memo(({ theme, locationName, days, budget, st
 
   return (
     <div style={{
-      minHeight: "100vh",
-      background: theme.heroGradient,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      padding: "80px 20px 40px",
-      fontFamily: "'Segoe UI', sans-serif",
+      width: "100%",
       animation: "fadeIn 0.3s ease",
     }}>
-      {/* Back */}
-      <div onClick={onBack} style={{
-        position: "fixed", top: "30px", left: "40px",
-        color: theme.subtext, cursor: "pointer",
-        fontSize: "14px", fontWeight: "600", zIndex: 10,
-      }}>← Back</div>
-
-      <div style={{ color: theme.primary, fontSize: "13px", letterSpacing: "4px", fontWeight: "700", marginBottom: "8px" }}>
-        📅 DAY-BY-DAY ITINERARY
-      </div>
-      <h2 style={{ color: theme.text, fontSize: "clamp(20px, 4vw, 30px)", fontWeight: "900", marginBottom: "32px", textAlign: "center" }}>
-        {locationName} · {days} Days
-      </h2>
-
-      <div style={{ width: "100%", maxWidth: "620px" }}>
+      <div style={{ width: "100%", maxWidth: "620px", margin: "0 auto" }}>
         {loading ? (
           <div style={{ color: theme.subtext, textAlign: "center", padding: "40px" }}>
             <div style={{ fontSize: "32px", marginBottom: "16px", animation: "pulse 1.5s infinite" }}>⏳</div>

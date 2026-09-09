@@ -12,11 +12,14 @@ import { EntryTicketsCard } from "./BudgetResult/EntryTicketsCard"
 import { CostSummary } from "./BudgetResult/CostSummary"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
+import { generateTripPlan } from "../utils/tripPlanUtils"
 
 const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const navigate = useNavigate()
   const { user, session } = useAuth()
   const [isSavingTrip, setIsSavingTrip] = useState(false)
+  const [isSavedLocally, setIsSavedLocally] = useState(false)
+  const [localAiData, setLocalAiData] = useState(null)
   const [showTripPlan, setShowTripPlan] = useState(false)
   const locationKey = location?.name?.toLowerCase()
   const routeKey = `delhi-${locationKey}` // fallback key for static data
@@ -63,6 +66,17 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   useEffect(() => {
     fetchAllSpots()
   }, [preferences.activities, location?.name])
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (!isSavedLocally && !isSavingTrip) {
+        e.preventDefault()
+        e.returnValue = "You have an unsaved trip budget. Are you sure you want to leave without saving to dashboard?"
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [isSavedLocally, isSavingTrip])
 
   // ── Live train data from API ────────────────────────
   const [liveTrainData, setLiveTrainData] = useState(null)
@@ -600,11 +614,30 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
         return transportMedium
       }
 
+      // Prepare rich trip data
       const trip_data = {
-        hotel: { name: stayOptions[selectedStayIndex]?.name || "Not selected", price: stayCost },
-        transport: { name: getDetailedTransportName(), price: transportCost },
+        hotel: { 
+          name: stayOptions[selectedStayIndex]?.name || "Not selected", 
+          price: stayCost,
+          days: preferences?.days || 1
+        },
+        transport: { 
+          name: getDetailedTransportName(), 
+          price: transportCost,
+          medium: transportMedium,
+          from: fromStation || fromAirport || 'Origin',
+          to: toStation || locationKey,
+          class: (isMultiLeg && selectedStation) ? selectedTrainClass : selectedDirectClass,
+          distance: calculatedDist
+        },
         buffer: foodBuffer,
-        spots: entryBreakdown
+        spots: entryBreakdown,
+        preferences: preferences // save to allow later regeneration
+      }
+
+      // If they already generated AI data by opening "See Full Trip Plan", attach it!
+      if (localAiData) {
+        trip_data.aiData = localAiData
       }
 
       const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/saved-trips`, {
@@ -621,8 +654,37 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
       })
 
       if (res.ok) {
+        const { trip } = await res.json()
+        setIsSavedLocally(true)
         alert("Trip saved successfully! View it in your dashboard.")
         navigate("/dashboard")
+
+        // Background generation if they haven't generated AI data yet
+        if (!localAiData) {
+          generateTripPlan(
+            location?.name || locationKey,
+            preferences?.days,
+            foodBuffer,
+            stayOptions[selectedStayIndex]?.name || preferences.stayType,
+            getDetailedTransportName(),
+            preferences.activities
+          ).then(async (aiData) => {
+            // Drop the itinerary so we force them to generate it in the dashboard (to save tokens/space if they don't want it)
+            // Or just keep the generated activities/food.
+            const modifiedAiData = { ...aiData, itinerary: null };
+            const updatedTripData = { ...trip_data, aiData: modifiedAiData };
+            
+            await fetch(`${import.meta.env.VITE_API_URL || ''}/api/saved-trips/${trip.id}`, {
+              method: 'PUT',
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${session?.access_token || ''}`
+              },
+              body: JSON.stringify({ trip_data: updatedTripData, total_budget: totalBudget })
+            });
+          }).catch(err => console.error("Background AI save failed:", err))
+        }
+
       } else {
         throw new Error("Failed to save trip")
       }
@@ -787,15 +849,22 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
             SEE FULL TRIP PLAN →
           </button>
           
-          <button
+          <button 
             onClick={handleSaveTrip}
             disabled={isSavingTrip}
             style={{
-              background: "transparent", border: `2px solid ${theme.primary}`, padding: "15px",
-              borderRadius: "50px", color: theme.primary, fontWeight: "700",
-              fontSize: "15px", cursor: "pointer", letterSpacing: "1px",
-              transition: "all 0.2s ease",
-              opacity: isSavingTrip ? 0.6 : 1
+              width: "100%",
+              background: "transparent",
+              border: `2px solid ${theme.primary}`,
+              padding: "16px",
+              borderRadius: "16px",
+              color: theme.primary,
+              fontWeight: "900",
+              fontSize: "14px",
+              letterSpacing: "2px",
+              cursor: isSavingTrip ? "default" : "pointer",
+              transition: "all 0.3s ease",
+              marginTop: "8px",
             }}
             onMouseEnter={e => {
               if (!isSavingTrip) {
@@ -812,6 +881,9 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
           >
             {isSavingTrip ? "SAVING..." : "💾 SAVE TO DASHBOARD"}
           </button>
+          <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '12px', color: theme.subtext, fontStyle: 'italic' }}>
+            Tip: View the full trip plan to generate activities and itineraries before saving!
+          </div>
         </div>
 
       </div>
@@ -850,13 +922,14 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
               preferences={detailedPreferences}
               budgetData={{ 
                 foodBuffer, 
-                stayCost, 
+                stayCost: getStayCost(roomOption), 
                 transportCost, 
                 totalEntryCost, 
                 hasMissingEntryCosts,
                 totalBudget
               }}
               onBack={() => setShowTripPlan(false)}
+              onPlanGenerated={(data) => setLocalAiData(data)}
             />
           </div>
         )

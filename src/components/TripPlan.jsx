@@ -11,7 +11,6 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
   const [aiData, setAiData] = useState(null)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState("")
-  const [showItinerary, setShowItinerary] = useState(false)
 
   const foodBuffer = budgetData?.foodBuffer || 0
   const isGroup = planData?.budgetType === "group"
@@ -49,26 +48,11 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
 
   const tabs = [
     { id: "overview", label: "📋 Overview" },
+    { id: "itinerary", label: "📅 Itinerary" },
     { id: "activities", label: "🎯 Activities & Festivals" },
     { id: "booking", label: "🔗 Book Now" },
     { id: "emergency", label: "🆘 Emergency" },
   ]
-
-  if (showItinerary) {
-    return (
-      <ItineraryView
-        theme={theme}
-        locationName={locationName}
-        days={preferences?.days}
-        budget={foodBuffer}
-        stayType={stayType}
-        transport={transport}
-        selectedActivities={aiData?.activities || []}
-        selectedFestivals={aiData?.festivals || []}
-        onBack={() => setShowItinerary(false)}
-      />
-    )
-  }
 
   return (
     <div style={{
@@ -125,34 +109,6 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
             ₹{Math.abs(foodBuffer).toLocaleString("en-IN")}
             {foodBuffer < 0 ? " (over!)" : ""}
           </span>
-        </div>
-
-        {/* Itinerary Button */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", maxWidth: "200px" }}>
-          <button
-            onClick={() => setShowItinerary(true)}
-            style={{
-              background: "transparent",
-              border: `2px solid ${theme.primary}`,
-              color: theme.primary,
-              padding: "10px 24px",
-              borderRadius: "12px",
-              fontWeight: "800",
-              fontSize: "14px",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = theme.primary
-              e.currentTarget.style.color = "#000"
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = "transparent"
-              e.currentTarget.style.color = theme.primary
-            }}
-          >
-            Itinerary
-          </button>
         </div>
       </div>
 
@@ -256,7 +212,21 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
             aiData={aiData}
           />
         )}
-
+        {activeTab === "itinerary" && (
+          <ItineraryView
+            theme={theme}
+            locationName={locationName}
+            days={preferences?.days}
+            budget={foodBuffer}
+            stayType={stayType}
+            transport={transport}
+            selectedActivities={aiData?.activities || []}
+            selectedFestivals={aiData?.festivals || []}
+            onItineraryLoaded={(data) => {
+              setAiData(prev => prev ? { ...prev, itinerary: data.itinerary } : prev)
+            }}
+          />
+        )}
         {activeTab === "activities" && (
           <TripActivitiesTab
             theme={theme}

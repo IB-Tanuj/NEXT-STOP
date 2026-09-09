@@ -178,13 +178,21 @@ export const EntryTicketsCard = React.memo(({
                   {/* Tips */}
                   {info.tips?.length > 0 && (
                     <div>
-                      <div style={{ color: theme.primary, fontWeight: "700", marginBottom: "4px", fontSize: "12px", letterSpacing: "1px", textTransform: "uppercase" }}>💡 Expert Tips</div>
-                      {info.tips.map((tip, idx) => (
-                        <div key={idx} style={{ color: theme.text, marginBottom: "2px", fontStyle: "italic" }}>"{tip}"</div>
-                      ))}
+                      <div style={{ color: theme.subtext, fontSize: "11px", marginBottom: "4px" }}>TIPS</div>
+                      <ul style={{ margin: 0, paddingLeft: "16px", color: theme.text }}>
+                        {info.tips.map((tip, idx) => (
+                          <li key={idx} style={{ marginBottom: "2px" }}>{tip}</li>
+                        ))}
+                      </ul>
                     </div>
                   )}
-                  
+
+                  {/* Fallback for empty info */}
+                  {(!info.rules?.length && !info.permit?.required && !info.recommendedDuration && !info.photographyPolicy && !info.accessibility && !info.tips?.length) && (
+                    <div style={{ fontStyle: 'italic', color: theme.subtext }}>
+                      No detailed information available for this spot.
+                    </div>
+                  )}
                 </div>
               )}
             </div>

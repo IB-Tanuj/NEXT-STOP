@@ -77,10 +77,14 @@ const PersonalDashboard = () => {
                         <select 
                             value={selectedTrip?.id || ''} 
                             onChange={(e) => setSelectedTrip(trips.find(t => t.id === e.target.value))}
+                            style={{ 
+                                padding: '8px 12px', borderRadius: '8px', border: '1px solid #4ade8033', 
+                                background: '#ffffff0a', color: '#eef7f1', cursor: 'pointer', outline: 'none'
+                            }}
                         >
                             {trips.map(trip => (
-                                <option key={trip.id} value={trip.id}>
-                                    {trip.destination} ({new Date(trip.created_at).toLocaleDateString()})
+                                <option key={trip.id} value={trip.id} style={{ background: '#0a0a0a', color: '#fff' }}>
+                                    {trip.trip_data?.preferences?.days ? `${trip.trip_data.preferences.days}-days , ` : ''}{trip.destination}
                                 </option>
                             ))}
                         </select>
