@@ -16,6 +16,7 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
 
     const [fundingAmount, setFundingAmount] = useState('');
     const [selectedWallet, setSelectedWallet] = useState(sortedWallets[0]?.id || '');
+    const [contributorName, setContributorName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
     const handleAddFunds = async (e) => {
@@ -24,6 +25,14 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
         
         const wallet = sortedWallets.find(w => w.id === selectedWallet);
         if (!wallet) return;
+
+        const maxAllowed = Number(wallet.target_amount) - Number(wallet.saved_amount);
+        const amountToAdd = Math.min(Number(fundingAmount), maxAllowed > 0 ? maxAllowed : 0);
+
+        if (amountToAdd <= 0) {
+            alert("This wallet is already fully funded!");
+            return;
+        }
 
         setIsSaving(true);
         try {
@@ -35,13 +44,18 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                     'Content-Type': 'application/json', 
                     'Authorization': `Bearer ${token}` 
                 },
-                body: JSON.stringify({ trip_id: trip.id, wallet_type: wallet.wallet_type, amount: Number(fundingAmount) })
+                body: JSON.stringify({ 
+                    trip_id: trip.id, 
+                    wallet_type: wallet.wallet_type, 
+                    amount: amountToAdd,
+                    contributor_name: contributorName 
+                })
             });
 
             if (!res.ok) throw new Error('Failed to save to backend');
             const newWallets = wallets.map(w => {
                 if (w.id === wallet.id) {
-                    return { ...w, saved_amount: Number(w.saved_amount) + Number(fundingAmount) };
+                    return { ...w, saved_amount: Number(w.saved_amount) + amountToAdd };
                 }
                 return w;
             });
@@ -76,64 +90,92 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                 </div>
             </div>
 
-            <div className="planner-grid">
-                <div className="wallets-section">
-                    <h4>Segmented Wallets</h4>
-                    <p className="subtitle">Fund your trip piece by piece. Prioritize early bookings like transport!</p>
-                    
-                    <div className="wallets-list">
-                        {sortedWallets.map(wallet => {
-                            const wTarget = Number(wallet.target_amount);
-                            const wSaved = Number(wallet.saved_amount);
-                            const wPercent = wTarget > 0 ? Math.min(100, Math.round((wSaved / wTarget) * 100)) : 0;
-                            
-                            return (
-                                <div key={wallet.id} className="wallet-card">
-                                    <div className="wallet-header">
+            <div className="planner-grid" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div className="contributor-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', margin: '20px 0' }}>
+                    <label style={{ fontWeight: 'bold' }}>contributor =</label>
+                    <input 
+                        type="text" 
+                        placeholder="Your name or friend's name" 
+                        value={contributorName}
+                        onChange={(e) => setContributorName(e.target.value)}
+                        style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #4ade8055', background: '#ffffff0a', color: '#fff', width: '250px' }}
+                    />
+                </div>
+
+                <div className="wallets-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                    {sortedWallets.map(wallet => {
+                        const wTarget = Number(wallet.target_amount);
+                        const wSaved = Number(wallet.saved_amount);
+                        const wPercent = wTarget > 0 ? Math.min(100, Math.round((wSaved / wTarget) * 100)) : 0;
+                        
+                        return (
+                            <div key={wallet.id} className="wallet-card" style={{ background: '#1a1d24', padding: '20px', borderRadius: '12px', border: '1px solid #333' }}>
+                                <div className="wallet-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <span className="wallet-icon">
                                             {wallet.wallet_type === 'transport' && '🚆'}
                                             {wallet.wallet_type === 'stay' && '🏨'}
                                             {wallet.wallet_type === 'food' && '🍔'}
                                             {wallet.wallet_type === 'buffer' && '💰'}
                                         </span>
-                                        <span className="wallet-name">{wallet.wallet_type.toUpperCase()}</span>
-                                        <span className="wallet-amount">₹{wSaved.toLocaleString()} of ₹{wTarget.toLocaleString()}</span>
-                                    </div>
-                                    <div className="progress-bar-bg">
-                                        <div className="progress-bar-fill" style={{ width: `${wPercent}%`, background: wPercent >= 100 ? '#2ecc71' : '#3498db' }}></div>
+                                        <span className="wallet-name" style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
+                                            {wallet.wallet_type.toUpperCase()}
+                                        </span>
                                     </div>
                                 </div>
-                            );
-                        })}
-                    </div>
+                                <div className="progress-bar-bg" style={{ background: '#333', height: '12px', borderRadius: '6px', overflow: 'hidden', marginBottom: '10px' }}>
+                                    <div className="progress-bar-fill" style={{ width: `${wPercent}%`, background: wPercent >= 100 ? '#4ade80' : '#3b82f6', height: '100%', transition: 'width 0.5s ease' }}></div>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#aaa' }}>
+                                    <span>₹{wSaved.toLocaleString()} saved</span>
+                                    <span>Target: ₹{wTarget.toLocaleString()}</span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
 
-                    <form className="add-funds-form" onSubmit={handleAddFunds}>
-                        <h5>Add Savings</h5>
-                        <div className="form-row">
+                <div className="add-funds-container" style={{ background: '#1a1d24', padding: '20px', borderRadius: '12px', border: '1px solid #333', marginTop: '10px' }}>
+                    <form className="add-funds-form" onSubmit={handleAddFunds} style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'flex-end' }}>
+                        <div style={{ flex: '1', minWidth: '150px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.9rem', color: '#aaa' }}>Select Wallet</label>
                             <select 
                                 value={selectedWallet} 
                                 onChange={(e) => setSelectedWallet(e.target.value)}
+                                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #444', background: '#0a0a0a', color: '#fff' }}
                             >
                                 {sortedWallets.map(w => (
                                     <option key={w.id} value={w.id}>{w.wallet_type.toUpperCase()}</option>
                                 ))}
                             </select>
+                        </div>
+                        <div style={{ flex: '1', minWidth: '150px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.9rem', color: '#aaa' }}>Amount (₹)</label>
                             <input 
                                 type="number" 
                                 placeholder="Amount (₹)" 
                                 value={fundingAmount}
                                 onChange={(e) => setFundingAmount(e.target.value)}
                                 min="1"
+                                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #444', background: '#0a0a0a', color: '#fff' }}
                             />
-                            <button type="submit" disabled={isSaving || !fundingAmount}>
-                                {isSaving ? 'Adding...' : 'Fund Wallet'}
-                            </button>
                         </div>
+                        <button 
+                            type="submit" 
+                            disabled={isSaving || !fundingAmount || !contributorName}
+                            style={{ 
+                                padding: '10px 24px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', height: '42px',
+                                background: (!fundingAmount || !contributorName) ? '#444' : '#3b82f6', color: '#fff' 
+                            }}
+                        >
+                            {isSaving ? 'Adding...' : 'Fund Wallet'}
+                        </button>
                     </form>
+                    {(!contributorName) && <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '10px' }}>Please enter a contributor name above first.</p>}
                 </div>
 
-                <div className="animation-section">
-                    <h4>Trip Journey Progress</h4>
+                <div className="animation-section" style={{ marginTop: '40px', background: '#1a1d24', padding: '30px', borderRadius: '16px', border: '1px solid #333' }}>
+                    <h4 style={{ textAlign: 'center', marginBottom: '20px' }}>Trip Journey Progress</h4>
                     <LiquidCityAnimation percentage={percentage} city={trip.destination} />
                 </div>
             </div>
