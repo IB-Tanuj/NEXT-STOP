@@ -630,10 +630,10 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
           class: (isMultiLeg && selectedStation) ? selectedTrainClass : selectedDirectClass,
           distance: calculatedDist
         },
-        buffer: foodBuffer,
-        spots: entryBreakdown,
-        preferences: preferences // save to allow later regeneration
-      }
+          buffer: foodBuffer,
+          spots: entryBreakdown,
+          preferences: { ...preferences, groupMembers: planData.groupMembers || [] } // save to allow later regeneration
+        }
 
       // If they already generated AI data by opening "See Full Trip Plan", attach it!
       if (localAiData) {

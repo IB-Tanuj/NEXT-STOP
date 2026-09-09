@@ -8,9 +8,10 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
   const [selectedCity, setSelectedCity] = useState(null)
   const [locationLoading, setLocationLoading] = useState(false)
   const [locationError, setLocationError] = useState("")
-  const [budgetType, setBudgetType] = useState(null)
-  const [budget, setBudget] = useState("")
+  const [budgetType, setBudgetType] = useState("") // "solo" or "group"
   const [groupSize, setGroupSize] = useState("")
+  const [groupMembers, setGroupMembers] = useState([])
+  const [budget, setBudget] = useState("")
   const [specificPlace, setSpecificPlace] = useState("")
   const [placeSearch, setPlaceSearch] = useState("")
   const [suggestions, setSuggestions] = useState([])
@@ -25,6 +26,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
     if (!budget.trim()) return false
     if (Number(budget) < 2200) return false
     if (budgetType === "group" && !groupSize.trim()) return false
+    if (budgetType === "group" && groupMembers.filter(m => m.trim()).length === 0) return false
     if (choice === "specific" && !specificPlace) return false
     return true
   }
@@ -402,7 +404,11 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                 {[2, 3, 4, 5, 6, "7+"].map((num) => (
                   <div
                     key={num}
-                    onClick={() => setGroupSize(String(num))}
+                    onClick={() => {
+                      setGroupSize(String(num));
+                      const size = String(num) === "7+" ? 7 : num;
+                      setGroupMembers(Array(size).fill(""));
+                    }}
                     style={{
                       padding: "10px 18px",
                       borderRadius: "12px",
@@ -418,6 +424,53 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {budgetType === "group" && groupSize && (
+            <div style={{ marginTop: "24px", animation: "fadeIn 0.4s ease" }}>
+              <div style={{ color: theme.subtext, fontSize: "13px", marginBottom: "12px" }}>
+                👥 Who's coming with you?
+              </div>
+              {Array.from({ length: isNaN(parseInt(groupSize)) ? 7 : parseInt(groupSize) }).map((_, i) => (
+                <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "10px", flexWrap: "wrap" }}>
+                  <input 
+                    type="text"
+                    placeholder={i === 0 ? "Your Name (You)" : `Member ${i+1} Name`}
+                    value={groupMembers[i] || ""}
+                    onChange={(e) => {
+                      const newMembers = [...groupMembers];
+                      newMembers[i] = e.target.value;
+                      setGroupMembers(newMembers);
+                    }}
+                    style={{ 
+                      flex: "1 1 200px", padding: "12px", borderRadius: "8px", 
+                      border: `1px solid ${theme.primary}33`, background: "transparent", 
+                      color: theme.text, outline: "none" 
+                    }}
+                  />
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button 
+                      onClick={() => alert("Add by UID coming soon!")}
+                      style={{ 
+                        background: `${theme.primary}22`, color: theme.primary, border: "none", 
+                        padding: "0 14px", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer" 
+                      }}
+                    >
+                      Add by UID
+                    </button>
+                    <button 
+                      onClick={() => alert("Add from friends coming soon!")}
+                      style={{ 
+                        background: `${theme.primary}22`, color: theme.primary, border: "none", 
+                        padding: "0 14px", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer" 
+                      }}
+                    >
+                      Add from friends
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -585,7 +638,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
           <TripPreferences
             location={location}
             theme={theme}
-            planData={{ leavingFrom, originCoords: leavingCoords, originCity: selectedCity, budget, budgetType, groupSize }}
+            planData={{ leavingFrom, originCoords: leavingCoords, originCity: selectedCity, budget, budgetType, groupSize, groupMembers }}
             onBack={() => setShowPreferences(false)}
             onNext={(prefs) => {
               setPlanData(prefs)
