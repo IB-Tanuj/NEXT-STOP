@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import TripDetailsTab from './TripDetailsTab';
 import SavingsPlannerTab from './SavingsPlannerTab';
@@ -8,6 +8,7 @@ import './Dashboard.css';
 
 const PersonalDashboard = () => {
     const { section } = useParams();
+    const navigate = useNavigate();
     const { user, session } = useAuth();
     const [trips, setTrips] = useState([]);
     const [selectedTrip, setSelectedTrip] = useState(null);
@@ -53,6 +54,34 @@ const PersonalDashboard = () => {
         setSelectedTrip(updatedTrip);
     };
 
+    const handleDeleteTrip = async () => {
+        if (!selectedTrip) return;
+        const confirmDelete = window.confirm(`Are you sure you want to delete the trip to ${selectedTrip.destination}?`);
+        if (!confirmDelete) return;
+
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/saved-trips/${selectedTrip.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${session?.access_token || ''}`
+                }
+            });
+
+            if (!res.ok) throw new Error('Failed to delete trip');
+
+            const updatedTrips = trips.filter(t => t.id !== selectedTrip.id);
+            setTrips(updatedTrips);
+            if (updatedTrips.length > 0) {
+                setSelectedTrip(updatedTrips[0]);
+            } else {
+                setSelectedTrip(null);
+            }
+        } catch (err) {
+            console.error("Error deleting trip:", err);
+            alert("Failed to delete trip");
+        }
+    };
+
     const renderContent = () => {
         if (section === 'profile') {
             return <ProfileTab />;
@@ -69,8 +98,16 @@ const PersonalDashboard = () => {
 
         return (
             <>
-                <header className="dashboard-header">
-                    <h2>{section === 'savings' ? 'Savings Track' : 'Saved Trips'}</h2>
+                <header className="dashboard-header" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '15px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <button 
+                            onClick={() => navigate('/')}
+                            style={{ background: 'transparent', border: '1px solid #4ade8033', color: '#4ade80', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}
+                        >
+                            ← Back
+                        </button>
+                        <h2 style={{ margin: 0 }}>{section === 'savings' ? 'Savings Track' : 'Saved Trips'}</h2>
+                    </div>
                     
                     <div className="trip-selector">
                         <label>Select Trip: </label>
@@ -88,6 +125,13 @@ const PersonalDashboard = () => {
                                 </option>
                             ))}
                         </select>
+                        <button 
+                            onClick={handleDeleteTrip}
+                            style={{ background: '#ef444422', border: '1px solid #ef4444', color: '#ef4444', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', marginLeft: '10px' }}
+                            title="Delete Trip"
+                        >
+                            🗑️ Delete
+                        </button>
                     </div>
                 </header>
 

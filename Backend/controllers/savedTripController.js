@@ -132,3 +132,26 @@ export const addSavings = async (req, res) => {
         res.status(500).json({ error: 'Failed to add savings' });
     }
 };
+
+export const deleteTrip = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const { error } = await supabase
+            .from('saved_trips')
+            .delete()
+            .match({ id, user_id: userId });
+
+        if (error) throw error;
+        
+        res.json({ message: 'Trip deleted successfully' });
+    } catch (error) {
+        console.error("Delete trip error:", error);
+        res.status(500).json({ error: "Failed to delete trip" });
+    }
+};
