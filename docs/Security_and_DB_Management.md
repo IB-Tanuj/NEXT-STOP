@@ -139,3 +139,7 @@ RLS is enabled on **all** public tables with **zero public policies**. This mean
 | 2026-09-04 | SMTP reminder logged | Must add custom SMTP (Resend/Brevo) before launch to remove email rate limits. |
 | 2026-09-04 | Bot protection planned | Cloudflare Turnstile to be added pre-launch. Email verification covers beta phase. |
 | 2026-09-05 | Cache TTL updated | Adjusted live hotel (90m) and spot info (90d) TTLs. Documented lazy deletion behavior. |
+| 2026-09-09 | Removed global itinerary cache | Stopped saving itineraries to `gemini_results` due to strict constraints causing low hit rates. Relies entirely on `sessionStorage` and user's personal `saved_trips` row. |
+| 2026-09-09 | Fixed cache hit bug | Aligned `cacheKey` generation to use `aiData.activities` instead of `preferences.activities`, resolving 15s delay API fallback errors. |
+| 2026-09-09 | Fixed itinerary persistence | Updated frontend to properly pass generated itinerary state up to `TripPlan` so it saves successfully to `saved_trips.trip_data`. |
+| 2026-09-09 | Added Delete Trip Route | Implemented secure `DELETE /api/saved-trips/:id` controller matching `user_id` to safely remove trips from DB. |

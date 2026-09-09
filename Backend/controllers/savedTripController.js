@@ -104,7 +104,24 @@ export const updateTripData = async (req, res) => {
 export const addSavings = async (req, res) => {
     try {
         const { trip_id, wallet_type, amount } = req.body;
-        
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        // Verify this user owns the trip before modifying wallets
+        const { data: trip, error: tripError } = await supabase
+            .from('saved_trips')
+            .select('id')
+            .eq('id', trip_id)
+            .eq('user_id', userId)
+            .single();
+
+        if (tripError || !trip) {
+            return res.status(403).json({ error: 'Forbidden — you do not own this trip' });
+        }
+
         // Fetch current saved_amount
         const { data: wallet, error: fetchError } = await supabase
             .from('trip_wallets')
