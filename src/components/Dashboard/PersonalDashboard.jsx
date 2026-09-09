@@ -101,7 +101,7 @@ const PersonalDashboard = () => {
                 <header className="dashboard-header" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '15px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                         <button 
-                            onClick={() => navigate('/')}
+                            onClick={() => navigate('/app')}
                             style={{ background: 'transparent', border: '1px solid #4ade8033', color: '#4ade80', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}
                         >
                             ← Back
