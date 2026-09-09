@@ -103,7 +103,7 @@ export const updateTripData = async (req, res) => {
 
 export const addSavings = async (req, res) => {
     try {
-        const { trip_id, wallet_type, amount } = req.body;
+        const { trip_id, wallet_type, amount, contributor_name } = req.body;
         const userId = req.user?.id;
 
         if (!userId) {
@@ -132,7 +132,15 @@ export const addSavings = async (req, res) => {
 
         if (fetchError) throw fetchError;
 
-        const newSavedAmount = parseFloat(wallet.saved_amount) + parseFloat(amount);
+        let newSavedAmount = parseFloat(wallet.saved_amount) + parseFloat(amount);
+        const targetAmount = parseFloat(wallet.target_amount);
+
+        // Enforce the maximum cap to prevent overfunding
+        if (newSavedAmount > targetAmount) {
+            newSavedAmount = targetAmount;
+        }
+
+        const actualAddedAmount = newSavedAmount - parseFloat(wallet.saved_amount);
         
         const { data, error: updateError } = await supabase
             .from('trip_wallets')
@@ -143,6 +151,21 @@ export const addSavings = async (req, res) => {
             .single();
 
         if (updateError) throw updateError;
+
+        // Record the transaction if a contributor name is provided and we actually added funds
+        if (contributor_name && actualAddedAmount > 0) {
+            const { error: txError } = await supabase
+                .from('wallet_transactions')
+                .insert({
+                    wallet_id: data.id,
+                    contributor_name: contributor_name,
+                    amount: actualAddedAmount
+                });
+            if (txError) {
+                console.warn('Failed to record wallet transaction:', txError);
+            }
+        }
+
         res.status(200).json({ message: 'Savings added', wallet: data });
     } catch (error) {
         console.error('Error adding savings:', error);
