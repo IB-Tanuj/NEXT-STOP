@@ -407,7 +407,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                     onClick={() => {
                       setGroupSize(String(num));
                       const size = String(num) === "7+" ? 7 : num;
-                      setGroupMembers(Array(size).fill(""));
+                      setGroupMembers(Array(Math.max(0, size - 1)).fill(""));
                     }}
                     style={{
                       padding: "10px 18px",
@@ -432,11 +432,11 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
               <div style={{ color: theme.subtext, fontSize: "13px", marginBottom: "12px" }}>
                 👥 Who's coming with you?
               </div>
-              {Array.from({ length: isNaN(parseInt(groupSize)) ? 7 : parseInt(groupSize) }).map((_, i) => (
+              {Array.from({ length: Math.max(0, (isNaN(parseInt(groupSize)) ? 7 : parseInt(groupSize)) - 1) }).map((_, i) => (
                 <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "10px", flexWrap: "wrap" }}>
                   <input 
                     type="text"
-                    placeholder={i === 0 ? "Your Name (You)" : `Member ${i+1} Name`}
+                    placeholder={`Member ${i+2} Name`}
                     value={groupMembers[i] || ""}
                     onChange={(e) => {
                       const newMembers = [...groupMembers];

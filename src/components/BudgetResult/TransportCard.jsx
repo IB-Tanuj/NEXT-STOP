@@ -224,7 +224,9 @@ export const TransportCard = React.memo(({
           const thisCost = Math.round((opt.min + opt.max) / 2) * 2 * (isGroup ? groupSize : 1)
           const thisBuffer = totalBudget - stayCost - totalEntryCost - thisCost
           
-          const priceText = opt.min === opt.max ? `₹${opt.min.toLocaleString("en-IN")} per leg` : `₹${opt.min.toLocaleString("en-IN")}–₹${opt.max.toLocaleString("en-IN")} per leg`
+          const priceText = opt.min === opt.max 
+            ? `₹${opt.min.toLocaleString("en-IN")} per leg (Total: ₹${thisCost.toLocaleString("en-IN")})` 
+            : `₹${opt.min.toLocaleString("en-IN")}–₹${opt.max.toLocaleString("en-IN")} per leg (Total: ₹${thisCost.toLocaleString("en-IN")})`
           const rightBottomText = transportMedium === "flight" ? undefined : `${thisBuffer >= 0 ? `₹${thisBuffer.toLocaleString("en-IN")} for food` : `₹${Math.abs(thisBuffer).toLocaleString("en-IN")} over budget`}`
           
           return selectableRow(
