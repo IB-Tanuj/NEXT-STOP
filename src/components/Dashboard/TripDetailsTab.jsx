@@ -4,8 +4,9 @@ import { generateTripPlan, fetchItineraryData, buildItineraryCacheKey } from '..
 import { ItineraryView } from '../TripPlan/ItineraryView';
 import './Dashboard.css';
 
-const SpotItem = ({ spot, theme }) => {
+const SpotItem = ({ spot, theme, groupSize = 1 }) => {
     const [open, setOpen] = useState(false);
+    const cost = (spot.cost ?? spot.total ?? 0) * groupSize;
     return (
         <li style={{ padding: '12px 0', borderBottom: '1px solid #ffffff11' }}>
             <div 
@@ -20,7 +21,7 @@ const SpotItem = ({ spot, theme }) => {
                         {(spot.cost === 0 || spot.total === 0) ? 'Free/Variable' : 'Ticket Required'}
                     </div>
                 </div>
-                <div style={{ fontWeight: 'bold', fontSize: '16px' }}>₹{spot.cost ?? spot.total ?? 0}</div>
+                <div style={{ fontWeight: 'bold', fontSize: '16px' }}>₹{cost}</div>
             </div>
             {open && (
                 <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '13px', color: '#ccc', lineHeight: '1.5' }}>
@@ -163,9 +164,10 @@ const TripDetailsTab = ({ trip, onUpdate }) => {
         URL.revokeObjectURL(url);
     };
 
+    const groupSize = parseInt(data.preferences?.groupSize) || 1;
     const hotelCost = data.hotel?.price || 0;
     const transportCost = data.transport?.price || 0;
-    const spotsCost = data.spots?.reduce((acc, curr) => acc + (curr.cost ?? curr.total ?? 0), 0) || 0;
+    const spotsCost = (data.spots?.reduce((acc, curr) => acc + (curr.cost ?? curr.total ?? 0), 0) || 0) * groupSize;
     const bufferCost = data.buffer || 0;
     
     const total = trip.total_budget || 1;
@@ -245,7 +247,7 @@ const TripDetailsTab = ({ trip, onUpdate }) => {
                         {data.spots && data.spots.length > 0 ? (
                             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                                 {data.spots.map((spot, idx) => (
-                                    <SpotItem key={idx} spot={spot} theme={{ primary: '#4ade80' }} />
+                                    <SpotItem key={idx} spot={spot} theme={{ primary: '#4ade80' }} groupSize={groupSize} />
                                 ))}
                             </ul>
                         ) : (

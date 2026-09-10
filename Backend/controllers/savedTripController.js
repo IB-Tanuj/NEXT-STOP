@@ -31,7 +31,12 @@ export const saveTrip = async (req, res) => {
         const stayTarget = trip_data.hotel?.price || 0;
         const transportTarget = trip_data.transport?.price || 0;
         const bufferTarget = trip_data.buffer || 0;
-        const foodTarget = trip_data.food?.price || 0;
+        
+        const groupSize = Number(trip_data.preferences?.groupMembers?.length || trip_data.preferences?.groupSize || 1);
+        const spotsTotalPerPerson = Array.isArray(trip_data.spots) 
+            ? trip_data.spots.reduce((sum, spot) => sum + (Number(spot.cost) || 0), 0)
+            : 0;
+        const foodTarget = spotsTotalPerPerson * groupSize;
 
         const { error: walletsError } = await supabase
             .from('trip_wallets')

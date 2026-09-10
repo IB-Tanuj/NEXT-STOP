@@ -17,11 +17,11 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
     const groupMembers = trip.trip_data?.preferences?.groupMembers || [];
     const validMembers = groupMembers.filter(m => m && m.trim() !== '');
     const defaultName = session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || 'admin';
-    const hasMembers = validMembers.length > 0;
+    const allContributors = [defaultName, ...validMembers];
 
     const [fundingAmount, setFundingAmount] = useState('');
     const [selectedWallet, setSelectedWallet] = useState(sortedWallets[0]?.id || '');
-    const [contributorName, setContributorName] = useState(hasMembers ? validMembers[0] : defaultName);
+    const [contributorName, setContributorName] = useState(allContributors[0]);
     const [isSaving, setIsSaving] = useState(false);
 
     const handleAddFunds = async (e) => {
@@ -104,7 +104,7 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                             onChange={(e) => setContributorName(e.target.value)}
                             style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #4ade8055', background: '#ffffff0a', color: '#fff', width: '250px' }}
                         >
-                            {validMembers.map((member, idx) => (
+                            {allContributors.map((member, idx) => (
                                 <option key={idx} value={member}>{member}</option>
                             ))}
                         </select>
