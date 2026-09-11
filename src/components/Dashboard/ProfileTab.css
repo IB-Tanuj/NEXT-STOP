@@ -1,11 +1,16 @@
+.profile-wrapper {
+    background: #0f172a;
+    min-height: 100vh;
+    padding-top: 100px;
+    width: 100%;
+}
+
 .profile-container {
-    max-width: 600px;
+    max-width: 975px;
     margin: 0 auto;
     padding: 20px;
     font-family: 'Inter', sans-serif;
     color: #fff;
-    background: #0f172a;
-    min-height: 100vh;
 }
 
 .profile-header {
