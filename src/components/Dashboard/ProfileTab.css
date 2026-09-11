@@ -38,30 +38,55 @@
     margin-bottom: 20px;
 }
 
+/* ═══ Enhanced Avatar with Gradient Ring ═══ */
 .avatar-container {
     position: relative;
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: #334155;
+    background: linear-gradient(135deg, #1e293b, #334155);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 30px;
     color: #fff;
     font-weight: bold;
-    border: 2px solid #334155;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    box-shadow: 0 0 0 3px transparent;
+    transition: box-shadow 0.4s ease;
+}
+
+.avatar-container::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, #06b6d4, #8b5cf6, #f43f5e, #f59e0b, #06b6d4);
+    z-index: -1;
+    animation: avatarRingSpin 6s linear infinite;
+}
+
+@keyframes avatarRingSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.avatar-container:hover {
+    box-shadow: 0 0 24px rgba(6, 182, 212, 0.3);
 }
 
 .avatar-note {
     position: absolute;
     top: -15px;
     left: 10px;
-    background: #334155;
+    background: linear-gradient(135deg, #06b6d4, #8b5cf6);
     font-size: 10px;
-    padding: 2px 6px;
+    padding: 2px 8px;
     border-radius: 10px;
-    color: #cbd5e1;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
 .stats-info {
@@ -73,6 +98,11 @@
 
 .stat-item {
     text-align: center;
+    transition: transform 0.2s ease;
+}
+
+.stat-item:hover {
+    transform: scale(1.1);
 }
 
 .stat-item .count {
@@ -104,6 +134,7 @@
     color: #f1f5f9;
 }
 
+/* ═══ Tags with Gradient Border ═══ */
 .profile-tags {
     display: flex;
     flex-wrap: wrap;
@@ -112,15 +143,24 @@
 }
 
 .badge {
-    background: #1e293b;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(139, 92, 246, 0.1));
     color: #94a3b8;
-    padding: 4px 10px;
+    padding: 4px 12px;
     border-radius: 20px;
     font-size: 0.75rem;
     font-weight: 600;
-    border: 1px solid #334155;
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    transition: all 0.3s ease;
 }
 
+.badge:hover {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(139, 92, 246, 0.2));
+    border-color: rgba(6, 182, 212, 0.6);
+    color: #e2e8f0;
+    transform: translateY(-2px);
+}
+
+/* ═══ Action Buttons with Glow ═══ */
 .profile-actions {
     display: flex;
     gap: 10px;
@@ -129,23 +169,46 @@
 
 .action-btn {
     flex: 1;
-    background: #334155;
+    background: linear-gradient(135deg, #1e293b, #334155);
     color: #fff;
-    border: none;
-    padding: 8px;
-    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 10px;
+    border-radius: 10px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(139, 92, 246, 0.15));
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .action-btn:hover {
-    background: #475569;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(6, 182, 212, 0.2);
+    border-color: rgba(6, 182, 212, 0.4);
 }
 
+.action-btn:hover::before {
+    opacity: 1;
+}
+
+.action-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* ═══ Tabs ═══ */
 .profile-tabs {
     display: flex;
     border-bottom: 1px solid #334155;
+    position: relative;
 }
 
 .profile-tab-btn {
@@ -158,17 +221,49 @@
     font-size: 1.2rem;
     display: flex;
     justify-content: center;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.3s, background 0.3s;
+}
+
+.profile-tab-btn:hover {
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.03);
 }
 
 .profile-tab-btn.active {
     color: #fff;
-    border-bottom: 2px solid #fff;
+    border-bottom: 2px solid #06b6d4;
+}
+
+.profile-tab-btn svg {
+    width: 20px;
+    height: 20px;
 }
 
 .tab-content {
     padding: 40px 20px;
     text-align: center;
     color: #64748b;
+    animation: fadeSlideUp 0.4s ease-out;
+}
+
+@keyframes fadeSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tab-content svg {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 10px;
+    opacity: 0.6;
 }
 
 /* Modal Styles */
@@ -183,17 +278,32 @@
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    backdrop-filter: blur(4px);
 }
 
 .modal-content {
     background: #1e293b;
     padding: 20px;
-    border-radius: 12px;
+    border-radius: 16px;
     width: 90%;
     max-width: 500px;
     color: #fff;
     max-height: 90vh;
     overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .modal-header {
@@ -215,6 +325,12 @@
     color: #94a3b8;
     font-size: 1.5rem;
     cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.close-btn:hover {
+    color: #f43f5e;
+    transform: rotate(90deg);
 }
 
 .form-group {
@@ -231,12 +347,19 @@
 .form-group input, .form-group textarea, .form-group select {
     width: 100%;
     padding: 10px;
-    border-radius: 6px;
+    border-radius: 8px;
     border: 1px solid #334155;
     background: #0f172a;
     color: #fff;
     font-family: inherit;
     box-sizing: border-box;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+    border-color: #06b6d4;
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    outline: none;
 }
 
 .form-group textarea {
@@ -261,33 +384,42 @@
 }
 
 .tag-select-btn.selected {
-    background: #3b82f6;
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
     color: #fff;
-    border-color: #3b82f6;
+    border-color: transparent;
+    box-shadow: 0 2px 12px rgba(6, 182, 212, 0.3);
 }
 
 .save-btn {
     width: 100%;
-    background: #3b82f6;
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
     color: white;
     border: none;
     padding: 12px;
-    border-radius: 8px;
+    border-radius: 10px;
     font-weight: bold;
     cursor: pointer;
     margin-top: 10px;
+    transition: transform 0.2s, box-shadow 0.3s;
 }
 
 .save-btn:hover {
-    background: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
+}
+
+.save-btn:active {
+    transform: translateY(0) scale(0.98);
 }
 
 .save-btn:disabled {
     background: #475569;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
-/* Floating Sidebar */
+/* ═══ Floating Sidebar – Enhanced ═══ */
 .profile-sidebar {
     position: fixed;
     left: 20px;
@@ -295,27 +427,77 @@
     transform: translateY(-50%);
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
     z-index: 100;
 }
 
 .sidebar-btn {
     width: 50px;
     height: 50px;
-    background: transparent;
-    border: 2px solid #fff;
-    border-radius: 0;
-    color: #fff;
-    font-size: 1.5rem;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: #94a3b8;
+    font-size: 1.3rem;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.sidebar-btn svg {
+    width: 22px;
+    height: 22px;
+    transition: transform 0.3s ease;
 }
 
 .sidebar-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(6, 182, 212, 0.1);
+    border-color: rgba(6, 182, 212, 0.4);
+    color: #06b6d4;
+    transform: scale(1.08);
+    box-shadow: 0 4px 20px rgba(6, 182, 212, 0.2);
+}
+
+.sidebar-btn:hover svg {
+    transform: scale(1.1);
+}
+
+.sidebar-btn:active {
+    transform: scale(0.95);
+}
+
+/* individual sidebar button colors on hover */
+.sidebar-btn--trips:hover {
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.4);
+    background: rgba(245, 158, 11, 0.1);
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2);
+}
+
+.sidebar-btn--savings:hover {
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.4);
+    background: rgba(16, 185, 129, 0.1);
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.2);
+}
+
+.sidebar-btn--exit:hover {
+    color: #8b5cf6;
+    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(139, 92, 246, 0.1);
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.2);
+}
+
+.sidebar-btn--settings:hover {
+    color: #f43f5e;
+    border-color: rgba(244, 63, 94, 0.4);
+    background: rgba(244, 63, 94, 0.1);
+    box-shadow: 0 4px 20px rgba(244, 63, 94, 0.2);
 }
 
 @media (max-width: 768px) {
@@ -325,6 +507,7 @@
     .sidebar-btn {
         width: 40px;
         height: 40px;
-        font-size: 1.2rem;
+        font-size: 1.1rem;
+        border-radius: 10px;
     }
 }
