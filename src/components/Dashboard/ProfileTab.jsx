@@ -1,72 +1,124 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import './Dashboard.css';
+import EditProfileModal from './EditProfileModal';
+import './ProfileTab.css';
 
 const ProfileTab = () => {
     const { user, profile } = useAuth();
-    const [copied, setCopied] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [localProfile, setLocalProfile] = useState(profile);
+    const [activeTab, setActiveTab] = useState('wanderlogs');
 
-    const handleCopy = () => {
-        if (profile?.unique_id) {
-            navigator.clipboard.writeText(profile.unique_id);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        }
+    // Use local profile if updated, else fallback to context profile
+    const currentProfile = localProfile || profile || {};
+
+    const handleSaveProfile = (updatedProfile) => {
+        setLocalProfile(updatedProfile);
+        setIsEditModalOpen(false);
     };
 
     return (
-        <div className="profile-tab" style={{ padding: '40px 0', textAlign: 'center' }}>
-            <div style={{
-                width: '100px', height: '100px', borderRadius: '50%',
-                backgroundColor: '#ff4757', color: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontWeight: 'bold', fontSize: '40px', margin: '0 auto 20px'
-            }}>
-                {user?.email?.charAt(0).toUpperCase()}
+        <div className="profile-container">
+            <div className="profile-header">
+                <h2>{currentProfile.username || 'set_username'}</h2>
+                <div className="settings-icon">⚙️</div>
             </div>
-            <h2>My Profile</h2>
-            <p style={{ color: '#aaa', fontSize: '18px', marginTop: '10px' }}>
-                {user?.email}
-            </p>
-            
-            {profile?.unique_id && (
-                <div style={{
-                    marginTop: '20px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    background: '#ffffff11',
-                    padding: '10px 20px',
-                    borderRadius: '50px',
-                    border: '1px solid #4ade8033'
-                }}>
-                    <span style={{ color: '#aaa', fontSize: '14px' }}>Unique ID:</span>
-                    <strong style={{ color: '#4ade80', fontSize: '18px', letterSpacing: '2px' }}>
-                        {profile.unique_id}
-                    </strong>
-                    <button
-                        onClick={handleCopy}
-                        style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: copied ? '#4ade80' : '#aaa',
-                            cursor: 'pointer',
-                            fontSize: '16px',
-                            marginLeft: '5px',
-                            transition: 'all 0.2s'
-                        }}
-                        title="Copy to clipboard"
-                    >
-                        {copied ? '✓ Copied' : '📋'}
-                    </button>
-                </div>
-            )}
 
-            <div style={{ marginTop: '40px', padding: '20px', background: '#ffffff0a', borderRadius: '12px', display: 'inline-block', textAlign: 'left', minWidth: '300px' }}>
-                <h4 style={{ color: '#ff4757', marginBottom: '10px' }}>Account Information</h4>
-                <p><strong>Member since:</strong> {new Date(user?.created_at).toLocaleDateString()}</p>
-                <p style={{ marginTop: '10px', fontStyle: 'italic', color: '#888' }}>More profile settings coming soon...</p>
+            <div className="profile-stats-row">
+                <div className="avatar-container">
+                    {user?.email?.charAt(0).toUpperCase()}
+                    <span className="avatar-note">Note...</span>
+                </div>
+                
+                <div className="stats-info">
+                    <div className="stat-item">
+                        <span className="count">0</span>
+                        <span className="label">Wanderlogs</span>
+                    </div>
+                    <div className="stat-item">
+                        <span className="count">0</span>
+                        <span className="label">Friends</span>
+                    </div>
+                </div>
             </div>
+
+            <div className="profile-bio-section">
+                <div className="display-name">
+                    {currentProfile.unique_id || 'UID'}
+                    {currentProfile.gender && (
+                        <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                            • {currentProfile.gender}
+                        </span>
+                    )}
+                </div>
+                
+                {currentProfile.tags && currentProfile.tags.length > 0 && (
+                    <div className="profile-tags">
+                        {currentProfile.tags.map(tag => (
+                            <span key={tag} className="badge">{tag}</span>
+                        ))}
+                    </div>
+                )}
+                
+                {currentProfile.bio && (
+                    <div className="bio-text">
+                        {currentProfile.bio}
+                    </div>
+                )}
+                
+                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                    @{currentProfile.username || 'username'}
+                </div>
+            </div>
+
+            <div className="profile-actions">
+                <button className="action-btn" onClick={() => setIsEditModalOpen(true)}>
+                    Edit profile
+                </button>
+                <button className="action-btn" onClick={() => alert("Search Friends feature coming soon!")}>
+                    Search friends
+                </button>
+            </div>
+
+            <div className="profile-tabs">
+                <button 
+                    className={`profile-tab-btn ${activeTab === 'wanderlogs' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('wanderlogs')}
+                >
+                    ⊞
+                </button>
+                <button 
+                    className={`profile-tab-btn ${activeTab === 'saved' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('saved')}
+                >
+                    🔖
+                </button>
+            </div>
+
+            <div className="tab-content">
+                {activeTab === 'wanderlogs' ? (
+                    <div>
+                        <div style={{ fontSize: '3rem', marginBottom: '10px' }}>📷</div>
+                        <h3>No Wanderlogs Yet</h3>
+                        <p>Share your trips and adventures here.</p>
+                    </div>
+                ) : (
+                    <div>
+                        <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🔖</div>
+                        <h3>No Saved Trips</h3>
+                        <p>Save trips to view them later.</p>
+                    </div>
+                )}
+            </div>
+
+            {isEditModalOpen && (
+                <EditProfileModal 
+                    profile={currentProfile} 
+                    user={user} 
+                    onClose={() => setIsEditModalOpen(false)} 
+                    onSave={handleSaveProfile}
+                />
+            )}
         </div>
     );
 };
