@@ -6,6 +6,11 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     unique_id TEXT UNIQUE NOT NULL,
     full_name TEXT,
     avatar_url TEXT,
+    username TEXT UNIQUE,
+    bio TEXT,
+    gender TEXT,
+    dob DATE,
+    tags TEXT[] DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
