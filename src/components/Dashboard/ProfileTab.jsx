@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import EditProfileModal from './EditProfileModal';
 import './ProfileTab.css';
 
 const ProfileTab = () => {
+    const navigate = useNavigate();
     const { user, profile } = useAuth();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [localProfile, setLocalProfile] = useState(profile);
@@ -19,10 +21,25 @@ const ProfileTab = () => {
 
     return (
         <div className="profile-wrapper">
+            {/* Floating Sidebar */}
+            <div className="profile-sidebar">
+                <button className="sidebar-btn" onClick={() => navigate('/dashboard/trips')} title="Saved Trips">
+                    📍
+                </button>
+                <button className="sidebar-btn" onClick={() => navigate('/dashboard/savings')} title="Savings Tracker">
+                    💰
+                </button>
+                <button className="sidebar-btn" onClick={() => navigate('/app')} title="Exit">
+                    🚪
+                </button>
+                <button className="sidebar-btn" onClick={() => setIsEditModalOpen(true)} title="Settings">
+                    ⚙️
+                </button>
+            </div>
+
             <div className="profile-container">
                 <div className="profile-header">
                     <h2>{currentProfile.username || currentProfile.full_name || 'set_username'}</h2>
-                    <div className="settings-icon">⚙️</div>
                 </div>
 
                 <div className="profile-stats-row">
@@ -106,7 +123,7 @@ const ProfileTab = () => {
                     ) : (
                         <div>
                             <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🔖</div>
-                            <h3>No Saved Trips</h3>
+                            <h3>No wanderlogs saved</h3>
                             <p>Save trips to view them later.</p>
                         </div>
                     )}
