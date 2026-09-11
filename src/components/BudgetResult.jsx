@@ -632,7 +632,11 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
         },
           buffer: foodBuffer,
           spots: entryBreakdown,
-          preferences: { ...preferences, groupMembers: planData.groupMembers || [] } // save to allow later regeneration
+          preferences: { 
+            ...preferences, 
+            groupMembers: planData.groupMembers || [],
+            groupSize: planData.groupSize || 1
+          } // save to allow later regeneration
         }
 
       // If they already generated AI data by opening "See Full Trip Plan", attach it!

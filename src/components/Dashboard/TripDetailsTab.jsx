@@ -164,7 +164,9 @@ const TripDetailsTab = ({ trip, onUpdate }) => {
         URL.revokeObjectURL(url);
     };
 
-    const groupSize = parseInt(data.preferences?.groupSize) || 1;
+    const savedGroupSize = parseInt(data.preferences?.groupSize);
+    const fallbackSize = data.preferences?.groupMembers?.length > 0 ? data.preferences.groupMembers.length + 1 : 1;
+    const groupSize = savedGroupSize || fallbackSize;
     const hotelCost = data.hotel?.price || 0;
     const transportCost = data.transport?.price || 0;
     const spotsCost = (data.spots?.reduce((acc, curr) => acc + (curr.cost ?? curr.total ?? 0), 0) || 0) * groupSize;

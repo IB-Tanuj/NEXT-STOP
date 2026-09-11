@@ -5,6 +5,7 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -33,6 +34,26 @@ export const AuthProvider = ({ children }) => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Fetch profile when user is available
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        if (!error && data) {
+          setProfile(data);
+        }
+      } else {
+        setProfile(null);
+      }
+    };
+    
+    fetchProfile();
+  }, [user]);
 
   // ── Sign up with email + password ──
   const signUp = async (email, password, displayName) => {
@@ -101,6 +122,7 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={{
       user,
+      profile,
       session,
       loading,
       emailVerified,
