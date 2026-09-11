@@ -87,71 +87,73 @@ const PersonalDashboard = () => {
             return <ProfileTab />;
         }
 
-        if (trips.length === 0) {
-            return (
-                <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px' }}>
-                    <h2>Your Travel Passport</h2>
-                    <p style={{ color: '#aaa', marginTop: '10px' }}>You haven't saved any trips yet. Head over to the Budget Calculator to plan your next adventure!</p>
-                </div>
-            );
-        }
-
         return (
-            <>
-                <header className="dashboard-header" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '15px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <button 
-                            onClick={() => navigate('/app')}
-                            style={{ background: 'transparent', border: '1px solid #4ade8033', color: '#4ade80', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}
-                        >
-                            ← Back
-                        </button>
-                        <h2 style={{ margin: 0 }}>{section === 'savings' ? 'Savings Track' : 'Saved Trips'}</h2>
-                    </div>
-                    
-                    <div className="trip-selector">
-                        <label>Select Trip: </label>
-                        <select 
-                            value={selectedTrip?.id || ''} 
-                            onChange={(e) => setSelectedTrip(trips.find(t => t.id === e.target.value))}
-                            style={{ 
-                                padding: '8px 12px', borderRadius: '8px', border: '1px solid #4ade8033', 
-                                background: '#ffffff0a', color: '#eef7f1', cursor: 'pointer', outline: 'none'
-                            }}
-                        >
-                            {trips.map(trip => (
-                                <option key={trip.id} value={trip.id} style={{ background: '#0a0a0a', color: '#fff' }}>
-                                    {trip.trip_data?.preferences?.days ? `${trip.trip_data.preferences.days}-days , ` : ''}{trip.destination}
-                                </option>
-                            ))}
-                        </select>
-                        <button 
-                            onClick={handleDeleteTrip}
-                            style={{ background: '#ef444422', border: '1px solid #ef4444', color: '#ef4444', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', marginLeft: '10px' }}
-                            title="Delete Trip"
-                        >
-                            🗑️ Delete
-                        </button>
-                    </div>
-                </header>
+            <div className="dashboard-container" style={{ paddingTop: '100px' }}>
+                {(() => {
+                    if (trips.length === 0) {
+                        return (
+                            <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px' }}>
+                                <h2>Your Travel Passport</h2>
+                                <p style={{ color: '#aaa', marginTop: '10px' }}>You haven't saved any trips yet. Head over to the Budget Calculator to plan your next adventure!</p>
+                            </div>
+                        );
+                    }
 
-                <main className="dashboard-content">
-                    {section === 'trips' && selectedTrip && (
-                        <TripDetailsTab trip={selectedTrip} onUpdate={handleUpdateTrip} />
-                    )}
-                    {section === 'savings' && selectedTrip && (
-                        <SavingsPlannerTab trip={selectedTrip} onUpdate={handleUpdateTrip} />
-                    )}
-                </main>
-            </>
+                    return (
+                        <>
+                            <header className="dashboard-header" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '15px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <button 
+                                        onClick={() => navigate('/app')}
+                                        style={{ background: 'transparent', border: '1px solid #4ade8033', color: '#4ade80', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}
+                                    >
+                                        ← Back
+                                    </button>
+                                    <h2 style={{ margin: 0 }}>{section === 'savings' ? 'Savings Track' : 'Saved Trips'}</h2>
+                                </div>
+                                
+                                <div className="trip-selector">
+                                    <label>Select Trip: </label>
+                                    <select 
+                                        value={selectedTrip?.id || ''} 
+                                        onChange={(e) => setSelectedTrip(trips.find(t => t.id === e.target.value))}
+                                        style={{ 
+                                            padding: '8px 12px', borderRadius: '8px', border: '1px solid #4ade8033', 
+                                            background: '#ffffff0a', color: '#eef7f1', cursor: 'pointer', outline: 'none'
+                                        }}
+                                    >
+                                        {trips.map(trip => (
+                                            <option key={trip.id} value={trip.id} style={{ background: '#0a0a0a', color: '#fff' }}>
+                                                {trip.trip_data?.preferences?.days ? `${trip.trip_data.preferences.days}-days , ` : ''}{trip.destination}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button 
+                                        onClick={handleDeleteTrip}
+                                        style={{ background: '#ef444422', border: '1px solid #ef4444', color: '#ef4444', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', marginLeft: '10px' }}
+                                        title="Delete Trip"
+                                    >
+                                        🗑️ Delete
+                                    </button>
+                                </div>
+                            </header>
+
+                            <main className="dashboard-content">
+                                {section === 'trips' && selectedTrip && (
+                                    <TripDetailsTab trip={selectedTrip} onUpdate={handleUpdateTrip} />
+                                )}
+                                {section === 'savings' && selectedTrip && (
+                                    <SavingsPlannerTab trip={selectedTrip} onUpdate={handleUpdateTrip} />
+                                )}
+                            </main>
+                        </>
+                    );
+                })()}
+            </div>
         );
     };
 
-    return (
-        <div className="dashboard-container" style={{ paddingTop: '100px' }}>
-            {renderContent()}
-        </div>
-    );
+    return renderContent();
 };
 
 export default PersonalDashboard;
