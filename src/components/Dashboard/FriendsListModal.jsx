@@ -38,9 +38,13 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
         e.stopPropagation();
         if (!window.confirm("Are you sure you want to unfriend this user?")) return;
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/friends/${friendId}`, {
+            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/friends/remove`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${session.access_token}` }
+                headers: { 
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ friendId })
             });
             if (res.ok) {
                 setFriends(friends.filter(f => f.id !== friendId));

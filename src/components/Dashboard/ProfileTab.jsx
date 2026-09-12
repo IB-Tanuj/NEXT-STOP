@@ -172,7 +172,6 @@ const ProfileTab = () => {
                         ) : (
                             user?.email?.charAt(0).toUpperCase()
                         )}
-                        <span className="avatar-note" style={{ zIndex: 1 }}>Note...</span>
                     </div>
                     
                     <div className="stats-info">
