@@ -1,0 +1,201 @@
+import supabase from '../config/supabase.js';
+
+// Send a friend request by Unique ID
+export const sendFriendRequest = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { targetUid } = req.body;
+
+        if (!targetUid) {
+            return res.status(400).json({ error: 'Target Unique ID is required' });
+        }
+
+        // Find user by Unique ID
+        const { data: targetUser, error: searchError } = await supabase
+            .from('profiles')
+            .select('id, unique_id')
+            .eq('unique_id', targetUid.toUpperCase())
+            .single();
+
+        if (searchError || !targetUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (targetUser.id === userId) {
+            return res.status(400).json({ error: 'You cannot send a friend request to yourself' });
+        }
+
+        // Check if a relationship already exists
+        const { data: existing, error: existingError } = await supabase
+            .from('friendships')
+            .select('*')
+            .or(`and(requester_id.eq.${userId},addressee_id.eq.${targetUser.id}),and(requester_id.eq.${targetUser.id},addressee_id.eq.${userId})`)
+            .maybeSingle();
+
+        if (existing) {
+            if (existing.status === 'pending') {
+                return res.status(400).json({ error: 'Friend request is already pending' });
+            }
+            if (existing.status === 'accepted') {
+                return res.status(400).json({ error: 'You are already friends' });
+            }
+            if (existing.status === 'rejected') {
+                // Optionally allow re-sending if rejected, or block it. We will allow re-sending by updating to pending
+                const { error: updateError } = await supabase
+                    .from('friendships')
+                    .update({ status: 'pending', requester_id: userId, addressee_id: targetUser.id })
+                    .eq('id', existing.id);
+                if (updateError) throw updateError;
+                return res.json({ message: 'Friend request sent' });
+            }
+        }
+
+        // Insert new request
+        const { error: insertError } = await supabase
+            .from('friendships')
+            .insert([{
+                requester_id: userId,
+                addressee_id: targetUser.id,
+                status: 'pending'
+            }]);
+
+        if (insertError) throw insertError;
+
+        res.json({ message: 'Friend request sent successfully' });
+
+    } catch (error) {
+        console.error('sendFriendRequest error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// Accept a friend request
+export const acceptFriendRequest = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { requestId } = req.body;
+
+        const { error } = await supabase
+            .from('friendships')
+            .update({ status: 'accepted' })
+            .eq('id', requestId)
+            .eq('addressee_id', userId)
+            .eq('status', 'pending');
+
+        if (error) throw error;
+        res.json({ message: 'Friend request accepted' });
+    } catch (error) {
+        console.error('acceptFriendRequest error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// Reject a friend request
+export const rejectFriendRequest = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { requestId } = req.body;
+
+        const { error } = await supabase
+            .from('friendships')
+            .update({ status: 'rejected' })
+            .eq('id', requestId)
+            .eq('addressee_id', userId)
+            .eq('status', 'pending');
+
+        if (error) throw error;
+        res.json({ message: 'Friend request rejected' });
+    } catch (error) {
+        console.error('rejectFriendRequest error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// Remove a friend
+export const removeFriend = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { friendId } = req.body; // friend's profile ID
+
+        const { error } = await supabase
+            .from('friendships')
+            .delete()
+            .eq('status', 'accepted')
+            .or(`and(requester_id.eq.${userId},addressee_id.eq.${friendId}),and(requester_id.eq.${friendId},addressee_id.eq.${userId})`);
+
+        if (error) throw error;
+        res.json({ message: 'Friend removed' });
+    } catch (error) {
+        console.error('removeFriend error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// Get pending incoming (and outgoing) requests
+export const getPendingRequests = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Incoming requests (where user is addressee)
+        const { data: incoming, error: incomingError } = await supabase
+            .from('friendships')
+            .select(`
+                id, created_at, status,
+                requester:profiles!requester_id(id, unique_id, full_name, username, avatar_url)
+            `)
+            .eq('addressee_id', userId)
+            .eq('status', 'pending');
+
+        if (incomingError) throw incomingError;
+
+        // Outgoing requests (where user is requester)
+        const { data: outgoing, error: outgoingError } = await supabase
+            .from('friendships')
+            .select(`
+                id, created_at, status,
+                addressee:profiles!addressee_id(id, unique_id, full_name, username, avatar_url)
+            `)
+            .eq('requester_id', userId)
+            .eq('status', 'pending');
+
+        if (outgoingError) throw outgoingError;
+
+        res.json({ incoming, outgoing });
+    } catch (error) {
+        console.error('getPendingRequests error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// Get accepted friends
+export const getAcceptedFriends = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const { data, error } = await supabase
+            .from('friendships')
+            .select(`
+                id, requester_id, addressee_id,
+                requester:profiles!requester_id(id, unique_id, full_name, username, avatar_url),
+                addressee:profiles!addressee_id(id, unique_id, full_name, username, avatar_url)
+            `)
+            .eq('status', 'accepted')
+            .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+
+        if (error) throw error;
+
+        // Flatten the data so it's a simple list of friend profiles
+        const friends = data.map(rel => {
+            if (rel.requester_id === userId) {
+                return rel.addressee;
+            } else {
+                return rel.requester;
+            }
+        });
+
+        res.json(friends);
+    } catch (error) {
+        console.error('getAcceptedFriends error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};

@@ -1,8 +1,10 @@
 import { useState } from "react"
 import TripPreferences from "./TripPreferences"
 import { searchCities } from "../data/stations"
+import { useAuth } from "../context/AuthContext"
 
 const PlanningPage = ({ location, theme, choice, onBack }) => {
+  const { session } = useAuth();
   const [leavingFrom, setLeavingFrom] = useState("")
   const [leavingCoords, setLeavingCoords] = useState(null)
   const [selectedCity, setSelectedCity] = useState(null)
@@ -19,6 +21,8 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
   const [showPreferences, setShowPreferences] = useState(false)
   const [planData, setPlanData] = useState(null)
   const [showBudget, setShowBudget] = useState(false)
+  const [friends, setFriends] = useState([])
+  const [showFriendsModal, setShowFriendsModal] = useState({ show: false, index: null })
 
   const isValid = () => {
     if (!selectedCity) return false
@@ -30,6 +34,21 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
     if (choice === "specific" && !specificPlace) return false
     return true
   }
+
+  const fetchFriends = async () => {
+    if (!session?.access_token) return;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/friends`, {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFriends(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch friends", err);
+    }
+  };
 
   const handleGetLocation = () => {
     setLocationLoading(true)
@@ -464,18 +483,35 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                         const uid = prompt("Enter the friend's 8-character Unique ID (e.g. A4B9F1XC):");
                         if (!uid || !uid.trim()) return;
                         try {
-                          const res = await fetch(`/api/user/search/${uid.trim().toUpperCase()}`);
-                          if (res.ok) {
-                            const data = await res.json();
-                            const newMembers = [...groupMembers];
-                            newMembers[i] = { name: data.full_name || data.username || data.unique_id, uid: data.unique_id, id: data.id };
-                            setGroupMembers(newMembers);
+                          const reqRes = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/friends/request`, {
+                              method: 'POST',
+                              headers: {
+                                  'Content-Type': 'application/json',
+                                  'Authorization': `Bearer ${session?.access_token || ''}`
+                              },
+                              body: JSON.stringify({ targetUid: uid.trim() })
+                          });
+                          const data = await reqRes.json();
+                          if (reqRes.ok) {
+                              alert(data.message || "Friend request sent! They can be added to the trip once they accept.");
                           } else {
-                            const err = await res.json();
-                            alert(err.error || "User not found");
+                              // If they are already friends, we can fetch their info and add them directly
+                              if (data.error === 'You are already friends') {
+                                  const userRes = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/user/search/${uid.trim().toUpperCase()}`);
+                                  if (userRes.ok) {
+                                      const userData = await userRes.json();
+                                      const newMembers = [...groupMembers];
+                                      newMembers[i] = { name: userData.full_name || userData.username || userData.unique_id, uid: userData.unique_id, id: userData.id };
+                                      setGroupMembers(newMembers);
+                                  } else {
+                                      alert("User not found");
+                                  }
+                              } else {
+                                  alert(data.error || "Failed to send friend request");
+                              }
                           }
                         } catch (err) {
-                          alert("Failed to search user");
+                          alert("Failed to process request");
                         }
                       }}
 
@@ -489,7 +525,10 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                     </button>
                     {!groupMembers[i]?.uid && (
                       <button
-                        onClick={() => alert("Add from friends coming soon!")}
+                        onClick={async () => {
+                          await fetchFriends();
+                          setShowFriendsModal({ show: true, index: i });
+                        }}
                         style={{
                           background: `${theme.primary}22`, color: theme.primary, border: "none",
                           padding: "0 14px", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer"
@@ -675,6 +714,78 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
               setShowBudget(true)
             }}
           />
+        </div>
+      )}
+
+      {showFriendsModal.show && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 2500,
+          background: "rgba(0,0,0,0.5)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}>
+          <div style={{
+            background: theme.card,
+            padding: "24px",
+            borderRadius: "16px",
+            width: "90%",
+            maxWidth: "400px",
+            border: `1px solid ${theme.primary}33`
+          }}>
+            <h3 style={{ color: theme.text, marginTop: 0 }}>Select a Friend</h3>
+            <div style={{ display: 'grid', gap: '10px', margin: '20px 0' }}>
+              {friends.length === 0 ? (
+                <div style={{ color: theme.subtext, textAlign: 'center', padding: '20px' }}>
+                  No friends found. Add friends from your profile!
+                </div>
+              ) : (
+                friends.map(friend => (
+                  <div key={friend.id}
+                       onClick={() => {
+                         const newMembers = [...groupMembers];
+                         newMembers[showFriendsModal.index] = { name: friend.full_name || friend.username || friend.unique_id, uid: friend.unique_id, id: friend.id };
+                         setGroupMembers(newMembers);
+                         setShowFriendsModal({ show: false, index: null });
+                       }}
+                       style={{
+                         display: 'flex',
+                         alignItems: 'center',
+                         gap: '15px',
+                         padding: '12px',
+                         background: `${theme.primary}11`,
+                         borderRadius: '12px',
+                         cursor: 'pointer',
+                         border: `1px solid ${theme.primary}22`
+                       }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: theme.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold' }}>
+                      {friend.full_name?.charAt(0) || friend.username?.charAt(0) || 'U'}
+                    </div>
+                    <div>
+                      <div style={{ color: theme.text, fontWeight: 'bold' }}>{friend.full_name || friend.username}</div>
+                      <div style={{ color: theme.subtext, fontSize: '12px' }}>UID: {friend.unique_id}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <button
+              onClick={() => setShowFriendsModal({ show: false, index: null })}
+              style={{
+                width: '100%',
+                padding: '12px',
+                background: 'transparent',
+                border: `1px solid ${theme.primary}`,
+                color: theme.primary,
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 
