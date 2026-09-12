@@ -6,6 +6,14 @@ import SavingsPlannerTab from './SavingsPlannerTab';
 import ProfileTab from './ProfileTab';
 import './Dashboard.css';
 
+/* ─── Monochrome SVG Icon ─── */
+const IconTrash = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }}>
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        <line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+    </svg>
+);
+
 const PersonalDashboard = () => {
     const { section } = useParams();
     const navigate = useNavigate();
@@ -101,26 +109,40 @@ const PersonalDashboard = () => {
 
                     return (
                         <>
-                            <header className="dashboard-header" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '15px' }}>
+                            <header className="dashboard-header" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '15px', borderBottom: '2px solid rgba(6,182,212,0.15)' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                                     <button 
                                         onClick={() => navigate('/app')}
-                                        style={{ background: 'transparent', border: '1px solid #4ade8033', color: '#4ade80', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}
+                                        style={{ 
+                                            background: 'transparent', 
+                                            border: '1px solid rgba(6,182,212,0.3)', 
+                                            color: '#06b6d4', 
+                                            padding: '6px 14px', 
+                                            borderRadius: '8px', 
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s',
+                                            fontWeight: '600',
+                                        }}
+                                        onMouseEnter={e => { e.target.style.background = 'rgba(6,182,212,0.1)'; e.target.style.borderColor = '#06b6d4'; e.target.style.transform = 'translateX(-2px)'; }}
+                                        onMouseLeave={e => { e.target.style.background = 'transparent'; e.target.style.borderColor = 'rgba(6,182,212,0.3)'; e.target.style.transform = 'none'; }}
                                     >
                                         ← Back
                                     </button>
-                                    <h2 style={{ margin: 0 }}>{section === 'savings' ? 'Savings Track' : 'Saved Trips'}</h2>
+                                    <h2 style={{ margin: 0, background: 'linear-gradient(135deg, #e2e8f0, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{section === 'savings' ? 'Savings Track' : 'Saved Trips'}</h2>
                                 </div>
                                 
                                 <div className="trip-selector">
-                                    <label>Select Trip: </label>
+                                    <label style={{ color: '#94a3b8' }}>Select Trip: </label>
                                     <select 
                                         value={selectedTrip?.id || ''} 
                                         onChange={(e) => setSelectedTrip(trips.find(t => t.id === e.target.value))}
                                         style={{ 
-                                            padding: '8px 12px', borderRadius: '8px', border: '1px solid #4ade8033', 
-                                            background: '#ffffff0a', color: '#eef7f1', cursor: 'pointer', outline: 'none'
+                                            padding: '8px 12px', borderRadius: '10px', border: '1px solid rgba(6,182,212,0.2)', 
+                                            background: '#0f172a', color: '#eef7f1', cursor: 'pointer', outline: 'none',
+                                            transition: 'border-color 0.3s, box-shadow 0.3s',
                                         }}
+                                        onFocus={e => { e.target.style.borderColor = '#06b6d4'; e.target.style.boxShadow = '0 0 0 3px rgba(6,182,212,0.15)'; }}
+                                        onBlur={e => { e.target.style.borderColor = 'rgba(6,182,212,0.2)'; e.target.style.boxShadow = 'none'; }}
                                     >
                                         {trips.map(trip => (
                                             <option key={trip.id} value={trip.id} style={{ background: '#0a0a0a', color: '#fff' }}>
@@ -130,10 +152,22 @@ const PersonalDashboard = () => {
                                     </select>
                                     <button 
                                         onClick={handleDeleteTrip}
-                                        style={{ background: '#ef444422', border: '1px solid #ef4444', color: '#ef4444', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', marginLeft: '10px' }}
+                                        style={{ 
+                                            background: 'rgba(239,68,68,0.08)', 
+                                            border: '1px solid rgba(239,68,68,0.3)', 
+                                            color: '#ef4444', 
+                                            padding: '8px 14px', 
+                                            borderRadius: '10px', 
+                                            cursor: 'pointer', 
+                                            marginLeft: '10px',
+                                            transition: 'all 0.3s',
+                                            fontWeight: '600',
+                                        }}
                                         title="Delete Trip"
+                                        onMouseEnter={e => { e.target.style.background = 'rgba(239,68,68,0.15)'; e.target.style.borderColor = '#ef4444'; e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 4px 16px rgba(239,68,68,0.2)'; }}
+                                        onMouseLeave={e => { e.target.style.background = 'rgba(239,68,68,0.08)'; e.target.style.borderColor = 'rgba(239,68,68,0.3)'; e.target.style.transform = 'none'; e.target.style.boxShadow = 'none'; }}
                                     >
-                                        🗑️ Delete
+                                        <IconTrash /> Delete
                                     </button>
                                 </div>
                             </header>
