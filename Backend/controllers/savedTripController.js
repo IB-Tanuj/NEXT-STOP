@@ -4,7 +4,7 @@ export const saveTrip = async (req, res) => {
     try {
         const { destination, start_date, end_date, total_budget, trip_data } = req.body;
         const userId = req.user?.id;
-        
+
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
@@ -37,9 +37,9 @@ export const saveTrip = async (req, res) => {
         const stayTarget = trip_data.hotel?.price || 0;
         const transportTarget = trip_data.transport?.price || 0;
         const bufferTarget = trip_data.buffer || 0;
-        
+
         const groupSize = Number(trip_data.preferences?.groupMembers?.length || trip_data.preferences?.groupSize || 1);
-        const spotsTotalPerPerson = Array.isArray(trip_data.spots) 
+        const spotsTotalPerPerson = Array.isArray(trip_data.spots)
             ? trip_data.spots.reduce((sum, spot) => sum + (Number(spot.cost) || 0), 0)
             : 0;
         const foodTarget = spotsTotalPerPerson * groupSize;
@@ -68,7 +68,7 @@ export const getTrips = async (req, res) => {
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
-        
+
         const { data, error } = await supabase
             .from('saved_trips')
             .select(`
@@ -100,7 +100,7 @@ export const updateTripData = async (req, res) => {
             .from('saved_trips')
             .update({ trip_data, total_budget })
             .eq('id', id)
-            .eq('user_id', userId)
+            .or(`user_id.eq.${userId},member_ids.cs.{${userId}}`)
             .select()
             .single();
 
@@ -121,16 +121,16 @@ export const addSavings = async (req, res) => {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        // Verify this user owns the trip before modifying wallets
+        // Verify this user owns or is a member of the trip before modifying wallets
         const { data: trip, error: tripError } = await supabase
             .from('saved_trips')
             .select('id')
             .eq('id', trip_id)
-            .eq('user_id', userId)
+            .or(`user_id.eq.${userId},member_ids.cs.{${userId}}`)
             .single();
 
         if (tripError || !trip) {
-            return res.status(403).json({ error: 'Forbidden — you do not own this trip' });
+            return res.status(403).json({ error: 'Forbidden — you do not have access to this trip' });
         }
 
         // Fetch current saved_amount
@@ -152,7 +152,7 @@ export const addSavings = async (req, res) => {
         }
 
         const actualAddedAmount = newSavedAmount - parseFloat(wallet.saved_amount);
-        
+
         const { data, error: updateError } = await supabase
             .from('trip_wallets')
             .update({ saved_amount: newSavedAmount })
@@ -199,7 +199,7 @@ export const deleteTrip = async (req, res) => {
             .match({ id, user_id: userId });
 
         if (error) throw error;
-        
+
         res.json({ message: 'Trip deleted successfully' });
     } catch (error) {
         console.error("Delete trip error:", error);

@@ -26,7 +26,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
     if (!budget.trim()) return false
     if (Number(budget) < 2200) return false
     if (budgetType === "group" && !groupSize.trim()) return false
-    if (budgetType === "group" && groupMembers.filter(m => m.trim()).length === 0) return false
+    if (budgetType === "group" && groupMembers.filter(m => (typeof m === 'object' ? (m?.name || "") : (m || "")).trim()).length === 0) return false
     if (choice === "specific" && !specificPlace) return false
     return true
   }
@@ -43,15 +43,15 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
       async (position) => {
         const { latitude, longitude } = position.coords
         setLeavingCoords({ lat: latitude, lng: longitude })
-        
+
         try {
           // Reverse geocode to find the actual city name
           const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
           const data = await res.json()
-          
+
           // Nominatim's display_name provides the most accurate, street-level address available
           let foundLocation = data.display_name || ""
-          
+
           // If the display name is too long, we can shorten it to the first 3 components (e.g. Street, Suburb, City)
           if (foundLocation) {
             const parts = foundLocation.split(", ")
@@ -60,7 +60,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
             // Fallback to exact coordinates if Nominatim fails to provide an address
             foundLocation = `Current Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`
           }
-          
+
           setLeavingFrom(foundLocation)
           setSelectedCity(foundLocation)
         } catch (err) {
@@ -68,7 +68,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
           setLeavingFrom("Current Location")
           setSelectedCity("Current Location")
         }
-        
+
         setLocationLoading(false)
       },
       (error) => {
@@ -195,7 +195,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
             }}>
             {locationLoading ? "📡 Getting your location..." : leavingCoords ? "✅ Location detected!" : "🎯 Use my current location"}
           </button>
-          
+
           <div style={{ color: theme.subtext, fontSize: "11px", textAlign: "center", marginBottom: "12px", fontStyle: "italic" }}>
             *Planning a road trip? Use 'Current Location' for the most accurate fuel & distance calculation!
           </div>
@@ -229,7 +229,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
               boxSizing: "border-box",
             }}
           />
-           {/* City Suggestions Dropdown */}
+          {/* City Suggestions Dropdown */}
           {showSuggestions && suggestions.length > 0 && (
             <div style={{
               background: theme.card,
@@ -242,38 +242,38 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
               overflowY: "auto",
             }}>
               {suggestions.map((city, i) => (
-                  <div
-                    key={city}
-                    onMouseDown={() => {
-                      setLeavingFrom(city)
-                      setSelectedCity(city)
-                      setShowSuggestions(false)
-                      setSuggestions([])
-                    }}
-                    style={{
-                      padding: "12px 16px",
-                      cursor: "pointer",
-                      borderBottom: i < suggestions.length - 1 ? `1px solid ${theme.primary}22` : "none",
-                      transition: "background 0.2s ease",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = `${theme.primary}22`}
-                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                  >
-                    <span style={{ fontSize: "18px" }}>📍</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{
-                        color: theme.text,
-                        fontWeight: "600",
-                        fontSize: "14px",
-                      }}>
-                        {city}
-                      </div>
-
+                <div
+                  key={city}
+                  onMouseDown={() => {
+                    setLeavingFrom(city)
+                    setSelectedCity(city)
+                    setShowSuggestions(false)
+                    setSuggestions([])
+                  }}
+                  style={{
+                    padding: "12px 16px",
+                    cursor: "pointer",
+                    borderBottom: i < suggestions.length - 1 ? `1px solid ${theme.primary}22` : "none",
+                    transition: "background 0.2s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = `${theme.primary}22`}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                >
+                  <span style={{ fontSize: "18px" }}>📍</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{
+                      color: theme.text,
+                      fontWeight: "600",
+                      fontSize: "14px",
+                    }}>
+                      {city}
                     </div>
+
                   </div>
+                </div>
               ))}
             </div>
           )}
@@ -377,7 +377,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                   }}
                 />
               </div>
-              
+
               {budget && Number(budget) < 2200 && (
                 <div style={{
                   color: "#FFB347",
@@ -407,7 +407,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                     onClick={() => {
                       setGroupSize(String(num));
                       const size = String(num) === "7+" ? 7 : num;
-                      setGroupMembers(Array(Math.max(0, size - 1)).fill(""));
+                      setGroupMembers(Array(Math.max(0, size - 1)).fill(null).map(() => ({ name: "", uid: null, id: null })));
                     }}
                     style={{
                       padding: "10px 18px",
@@ -434,40 +434,70 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
               </div>
               {Array.from({ length: Math.max(0, (isNaN(parseInt(groupSize)) ? 7 : parseInt(groupSize)) - 1) }).map((_, i) => (
                 <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "10px", flexWrap: "wrap" }}>
-                  <input 
+                  <input
                     type="text"
-                    placeholder={`Member ${i+2} Name`}
-                    value={groupMembers[i] || ""}
+                    placeholder={`Member ${i + 2} Name`}
+                    value={groupMembers[i]?.name || ""}
                     onChange={(e) => {
                       const newMembers = [...groupMembers];
-                      newMembers[i] = e.target.value;
+                      newMembers[i] = { name: e.target.value, uid: null, id: null };
                       setGroupMembers(newMembers);
                     }}
-                    style={{ 
-                      flex: "1 1 200px", padding: "12px", borderRadius: "8px", 
-                      border: `1px solid ${theme.primary}33`, background: "transparent", 
-                      color: theme.text, outline: "none" 
+                    style={{
+                      flex: "1 1 200px", padding: "12px", borderRadius: "8px",
+                      border: `1px solid ${groupMembers[i]?.uid ? theme.primary : theme.primary + "33"}`, background: groupMembers[i]?.uid ? `${theme.primary}11` : "transparent",
+                      color: groupMembers[i]?.uid ? theme.primary : theme.text, outline: "none",
+                      fontWeight: groupMembers[i]?.uid ? "bold" : "normal"
                     }}
+                    readOnly={!!groupMembers[i]?.uid} // lock input if connected to UID
                   />
                   <div style={{ display: "flex", gap: "6px" }}>
-                    <button 
-                      onClick={() => alert("Add by UID coming soon!")}
-                      style={{ 
-                        background: `${theme.primary}22`, color: theme.primary, border: "none", 
-                        padding: "0 14px", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer" 
+                    <button
+                      onClick={async () => {
+                        if (groupMembers[i]?.uid) {
+                          // Unlink
+                          const newMembers = [...groupMembers];
+                          newMembers[i] = { name: "", uid: null, id: null };
+                          setGroupMembers(newMembers);
+                          return;
+                        }
+                        const uid = prompt("Enter the friend's 8-character Unique ID (e.g. A4B9F1XC):");
+                        if (!uid || !uid.trim()) return;
+                        try {
+                          const res = await fetch(`/api/user/search/${uid.trim().toUpperCase()}`);
+                          if (res.ok) {
+                            const data = await res.json();
+                            const newMembers = [...groupMembers];
+                            newMembers[i] = { name: data.full_name || data.username || data.unique_id, uid: data.unique_id, id: data.id };
+                            setGroupMembers(newMembers);
+                          } else {
+                            const err = await res.json();
+                            alert(err.error || "User not found");
+                          }
+                        } catch (err) {
+                          alert("Failed to search user");
+                        }
+                      }}
+
+                      style={{
+                        background: groupMembers[i]?.uid ? "#ff6b6b22" : `${theme.primary}22`,
+                        color: groupMembers[i]?.uid ? "#ff6b6b" : theme.primary, border: "none",
+                        padding: "0 14px", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer"
                       }}
                     >
-                      Add by UID
+                      {groupMembers[i]?.uid ? "Unlink" : "Add by UID"}
                     </button>
-                    <button 
-                      onClick={() => alert("Add from friends coming soon!")}
-                      style={{ 
-                        background: `${theme.primary}22`, color: theme.primary, border: "none", 
-                        padding: "0 14px", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer" 
-                      }}
-                    >
-                      Add from friends
-                    </button>
+                    {!groupMembers[i]?.uid && (
+                      <button
+                        onClick={() => alert("Add from friends coming soon!")}
+                        style={{
+                          background: `${theme.primary}22`, color: theme.primary, border: "none",
+                          padding: "0 14px", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer"
+                        }}
+                      >
+                        Add from friends
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -604,22 +634,22 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
 
         {/* Next Button */}
         {isValid() && (
-          <button 
-          onClick={() => setShowPreferences(true)}
-          style={{
-            background: theme.primary,
-            border: "none",
-            padding: "18px",
-            borderRadius: "50px",
-            color: "#fff",
-            fontWeight: "800",
-            fontSize: "16px",
-            cursor: "pointer",
-            letterSpacing: "2px",
-            boxShadow: `0 8px 32px ${theme.primary}66`,
-            animation: "fadeIn 0.4s ease",
-            transition: "transform 0.2s ease",
-          }}
+          <button
+            onClick={() => setShowPreferences(true)}
+            style={{
+              background: theme.primary,
+              border: "none",
+              padding: "18px",
+              borderRadius: "50px",
+              color: "#fff",
+              fontWeight: "800",
+              fontSize: "16px",
+              cursor: "pointer",
+              letterSpacing: "2px",
+              boxShadow: `0 8px 32px ${theme.primary}66`,
+              animation: "fadeIn 0.4s ease",
+              transition: "transform 0.2s ease",
+            }}
             onMouseEnter={e => e.currentTarget.style.transform = "scale(1.02)"}
             onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
           >
@@ -643,7 +673,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
             onNext={(prefs) => {
               setPlanData(prefs)
               setShowBudget(true)
-              }}
+            }}
           />
         </div>
       )}
