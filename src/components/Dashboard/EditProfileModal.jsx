@@ -13,7 +13,8 @@ const EditProfileModal = ({ profile, user, onClose, onSave }) => {
         bio: '',
         gender: '',
         dob: '',
-        tags: []
+        tags: [],
+        avatar_url: ''
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -25,7 +26,8 @@ const EditProfileModal = ({ profile, user, onClose, onSave }) => {
                 bio: profile.bio || '',
                 gender: profile.gender || '',
                 dob: profile.dob || '',
-                tags: profile.tags || []
+                tags: profile.tags || [],
+                avatar_url: profile.avatar_url || ''
             });
         }
     }, [profile]);
@@ -60,7 +62,8 @@ const EditProfileModal = ({ profile, user, onClose, onSave }) => {
                     bio: formData.bio,
                     gender: formData.gender,
                     dob: formData.dob || null, // Handle empty date
-                    tags: formData.tags
+                    tags: formData.tags,
+                    avatar_url: formData.avatar_url
                 })
                 .eq('id', user.id)
                 .select()
@@ -94,6 +97,38 @@ const EditProfileModal = ({ profile, user, onClose, onSave }) => {
                 {error && <div style={{ color: '#ff4757', marginBottom: '15px' }}>{error}</div>}
 
                 <form onSubmit={handleSubmit}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px' }}>
+                        <div style={{
+                            width: '80px', height: '80px', borderRadius: '50%', background: '#6366f1',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: '#fff', fontSize: '32px', fontWeight: 'bold', overflow: 'hidden', position: 'relative', cursor: 'pointer', marginBottom: '10px'
+                        }}>
+                            {formData.avatar_url ? (
+                                <img src={formData.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                formData.username?.charAt(0).toUpperCase() || 'U'
+                            )}
+                            <input 
+                                type="file" 
+                                accept="image/*" 
+                                style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} 
+                                onChange={(e) => {
+                                    const file = e.target.files[0];
+                                    if (file) {
+                                        if (file.size > 2 * 1024 * 1024) {
+                                            setError("Image must be smaller than 2MB");
+                                            return;
+                                        }
+                                        const reader = new FileReader();
+                                        reader.onloadend = () => setFormData(prev => ({ ...prev, avatar_url: reader.result }));
+                                        reader.readAsDataURL(file);
+                                    }
+                                }}
+                            />
+                        </div>
+                        <span style={{ fontSize: '12px', color: '#94a3b8' }}>Tap to change photo</span>
+                    </div>
+
                     <div className="form-group">
                         <label>Username</label>
                         <input 
