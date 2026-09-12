@@ -94,7 +94,7 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
     const percentage = totalTarget > 0 ? Math.min(100, Math.round((totalSaved / totalTarget) * 100)) : 0;
 
     const groupMembers = trip.trip_data?.preferences?.groupMembers || [];
-    const validMembers = groupMembers.filter(m => m && m.trim() !== '');
+    const validMembers = groupMembers.map(m => typeof m === 'object' ? m?.name : m).filter(m => m && String(m).trim() !== '');
     const defaultName = session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || 'admin';
     const allContributors = [defaultName, ...validMembers];
     const hasMembers = validMembers.length > 0;
