@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import './SearchFriendsModal.css';
+import './ProfileTab.css';
 
 const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
     const { session } = useAuth();

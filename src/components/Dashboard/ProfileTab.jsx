@@ -166,9 +166,13 @@ const ProfileTab = () => {
                 </div>
 
                 <div className="profile-stats-row">
-                    <div className="avatar-container">
-                        {user?.email?.charAt(0).toUpperCase()}
-                        <span className="avatar-note">Note...</span>
+                    <div className="avatar-container" style={{ overflow: 'hidden', position: 'relative' }}>
+                        {currentProfile.avatar_url ? (
+                            <img src={currentProfile.avatar_url} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                            user?.email?.charAt(0).toUpperCase()
+                        )}
+                        <span className="avatar-note" style={{ zIndex: 1 }}>Note...</span>
                     </div>
                     
                     <div className="stats-info">
