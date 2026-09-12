@@ -10,9 +10,34 @@ export const saveTrip = async (req, res) => {
         }
 
         const groupMembers = trip_data.preferences?.groupMembers || [];
-        const memberIds = groupMembers
-            .map(m => m?.id)
-            .filter(id => id && id !== userId);
+        const memberIds = [];
+        
+        for (let m of groupMembers) {
+            let memberId = m?.id;
+            let memberName = typeof m === 'object' ? m?.name : m;
+
+            // If the user typed the 8-character UID directly into the name field
+            if (!memberId && memberName && /^[A-Z0-9]{8}$/i.test(memberName.trim())) {
+                const { data } = await supabase
+                    .from('profiles')
+                    .select('id, full_name, username')
+                    .eq('unique_id', memberName.trim().toUpperCase())
+                    .single();
+                
+                if (data) {
+                    memberId = data.id;
+                    if (typeof m === 'object') {
+                        m.id = data.id;
+                        m.uid = memberName.trim().toUpperCase();
+                        m.name = data.full_name || data.username || m.name;
+                    }
+                }
+            }
+
+            if (memberId && memberId !== userId && !memberIds.includes(memberId)) {
+                memberIds.push(memberId);
+            }
+        }
 
         // 1. Insert the trip
         const { data: trip, error: tripError } = await supabase
