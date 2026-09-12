@@ -507,7 +507,69 @@
     .sidebar-btn {
         width: 40px;
         height: 40px;
-        font-size: 1.1rem;
+        font-size: 1.2rem;
         border-radius: 10px;
     }
+}
+
+/* Settings Menu Modal */
+.settings-menu-modal {
+    background: #111;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 350px;
+    padding: 20px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    border: 1px solid #333;
+    animation: scaleUp 0.3s ease;
+}
+
+.settings-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+}
+
+.settings-menu-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #fff;
+}
+
+.settings-menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.settings-list-btn {
+    background: transparent;
+    border: none;
+    padding: 12px 15px;
+    text-align: left;
+    color: #fff;
+    font-size: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.settings-list-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.logout-list-btn {
+    color: #ef4444;
+    margin-top: 10px;
+    border-top: 1px solid #333;
+    border-radius: 0 0 8px 8px;
+    padding-top: 15px;
+}
+
+.logout-list-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
 }

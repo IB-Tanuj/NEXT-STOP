@@ -57,10 +57,44 @@ const IconGrid = () => (
     </svg>
 );
 
+const SettingsMenuModal = ({ onClose, onEditProfile, onLogout }) => {
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="settings-menu-modal" onClick={e => e.stopPropagation()}>
+                <div className="settings-menu-header">
+                    <h3>Settings</h3>
+                    <button className="close-btn" onClick={onClose}>×</button>
+                </div>
+                <div className="settings-menu-list">
+                    <button className="settings-list-btn" onClick={() => { onClose(); onEditProfile(); }}>
+                        Edit Profile
+                    </button>
+                    <button className="settings-list-btn" onClick={() => alert("Notification feature coming soon!")}>
+                        Notification
+                    </button>
+                    <button className="settings-list-btn" onClick={() => alert("Privacy feature coming soon!")}>
+                        Privacy
+                    </button>
+                    <button className="settings-list-btn" onClick={() => alert("Website Permissions feature coming soon!")}>
+                        Website Permissions
+                    </button>
+                    <button className="settings-list-btn" onClick={() => alert("Terms and Condition coming soon!")}>
+                        Terms and Condition
+                    </button>
+                    <button className="settings-list-btn logout-list-btn" onClick={onLogout}>
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const ProfileTab = () => {
     const navigate = useNavigate();
-    const { user, profile } = useAuth();
+    const { user, profile, logout } = useAuth();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
     const [localProfile, setLocalProfile] = useState(profile);
     const [activeTab, setActiveTab] = useState('wanderlogs');
 
@@ -70,6 +104,16 @@ const ProfileTab = () => {
     const handleSaveProfile = (updatedProfile) => {
         setLocalProfile(updatedProfile);
         setIsEditModalOpen(false);
+    };
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            navigate('/');
+        } catch (error) {
+            console.error('Error logging out:', error);
+            alert('Failed to logout');
+        }
     };
 
     return (
@@ -85,7 +129,7 @@ const ProfileTab = () => {
                 <button className="sidebar-btn sidebar-btn--exit" onClick={() => navigate('/app')} title="Exit">
                     <IconLogout />
                 </button>
-                <button className="sidebar-btn sidebar-btn--settings" onClick={() => setIsEditModalOpen(true)} title="Settings">
+                <button className="sidebar-btn sidebar-btn--settings" onClick={() => setIsSettingsMenuOpen(true)} title="Settings">
                     <IconSettings />
                 </button>
             </div>
@@ -188,6 +232,14 @@ const ProfileTab = () => {
                         user={user} 
                         onClose={() => setIsEditModalOpen(false)} 
                         onSave={handleSaveProfile}
+                    />
+                )}
+
+                {isSettingsMenuOpen && (
+                    <SettingsMenuModal 
+                        onClose={() => setIsSettingsMenuOpen(false)}
+                        onEditProfile={() => setIsEditModalOpen(true)}
+                        onLogout={handleLogout}
                     />
                 )}
             </div>
