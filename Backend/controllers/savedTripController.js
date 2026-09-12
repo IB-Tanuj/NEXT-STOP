@@ -9,6 +9,11 @@ export const saveTrip = async (req, res) => {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
+        const groupMembers = trip_data.preferences?.groupMembers || [];
+        const memberIds = groupMembers
+            .map(m => m?.id)
+            .filter(id => id && id !== userId);
+
         // 1. Insert the trip
         const { data: trip, error: tripError } = await supabase
             .from('saved_trips')
@@ -19,7 +24,8 @@ export const saveTrip = async (req, res) => {
                     start_date,
                     end_date,
                     total_budget,
-                    trip_data
+                    trip_data,
+                    member_ids: memberIds
                 }
             ])
             .select()
@@ -69,7 +75,7 @@ export const getTrips = async (req, res) => {
                 *,
                 trip_wallets (*)
             `)
-            .eq('user_id', userId)
+            .or(`user_id.eq.${userId},member_ids.cs.{${userId}}`)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
