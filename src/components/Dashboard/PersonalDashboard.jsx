@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import TripDetailsTab from './TripDetailsTab';
 import SavingsPlannerTab from './SavingsPlannerTab';
 import ProfileTab from './ProfileTab';
+import FriendRequestsTab from './FriendRequestsTab';
 import './Dashboard.css';
 
 /* ─── Monochrome SVG Icon ─── */
@@ -98,7 +99,7 @@ const PersonalDashboard = () => {
         return (
             <div className="dashboard-container" style={{ paddingTop: '100px' }}>
                 {(() => {
-                    if (trips.length === 0) {
+                    if (trips.length === 0 && section !== 'requests') {
                         return (
                             <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px' }}>
                                 <h2>Your Travel Passport</h2>
@@ -109,7 +110,7 @@ const PersonalDashboard = () => {
 
                     return (
                         <>
-                            <header className="dashboard-header" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '15px', borderBottom: '2px solid rgba(6,182,212,0.15)' }}>
+                            <header className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                                     <button 
                                         onClick={() => navigate('/app')}
@@ -128,9 +129,12 @@ const PersonalDashboard = () => {
                                     >
                                         ← Back
                                     </button>
-                                    <h2 style={{ margin: 0, background: 'linear-gradient(135deg, #e2e8f0, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{section === 'savings' ? 'Savings Track' : 'Saved Trips'}</h2>
+                                    <h2 style={{ margin: 0, background: 'linear-gradient(135deg, #e2e8f0, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                                        {section === 'savings' ? 'Savings Track' : section === 'requests' ? 'Friend Requests' : 'Saved Trips'}
+                                    </h2>
                                 </div>
                                 
+                                {section !== 'requests' && (
                                 <div className="trip-selector">
                                     <label style={{ color: '#94a3b8' }}>Select Trip: </label>
                                     <select 
@@ -170,6 +174,7 @@ const PersonalDashboard = () => {
                                         <IconTrash /> Delete
                                     </button>
                                 </div>
+                                )}
                             </header>
 
                             <main className="dashboard-content">
@@ -178,6 +183,9 @@ const PersonalDashboard = () => {
                                 )}
                                 {section === 'savings' && selectedTrip && (
                                     <SavingsPlannerTab trip={selectedTrip} onUpdate={handleUpdateTrip} />
+                                )}
+                                {section === 'requests' && (
+                                    <FriendRequestsTab />
                                 )}
                             </main>
                         </>

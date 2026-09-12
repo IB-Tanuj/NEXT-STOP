@@ -1,12 +1,28 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "../context/AuthContext"
 import { useNavigate } from "react-router-dom"
 
 const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onBusLovers }) => {
   const [menuOpen, setMenuOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-  const { user, logout } = useAuth()
+  const [pendingCount, setPendingCount] = useState(0)
+  const { user, session, logout } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (user && session?.access_token) {
+      fetch(`${import.meta.env.VITE_API_URL || ''}/api/friends/requests`, {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setPendingCount(data.length);
+        }
+      })
+      .catch(err => console.error("Error fetching requests count:", err));
+    }
+  }, [user, session]);
 
   return (
     <nav style={{
@@ -103,7 +119,8 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
                     { label: 'Profile', path: '/dashboard/profile' },
                     { label: 'Saved Trips', path: '/dashboard/trips' },
                     { label: 'Savings Track', path: '/dashboard/savings' },
-                  ].map((item) => (
+                    { label: 'Friend Requests', path: '/dashboard/requests', count: pendingCount },
+                  ].map((item, idx) => (
                     <div
                       key={item.label}
                       onClick={() => {
@@ -118,11 +135,26 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
                         fontSize: '14px',
                         fontWeight: '500',
                         transition: 'background 0.2s',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
                       }}
                       onMouseEnter={e => e.currentTarget.style.backgroundColor = `${theme.primary}22`}
                       onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
-                      {item.label}
+                      <span>{item.label}</span>
+                      {item.count > 0 && (
+                        <span style={{
+                          background: theme.primary,
+                          color: '#fff',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          padding: '2px 6px',
+                          borderRadius: '10px'
+                        }}>
+                          {item.count}
+                        </span>
+                      )}
                     </div>
                   ))}
                   <div style={{ height: '1px', background: `${theme.primary}22`, margin: '4px 0' }} />
@@ -246,21 +278,36 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
                 { label: 'Profile', path: '/dashboard/profile' },
                 { label: 'Saved Trips', path: '/dashboard/trips' },
                 { label: 'Savings Track', path: '/dashboard/savings' },
+                { label: 'Friend Requests', path: '/dashboard/requests', count: pendingCount },
               ].map((item) => (
-                <span
+                <div
                   key={item.label}
                   onClick={() => { navigate(item.path); setMenuOpen(false); }}
                   style={{
-                    color: theme.primary,
-                    cursor: "pointer",
-                    fontSize: "16px",
-                    letterSpacing: "1px",
-                    fontWeight: "600",
-                    padding: "8px 0",
-                    borderBottom: `1px solid ${theme.primary}22`,
-                  }}>
-                  {item.label}
-                </span>
+                    color: theme.text,
+                    fontSize: '15px',
+                    padding: '8px 0',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderBottom: `1px solid ${theme.primary}22`
+                  }}
+                >
+                  <span>{item.label}</span>
+                  {item.count > 0 && (
+                    <span style={{
+                      background: theme.primary,
+                      color: '#fff',
+                      fontSize: '11px',
+                      fontWeight: 'bold',
+                      padding: '2px 6px',
+                      borderRadius: '10px'
+                    }}>
+                      {item.count}
+                    </span>
+                  )}
+                </div>
               ))}
               <button
                 onClick={() => { logout(); setMenuOpen(false); }}

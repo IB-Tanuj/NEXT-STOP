@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import EditProfileModal from './EditProfileModal';
+import SearchFriendsModal from './SearchFriendsModal';
+import FriendsListModal from './FriendsListModal';
 import './ProfileTab.css';
 
 /* ─── Monochrome SVG Icons ─── */
@@ -92,14 +94,38 @@ const SettingsMenuModal = ({ onClose, onEditProfile, onLogout }) => {
 
 const ProfileTab = () => {
     const navigate = useNavigate();
-    const { user, profile, logout } = useAuth();
+    const { user, profile, session, logout } = useAuth();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
-    const [localProfile, setLocalProfile] = useState(profile);
+    const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+    const [isFriendsListModalOpen, setIsFriendsListModalOpen] = useState(false);
+    const [localProfile, setLocalProfile] = useState(null);
+    const [friendsCount, setFriendsCount] = useState(0);
     const [activeTab, setActiveTab] = useState('wanderlogs');
 
     // Use local profile if updated, else fallback to context profile
     const currentProfile = localProfile || profile || {};
+
+    useEffect(() => {
+        const fetchFriendsCount = async () => {
+            if (!session?.access_token) return;
+            try {
+                const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/friends`, {
+                    headers: { 'Authorization': `Bearer ${session.access_token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setFriendsCount(data.length || 0);
+                }
+            } catch (error) {
+                console.error('Error fetching friends count:', error);
+            }
+        };
+
+        if (user) {
+            fetchFriendsCount();
+        }
+    }, [user, session]);
 
     const handleSaveProfile = (updatedProfile) => {
         setLocalProfile(updatedProfile);
@@ -150,8 +176,8 @@ const ProfileTab = () => {
                             <span className="count">0</span>
                             <span className="label">Wanderlogs</span>
                         </div>
-                        <div className="stat-item">
-                            <span className="count">0</span>
+                        <div className="stat-item" onClick={() => setIsFriendsListModalOpen(true)} style={{ cursor: 'pointer' }}>
+                            <span className="count">{friendsCount}</span>
                             <span className="label">Friends</span>
                         </div>
                     </div>
@@ -190,7 +216,7 @@ const ProfileTab = () => {
                     <button className="action-btn" onClick={() => setIsEditModalOpen(true)}>
                         Edit profile
                     </button>
-                    <button className="action-btn" onClick={() => alert("Search Friends feature coming soon!")}>
+                    <button className="action-btn" onClick={() => setIsSearchModalOpen(true)}>
                         Search friends
                     </button>
                 </div>
@@ -232,6 +258,21 @@ const ProfileTab = () => {
                         user={user} 
                         onClose={() => setIsEditModalOpen(false)} 
                         onSave={handleSaveProfile}
+                    />
+                )}
+
+                {isSearchModalOpen && (
+                    <SearchFriendsModal 
+                        isOpen={isSearchModalOpen}
+                        onClose={() => setIsSearchModalOpen(false)}
+                    />
+                )}
+
+                {isFriendsListModalOpen && (
+                    <FriendsListModal 
+                        isOpen={isFriendsListModalOpen}
+                        onClose={() => setIsFriendsListModalOpen(false)}
+                        onFriendRemoved={() => setFriendsCount(prev => Math.max(0, prev - 1))}
                     />
                 )}
 

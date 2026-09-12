@@ -14,6 +14,7 @@ import bestTimeRoutes from "./routes/bestTimeRoutes.js";
 import spotInfoRoutes from "./routes/spotInfoRoutes.js";
 import savedTripRoutes from "./routes/savedTripRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import friendRoutes from "./routes/friendRoutes.js";
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use("/api/best-time", bestTimeRoutes);
 app.use("/api/spots", spotInfoRoutes);
 app.use("/api/saved-trips", savedTripRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/friends", friendRoutes);
 
 app.get("/", (req, res) => {
   res.json({
