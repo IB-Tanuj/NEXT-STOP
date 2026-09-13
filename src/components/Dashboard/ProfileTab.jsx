@@ -60,6 +60,7 @@ const IconGrid = () => (
 );
 
 const SettingsMenuModal = ({ onClose, onEditProfile, onLogout }) => {
+    const navigate = useNavigate();
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="settings-menu-modal" onClick={e => e.stopPropagation()}>
@@ -74,14 +75,14 @@ const SettingsMenuModal = ({ onClose, onEditProfile, onLogout }) => {
                     <button className="settings-list-btn" onClick={() => alert("Notification feature coming soon!")}>
                         Notification
                     </button>
-                    <button className="settings-list-btn" onClick={() => alert("Privacy feature coming soon!")}>
-                        Privacy
+                    <button className="settings-list-btn" onClick={() => { onClose(); navigate('/privacy'); }}>
+                        Privacy Policy
                     </button>
                     <button className="settings-list-btn" onClick={() => alert("Website Permissions feature coming soon!")}>
                         Website Permissions
                     </button>
-                    <button className="settings-list-btn" onClick={() => alert("Terms and Condition coming soon!")}>
-                        Terms and Condition
+                    <button className="settings-list-btn" onClick={() => { onClose(); navigate('/terms'); }}>
+                        Terms and Conditions
                     </button>
                     <button className="settings-list-btn logout-list-btn" onClick={onLogout}>
                         Logout
@@ -161,57 +162,62 @@ const ProfileTab = () => {
             </div>
 
             <div className="profile-container">
-                <div className="profile-header">
-                    <h2>{currentProfile.username || currentProfile.full_name || 'set_username'}</h2>
-                </div>
+                {/* ═══ Instagram-style Profile Hero ═══ */}
+                <div className="profile-hero">
+                    <div className="profile-hero__avatar">
+                        <div className="avatar-container" style={{ overflow: 'hidden', position: 'relative' }}>
+                            {currentProfile.avatar_url ? (
+                                <img src={currentProfile.avatar_url} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                user?.email?.charAt(0).toUpperCase()
+                            )}
+                        </div>
+                    </div>
 
-                <div className="profile-stats-row">
-                    <div className="avatar-container" style={{ overflow: 'hidden', position: 'relative' }}>
-                        {currentProfile.avatar_url ? (
-                            <img src={currentProfile.avatar_url} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                            user?.email?.charAt(0).toUpperCase()
-                        )}
-                    </div>
-                    
-                    <div className="stats-info">
-                        <div className="stat-item">
-                            <span className="count">0</span>
-                            <span className="label">Wanderlogs</span>
+                    <div className="profile-hero__info">
+                        {/* Row 1: Username + Settings gear */}
+                        <div className="profile-hero__username-row">
+                            <h2 className="profile-hero__username">
+                                {currentProfile.username || currentProfile.full_name || 'set_username'}
+                            </h2>
+                            <button className="profile-hero__settings-btn" onClick={() => setIsSettingsMenuOpen(true)} title="Settings">
+                                <IconSettings />
+                            </button>
                         </div>
-                        <div className="stat-item" onClick={() => setIsFriendsListModalOpen(true)} style={{ cursor: 'pointer' }}>
-                            <span className="count">{friendsCount}</span>
-                            <span className="label">Friends</span>
-                        </div>
-                    </div>
-                </div>
 
-                <div className="profile-bio-section">
-                    <div className="display-name">
-                        {currentProfile.unique_id || 'UID'}
-                        {currentProfile.gender && (
-                            <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                                • {currentProfile.gender}
-                            </span>
+                        {/* Row 2: Display name + gender */}
+                        <div className="profile-hero__display-name">
+                            {currentProfile.full_name || currentProfile.username || 'User'}
+                            {currentProfile.gender && (
+                                <span className="profile-hero__gender">• {currentProfile.gender}</span>
+                            )}
+                        </div>
+
+                        {/* Row 3: Stats */}
+                        <div className="profile-hero__stats">
+                            <span className="profile-hero__stat"><strong>0</strong> posts</span>
+                            <span className="profile-hero__stat" onClick={() => setIsFriendsListModalOpen(true)} style={{ cursor: 'pointer' }}><strong>{friendsCount}</strong> friends</span>
+                            <span className="profile-hero__stat"><strong>0</strong> wanderlogs</span>
+                        </div>
+
+                        {/* Row 4: Bio */}
+                        {currentProfile.bio && (
+                            <div className="profile-hero__bio">{currentProfile.bio}</div>
                         )}
-                    </div>
-                    
-                    {currentProfile.tags && currentProfile.tags.length > 0 && (
-                        <div className="profile-tags">
-                            {currentProfile.tags.map(tag => (
-                                <span key={tag} className="badge">{tag}</span>
-                            ))}
+
+                        {/* Row 5: Tags */}
+                        {currentProfile.tags && currentProfile.tags.length > 0 && (
+                            <div className="profile-tags">
+                                {currentProfile.tags.map(tag => (
+                                    <span key={tag} className="badge">{tag}</span>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Row 6: Handle */}
+                        <div className="profile-hero__handle">
+                            @ {currentProfile.username || currentProfile.full_name || 'username'}
                         </div>
-                    )}
-                    
-                    {currentProfile.bio && (
-                        <div className="bio-text">
-                            {currentProfile.bio}
-                        </div>
-                    )}
-                    
-                    <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
-                        @{currentProfile.username || currentProfile.full_name || 'username'}
                     </div>
                 </div>
 

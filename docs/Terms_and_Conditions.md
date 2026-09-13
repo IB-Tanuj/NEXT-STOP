@@ -136,7 +136,7 @@ These Terms shall be governed by and construed in accordance with the laws of **
 
 If you have any questions about these Terms, please contact us at:
 
-**Email:** [your-email@example.com]
+**Email:** t.adhikari.feb.2006@gmail.com
 
 ---
 

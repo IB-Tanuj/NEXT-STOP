@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const LandingAuthDrawer = ({ isOpen, onClose, initialMode = 'login' }) => {
   const [isLogin, setIsLogin] = useState(initialMode === 'login');
@@ -18,6 +18,10 @@ const LandingAuthDrawer = ({ isOpen, onClose, initialMode = 'login' }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Consent checkboxes (must NOT be pre-checked)
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+
   // Reset form when drawer opens/closes or mode changes
   useEffect(() => {
     if (isOpen) {
@@ -28,6 +32,8 @@ const LandingAuthDrawer = ({ isOpen, onClose, initialMode = 'login' }) => {
       setError('');
       setSuccessMessage('');
       setShowPassword(false);
+      setAcceptedTerms(false);
+      setAcceptedPrivacy(false);
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -59,6 +65,10 @@ const LandingAuthDrawer = ({ isOpen, onClose, initialMode = 'login' }) => {
     }
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
+      return;
+    }
+    if (!acceptedTerms || !acceptedPrivacy) {
+      setError('You must agree to both the Terms of Service and Privacy Policy');
       return;
     }
 
@@ -239,7 +249,7 @@ const LandingAuthDrawer = ({ isOpen, onClose, initialMode = 'login' }) => {
             <button
               type="submit"
               className="auth-submit-btn"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !acceptedTerms || !acceptedPrivacy}
             >
               {isSubmitting ? (
                 <span className="auth-spinner" />
@@ -249,8 +259,25 @@ const LandingAuthDrawer = ({ isOpen, onClose, initialMode = 'login' }) => {
             </button>
           </form>
 
-          <div className="auth-drawer-footer">
-            By continuing, you agree to our Terms of Service and Privacy Policy.
+          <div className="auth-consent-area">
+            <label className="auth-consent-checkbox">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+              />
+              <span className="auth-checkmark" />
+              <span>I agree to the <Link to="/terms" target="_blank" className="auth-consent-link">Terms of Service</Link></span>
+            </label>
+            <label className="auth-consent-checkbox">
+              <input
+                type="checkbox"
+                checked={acceptedPrivacy}
+                onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+              />
+              <span className="auth-checkmark" />
+              <span>I agree to the <Link to="/privacy" target="_blank" className="auth-consent-link">Privacy Policy</Link></span>
+            </label>
           </div>
         </div>
       </div>

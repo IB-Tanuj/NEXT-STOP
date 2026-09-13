@@ -15,6 +15,7 @@ const BudgetPage = lazy(() => import("./components/BudgetPage"))
 const PlanTripPage = lazy(() => import("./components/PlanTripPage"))
 const BusLoversPage = lazy(() => import("./components/BusLoversPage"))
 const DevAdminPage = lazy(() => import("./components/DevAdminPage"))
+const LegalPage = lazy(() => import("./components/LegalPage"))
 
 import { allIndiaLocations } from "./data/allLocations"
 import LandingPage from "./components/LandingPage"
@@ -237,6 +238,10 @@ function App() {
       <Suspense fallback={<FallbackSpinner theme={theme} />}>
       <Routes>
         <Route path="/dev" element={<DevAdminPage theme={theme} setLocationTheme={setLocationTheme} />} />
+        
+        {/* Legal Pages */}
+        <Route path="/privacy" element={<LegalPage type="privacy" />} />
+        <Route path="/terms" element={<LegalPage type="terms" />} />
         
         {/* New Marketing Landing Page */}
         <Route path="/" element={<LandingPage />} />
