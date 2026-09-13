@@ -123,7 +123,7 @@ We may update this Privacy Policy from time to time. We will notify you of any m
 
 If you have any questions about this Privacy Policy or your personal data, please contact us at:
 
-**Email:** [your-email@example.com]
+**Email:** t.adhikari.feb.2006@gmail.com
 
 ---
 

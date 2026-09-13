@@ -903,12 +903,86 @@
   flex-shrink: 0;
 }
 
-.auth-drawer-footer {
-  margin-top: 40px;
-  font-size: 12px;
+.auth-consent-area {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-consent-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 13px;
   color: var(--mist);
-  opacity: 0.6;
-  line-height: 1.5;
+  line-height: 1.4;
+  user-select: none;
+  position: relative;
+}
+
+.auth-consent-checkbox input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.auth-checkmark {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  background: transparent;
+  position: relative;
+}
+
+.auth-checkmark::after {
+  content: '';
+  display: none;
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+  margin-top: -2px;
+}
+
+.auth-consent-checkbox:hover .auth-checkmark {
+  border-color: var(--mint);
+}
+
+.auth-consent-checkbox input:checked ~ .auth-checkmark {
+  background: var(--mint);
+  border-color: var(--mint);
+}
+
+.auth-consent-checkbox input:checked ~ .auth-checkmark::after {
+  display: block;
+}
+
+.auth-consent-link {
+  color: var(--mint);
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.auth-consent-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.auth-submit-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 @keyframes lp-slideInRight {

@@ -13,42 +13,33 @@
     color: #fff;
 }
 
-.profile-header {
+/* ═══════════════════════════════════════════════
+   Instagram-style Profile Hero
+   ═══════════════════════════════════════════════ */
+.profile-hero {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
+    align-items: flex-start;
+    gap: 32px;
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #1e293b;
 }
 
-.profile-header h2 {
-    font-size: 1.2rem;
-    margin: 0;
-    font-weight: 700;
-}
-
-.settings-icon {
-    font-size: 1.5rem;
-    cursor: pointer;
-}
-
-.profile-stats-row {
-    display: flex;
-    align-items: center;
-    gap: 30px;
-    margin-bottom: 20px;
+.profile-hero__avatar {
+    flex-shrink: 0;
 }
 
 /* ═══ Enhanced Avatar with Gradient Ring ═══ */
 .avatar-container {
     position: relative;
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     background: linear-gradient(135deg, #1e293b, #334155);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 30px;
+    font-size: 36px;
     color: #fff;
     font-weight: bold;
     border: 3px solid transparent;
@@ -89,49 +80,110 @@
     letter-spacing: 0.5px;
 }
 
-.stats-info {
-    display: flex;
-    gap: 20px;
+/* ─── Info Column (right of avatar) ─── */
+.profile-hero__info {
     flex: 1;
-    justify-content: space-around;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
-.stat-item {
-    text-align: center;
-    transition: transform 0.2s ease;
-}
-
-.stat-item:hover {
-    transform: scale(1.1);
-}
-
-.stat-item .count {
-    display: block;
-    font-weight: 700;
-    font-size: 1.1rem;
-}
-
-.stat-item .label {
-    font-size: 0.85rem;
-    color: #cbd5e1;
-}
-
-.profile-bio-section {
-    margin-bottom: 20px;
-}
-
-.display-name {
-    font-weight: 700;
-    margin-bottom: 5px;
+/* Row 1: Username + gear */
+.profile-hero__username-row {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 12px;
 }
 
-.bio-text {
-    font-size: 0.9rem;
-    margin-bottom: 10px;
+.profile-hero__username {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0;
     color: #f1f5f9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-hero__settings-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, transform 0.3s;
+}
+
+.profile-hero__settings-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.profile-hero__settings-btn:hover {
+    color: #e2e8f0;
+    transform: rotate(60deg);
+}
+
+/* Row 2: Display name */
+.profile-hero__display-name {
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    font-weight: 600;
+}
+
+.profile-hero__gender {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-left: 6px;
+    font-weight: 400;
+}
+
+/* Row 3: Stats inline */
+.profile-hero__stats {
+    display: flex;
+    gap: 20px;
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    margin: 4px 0;
+}
+
+.profile-hero__stat {
+    transition: color 0.2s;
+}
+
+.profile-hero__stat:hover {
+    color: #f1f5f9;
+}
+
+.profile-hero__stat strong {
+    color: #fff;
+    font-weight: 700;
+    margin-right: 3px;
+}
+
+/* Row 4: Bio */
+.profile-hero__bio {
+    font-size: 0.9rem;
+    color: #e2e8f0;
+    line-height: 1.4;
+    margin-top: 2px;
+}
+
+/* Row 6: Handle */
+.profile-hero__handle {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+/* ─── Legacy compat ─── */
+.settings-icon {
+    font-size: 1.5rem;
+    cursor: pointer;
 }
 
 /* ═══ Tags with Gradient Border ═══ */
@@ -509,6 +561,26 @@
         height: 40px;
         font-size: 1.2rem;
         border-radius: 10px;
+    }
+    .profile-hero {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 16px;
+    }
+    .profile-hero__username-row {
+        justify-content: center;
+    }
+    .profile-hero__stats {
+        justify-content: center;
+    }
+    .profile-tags {
+        justify-content: center;
+    }
+    .avatar-container {
+        width: 80px;
+        height: 80px;
+        font-size: 28px;
     }
 }
 

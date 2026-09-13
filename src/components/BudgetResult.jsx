@@ -417,7 +417,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     if (scale > 3) scale = 3
 
     // Deep copy mediumData to safely mutate
-    mediumData = JSON.parse(JSON.stringify(mediumData))
+    mediumData = structuredClone(mediumData)
 
     if (mediumData.options) {
       mediumData.options = mediumData.options.map(opt => {
