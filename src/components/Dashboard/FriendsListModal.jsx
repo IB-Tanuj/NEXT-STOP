@@ -76,8 +76,12 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
                     {friends.map(friend => (
                         <div key={friend.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '18px' }}>
-                                    {friend.full_name?.charAt(0) || friend.username?.charAt(0) || 'U'}
+                                <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '18px', overflow: 'hidden' }}>
+                                    {friend.avatar_url ? (
+                                        <img src={friend.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        friend.full_name?.charAt(0) || friend.username?.charAt(0) || 'U'
+                                    )}
                                 </div>
                                 <div>
                                     <h4 style={{ margin: 0, color: '#fff', fontSize: '16px' }}>{friend.full_name || friend.username}</h4>
