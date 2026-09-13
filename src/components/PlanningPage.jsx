@@ -760,8 +760,12 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                          cursor: 'pointer',
                          border: `1px solid ${theme.primary}22`
                        }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: theme.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold' }}>
-                      {friend.full_name?.charAt(0) || friend.username?.charAt(0) || 'U'}
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: theme.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', overflow: 'hidden' }}>
+                      {friend.avatar_url ? (
+                          <img src={friend.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                          friend.full_name?.charAt(0) || friend.username?.charAt(0) || 'U'
+                      )}
                     </div>
                     <div>
                       <div style={{ color: theme.text, fontWeight: 'bold' }}>{friend.full_name || friend.username}</div>

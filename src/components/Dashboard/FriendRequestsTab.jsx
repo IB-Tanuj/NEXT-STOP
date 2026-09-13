@@ -84,8 +84,12 @@ const FriendRequestsTab = () => {
                         {incomingRequests.map(req => (
                             <div key={req.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #06b6d4, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-                                        {req.requester.full_name?.charAt(0) || req.requester.username?.charAt(0) || 'U'}
+                                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #06b6d4, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', overflow: 'hidden' }}>
+                                        {req.requester.avatar_url ? (
+                                            <img src={req.requester.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        ) : (
+                                            req.requester.full_name?.charAt(0) || req.requester.username?.charAt(0) || 'U'
+                                        )}
                                     </div>
                                     <div>
                                         <div style={{ fontWeight: '600' }}>{req.requester.full_name || req.requester.username || 'Unknown User'}</div>
@@ -123,8 +127,12 @@ const FriendRequestsTab = () => {
                         {outgoingRequests.map(req => (
                             <div key={req.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #64748b, #475569)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-                                        {req.addressee.full_name?.charAt(0) || req.addressee.username?.charAt(0) || 'U'}
+                                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #64748b, #475569)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', overflow: 'hidden' }}>
+                                        {req.addressee.avatar_url ? (
+                                            <img src={req.addressee.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        ) : (
+                                            req.addressee.full_name?.charAt(0) || req.addressee.username?.charAt(0) || 'U'
+                                        )}
                                     </div>
                                     <div>
                                         <div style={{ fontWeight: '600' }}>{req.addressee.full_name || req.addressee.username || 'Unknown User'}</div>

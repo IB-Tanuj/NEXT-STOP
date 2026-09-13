@@ -6,7 +6,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
   const [menuOpen, setMenuOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
-  const { user, session, logout } = useAuth()
+  const { user, session, profile, logout } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -16,8 +16,8 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
       })
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data)) {
-          setPendingCount(data.length);
+        if (data && data.incoming) {
+          setPendingCount(data.incoming.length);
         }
       })
       .catch(err => console.error("Error fetching requests count:", err));
@@ -92,7 +92,11 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
               onMouseEnter={e => e.currentTarget.style.transform = "scale(1.1)"}
               onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
               >
-                {user.email.charAt(0).toUpperCase()}
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                ) : (
+                  user.email.charAt(0).toUpperCase()
+                )}
               </div>
 
               {profileMenuOpen && (
