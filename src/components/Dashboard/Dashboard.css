@@ -327,11 +327,11 @@
         rgba(255, 255, 255, 0.35) 50%,
         transparent 100%
     );
-    animation: shimmer 2s infinite;
+    animation: progress-shimmer 2s infinite;
     border-radius: 5px;
 }
 
-@keyframes shimmer {
+@keyframes progress-shimmer {
     0% { transform: translateX(-100%); }
     100% { transform: translateX(100%); }
 }
