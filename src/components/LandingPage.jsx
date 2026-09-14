@@ -178,8 +178,6 @@ const LandingPage = () => {
               Explore {seasonName} Picks
             </a>
           </div>
-
-          {timerCard}
         </main>
 
         <a className="scroll-hint" href="#destinations" aria-label="Scroll down">▾</a>
