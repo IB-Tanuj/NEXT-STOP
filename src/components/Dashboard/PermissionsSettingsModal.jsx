@@ -10,11 +10,23 @@ const PermissionsSettingsModal = ({ profile, onClose, onSave }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    const storageKey = `trip_website_prefs_${profile?.id}`;
+
     useEffect(() => {
-        if (profile?.preferences?.permissions) {
-            setPermissions(profile.preferences.permissions);
+        if (profile?.id) {
+            const savedPrefs = localStorage.getItem(storageKey);
+            if (savedPrefs) {
+                try {
+                    const parsed = JSON.parse(savedPrefs);
+                    if (parsed.permissions) {
+                        setPermissions(parsed.permissions);
+                    }
+                } catch (e) {
+                    console.error("Error parsing preferences from local storage:", e);
+                }
+            }
         }
-    }, [profile]);
+    }, [profile, storageKey]);
 
     const handleToggle = (key) => {
         setPermissions(prev => ({ ...prev, [key]: !prev[key] }));
@@ -26,21 +38,16 @@ const PermissionsSettingsModal = ({ profile, onClose, onSave }) => {
         setError(null);
 
         try {
-            const updatedPreferences = {
-                ...profile.preferences,
+            // Get existing preferences to not overwrite notifications
+            const existingPrefs = JSON.parse(localStorage.getItem(storageKey) || '{}');
+            const updatedPrefs = {
+                ...existingPrefs,
                 permissions: permissions
             };
-
-            const { data, error: updateError } = await supabase
-                .from('profiles')
-                .update({ preferences: updatedPreferences })
-                .eq('id', profile.id)
-                .select()
-                .single();
-
-            if (updateError) throw updateError;
             
-            onSave(data);
+            localStorage.setItem(storageKey, JSON.stringify(updatedPrefs));
+            
+            // Just close the modal since we are no longer saving to DB
             onClose();
         } catch (err) {
             console.error("Error updating permissions:", err);
