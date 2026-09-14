@@ -11,6 +11,16 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     gender TEXT,
     dob DATE,
     tags TEXT[] DEFAULT '{}',
+    preferences JSONB DEFAULT '{
+      "notifications": {
+        "friend_requests": true,
+        "trip_reminders": true
+      },
+      "permissions": {
+        "location": false,
+        "camera": false
+      }
+    }'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
