@@ -4,6 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import EditProfileModal from './EditProfileModal';
 import SearchFriendsModal from './SearchFriendsModal';
 import FriendsListModal from './FriendsListModal';
+import NotificationSettingsModal from './NotificationSettingsModal';
+import PermissionsSettingsModal from './PermissionsSettingsModal';
 import './ProfileTab.css';
 
 /* ─── Monochrome SVG Icons ─── */
@@ -59,7 +61,7 @@ const IconGrid = () => (
     </svg>
 );
 
-const SettingsMenuModal = ({ onClose, onEditProfile, onLogout }) => {
+const SettingsMenuModal = ({ onClose, onEditProfile, onOpenNotifications, onOpenPermissions, onLogout }) => {
     const navigate = useNavigate();
     return (
         <div className="modal-overlay" onClick={onClose}>
@@ -72,13 +74,13 @@ const SettingsMenuModal = ({ onClose, onEditProfile, onLogout }) => {
                     <button className="settings-list-btn" onClick={() => { onClose(); onEditProfile(); }}>
                         Edit Profile
                     </button>
-                    <button className="settings-list-btn" onClick={() => alert("Notification feature coming soon!")}>
+                    <button className="settings-list-btn" onClick={() => { onClose(); onOpenNotifications(); }}>
                         Notification
                     </button>
                     <button className="settings-list-btn" onClick={() => { onClose(); navigate('/privacy'); }}>
                         Privacy Policy
                     </button>
-                    <button className="settings-list-btn" onClick={() => alert("Website Permissions feature coming soon!")}>
+                    <button className="settings-list-btn" onClick={() => { onClose(); onOpenPermissions(); }}>
                         Website Permissions
                     </button>
                     <button className="settings-list-btn" onClick={() => { onClose(); navigate('/terms'); }}>
@@ -100,6 +102,8 @@ const ProfileTab = () => {
     const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
     const [isFriendsListModalOpen, setIsFriendsListModalOpen] = useState(false);
+    const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+    const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
     const [localProfile, setLocalProfile] = useState(null);
     const [friendsCount, setFriendsCount] = useState(0);
     const [activeTab, setActiveTab] = useState('wanderlogs');
@@ -289,7 +293,25 @@ const ProfileTab = () => {
                     <SettingsMenuModal 
                         onClose={() => setIsSettingsMenuOpen(false)}
                         onEditProfile={() => setIsEditModalOpen(true)}
+                        onOpenNotifications={() => setIsNotificationModalOpen(true)}
+                        onOpenPermissions={() => setIsPermissionsModalOpen(true)}
                         onLogout={handleLogout}
+                    />
+                )}
+
+                {isNotificationModalOpen && (
+                    <NotificationSettingsModal 
+                        profile={currentProfile}
+                        onClose={() => setIsNotificationModalOpen(false)}
+                        onSave={handleSaveProfile}
+                    />
+                )}
+
+                {isPermissionsModalOpen && (
+                    <PermissionsSettingsModal 
+                        profile={currentProfile}
+                        onClose={() => setIsPermissionsModalOpen(false)}
+                        onSave={handleSaveProfile}
                     />
                 )}
             </div>
