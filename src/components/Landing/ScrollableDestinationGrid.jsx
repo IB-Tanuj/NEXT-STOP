@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import './ScrollableDestinationGrid.css';
 
 const SPOT_IMAGES = [
-  { name: "Gangtok", state: "Sikkim", desc: "Himalayan beauty and serene monasteries.", img: "/landing2/gangtok.jpg" },
-  { name: "Jaipur", state: "Rajasthan", desc: "The Pink City glowing under autumn skies.", img: "/landing2/jaipur.jpg" },
-  { name: "Kolkata", state: "West Bengal", desc: "Festive vibes and colonial charm.", img: "/landing2/kolkata.jpg" },
-  { name: "Leh", state: "Ladakh", desc: "Cold desert skies and high altitude passes.", img: "/landing2/leh.jpg" },
-  { name: "Shimla", state: "Himachal Pradesh", desc: "Pine forests and colonial architecture.", img: "/landing2/shimla.jpg" },
-  { name: "Srinagar", state: "Jammu & Kashmir", desc: "Dal lake reflecting the chinar leaves.", img: "/landing2/srinagar.jpg" }
+  { name: "Gangtok", state: "Sikkim", desc: "Himalayan beauty and serene monasteries.", img: "/landing2/gangtok.webp" },
+  { name: "Jaipur", state: "Rajasthan", desc: "The Pink City glowing under autumn skies.", img: "/landing2/jaipur.webp" },
+  { name: "Kolkata", state: "West Bengal", desc: "Festive vibes and colonial charm.", img: "/landing2/kolkata.webp" },
+  { name: "Leh", state: "Ladakh", desc: "Cold desert skies and high altitude passes.", img: "/landing2/leh.webp" },
+  { name: "Shimla", state: "Himachal Pradesh", desc: "Pine forests and colonial architecture.", img: "/landing2/shimla.webp" },
+  { name: "Srinagar", state: "Jammu & Kashmir", desc: "Dal lake reflecting the chinar leaves.", img: "/landing2/srinagar.webp" }
 ];
 
 const ScrollableDestinationGrid = () => {
