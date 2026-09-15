@@ -222,10 +222,7 @@ const ProfileTab = () => {
                             </div>
                         )}
 
-                        {/* Row 6: Handle */}
-                        <div className="profile-hero__handle">
-                            @ {currentProfile.username || currentProfile.full_name || 'username'}
-                        </div>
+                        {/* Row 6: Removed as Handle is now at the top */}
                     </div>
                 </div>
 
