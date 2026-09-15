@@ -43,8 +43,8 @@ const LandingPage = () => {
     setIsAuthOpen(true)
   }
 
-  // Current season determines if rain is shown (varsha = monsoon)
-  const showRain = seasonKey === "varsha"
+  // Always show rain on the classic monsoon page
+  const showRain = true
 
   const { timerCard, seasonBadge, seasonEmoji, seasonName } = SeasonTimer()
 
