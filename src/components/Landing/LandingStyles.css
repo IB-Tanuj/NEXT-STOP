@@ -488,7 +488,7 @@
   height: 52px;
   font-size: 1.4rem;
   border-radius: 14px;
-  background: #000000;
+  background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.3);
   filter: grayscale(1) brightness(1.7);
   margin-bottom: 16px;

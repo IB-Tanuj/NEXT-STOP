@@ -15,7 +15,7 @@
     position: absolute;
     top: -50px;
     will-change: transform, opacity;
-    animation: fall linear infinite;
+    animation: fall linear forwards;
 }
 
 /* Falling & Swaying Animation Loop */

@@ -124,6 +124,28 @@ const NewLandingPage = () => {
             border: 1px solid rgba(255, 255, 255, 0.15) !important;
             font-style: italic;
         }
+        /* Auth Drawer Autumn Theme Overrides */
+        .v2-landing {
+            --mint: #fde047;
+            --mint-strong: #eab308;
+        }
+        .v2-landing .auth-drawer {
+            background: rgba(15, 23, 42, 0.85) !important;
+        }
+        .v2-landing .auth-drawer-icon {
+            background: rgba(253, 224, 71, 0.1) !important;
+        }
+        .v2-landing .auth-submit-btn {
+            color: #1e1b4b !important;
+            font-weight: 700;
+        }
+        .v2-landing .auth-checkmark::after {
+            border-color: #1e1b4b !important;
+        }
+        .v2-landing .auth-input:focus {
+            border-color: rgba(253, 224, 71, 0.55) !important;
+            box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.1) !important;
+        }
       `}</style>
 
       {/* Background Image Overlay */}
