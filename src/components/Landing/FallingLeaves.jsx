@@ -19,7 +19,7 @@ const FallingLeaves = () => {
         const leafCount = 25;
         const leaves = [];
 
-        const createLeaf = () => {
+        const createLeaf = (isInitial = false) => {
             const leaf = document.createElement("div");
             leaf.classList.add("leaf");
             leaf.innerHTML = leafSVG;
@@ -28,7 +28,11 @@ const FallingLeaves = () => {
             const size = Math.random() * 30 + 25; // 25px to 55px
             const startPositionX = Math.random() * window.innerWidth;
             const duration = Math.random() * 5 + 6; // 6s to 11s animation time
-            const delay = Math.random() * -10; // Negative delay ensures instant organic scattering on load
+            
+            // Only apply negative delay on initial load so leaves start scattered
+            // Ensure negative delay doesn't exceed duration to avoid instant animationend
+            const delay = isInitial ? -(Math.random() * (duration - 0.1)) : 0; 
+            
             const chosenColor = colors[Math.floor(Math.random() * colors.length)];
 
             // Apply dynamic styles
@@ -43,14 +47,16 @@ const FallingLeaves = () => {
             leaves.push(leaf);
 
             // Recycle leaf element once its animation loop completes
-            leaf.addEventListener('animationiteration', () => {
-                leaf.style.left = `${Math.random() * window.innerWidth}px`;
-                leaf.style.animationDuration = `${Math.random() * 5 + 6}s`;
+            leaf.addEventListener('animationend', () => {
+                leaf.remove();
+                const index = leaves.indexOf(leaf);
+                if (index > -1) leaves.splice(index, 1);
+                createLeaf(false);
             });
         };
 
         for (let i = 0; i < leafCount; i++) {
-            createLeaf();
+            createLeaf(true);
         }
 
         return () => {
