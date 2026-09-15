@@ -34,7 +34,14 @@ const EditProfileModal = ({ profile, user, onClose, onSave }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        
+        if (name === 'username') {
+            // Only allow alphanumeric characters and underscores, and convert to lowercase
+            const formattedValue = value.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+            setFormData(prev => ({ ...prev, [name]: formattedValue }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const toggleTag = (tag) => {
@@ -131,13 +138,20 @@ const EditProfileModal = ({ profile, user, onClose, onSave }) => {
 
                     <div className="form-group">
                         <label>Username</label>
-                        <input 
-                            type="text" 
-                            name="username" 
-                            value={formData.username} 
-                            onChange={handleChange}
-                            placeholder="e.g. tanuj_19_"
-                        />
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                            <span style={{ position: 'absolute', left: '12px', color: '#94a3b8' }}>@</span>
+                            <input 
+                                type="text" 
+                                name="username" 
+                                value={formData.username} 
+                                onChange={handleChange}
+                                placeholder="johndoe"
+                                style={{ paddingLeft: '30px' }}
+                            />
+                        </div>
+                        <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
+                            Your unique username. Friends can use this to send you friend requests.
+                        </p>
                     </div>
                     
                     <div className="form-group">
