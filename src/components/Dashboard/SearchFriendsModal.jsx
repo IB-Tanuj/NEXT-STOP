@@ -11,14 +11,14 @@ const IconSearch = () => (
 
 const SearchFriendsModal = ({ onClose }) => {
     const { session } = useAuth();
-    const [searchUid, setSearchUid] = useState('');
+    const [searchUsername, setSearchUsername] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
 
     const handleSearch = async (e) => {
         e.preventDefault();
-        if (!searchUid.trim()) return;
+        if (!searchUsername.trim()) return;
         
         setLoading(true);
         setMessage('');
@@ -31,13 +31,13 @@ const SearchFriendsModal = ({ onClose }) => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session?.access_token || ''}`
                 },
-                body: JSON.stringify({ targetUid: searchUid.trim() })
+                body: JSON.stringify({ targetUsername: searchUsername.trim() })
             });
             const data = await res.json();
 
             if (res.ok) {
                 setMessage(data.message || 'Friend request sent!');
-                setSearchUid('');
+                setSearchUsername('');
             } else {
                 setError(data.error || 'Failed to send request');
             }
@@ -53,16 +53,16 @@ const SearchFriendsModal = ({ onClose }) => {
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
                 <button className="modal-close" onClick={onClose}>×</button>
-                <h3 style={{ marginBottom: '20px', color: '#eef7f1' }}>Search Friends by UID</h3>
+                <h3 style={{ marginBottom: '20px', color: '#eef7f1' }}>Search Friends by Username</h3>
                 
                 <form onSubmit={handleSearch}>
                     <div className="form-group" style={{ marginBottom: '15px' }}>
-                        <label>User's Unique ID</label>
+                        <label>Friend's Username</label>
                         <input
                             type="text"
-                            value={searchUid}
-                            onChange={(e) => setSearchUid(e.target.value)}
-                            placeholder="e.g. 605D1DCC"
+                            value={searchUsername}
+                            onChange={(e) => setSearchUsername(e.target.value)}
+                            placeholder="e.g. johndoe"
                             style={{ 
                                 width: '100%', 
                                 padding: '10px 14px', 

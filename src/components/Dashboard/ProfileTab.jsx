@@ -182,7 +182,11 @@ const ProfileTab = () => {
                         {/* Row 1: Username + Settings gear */}
                         <div className="profile-hero__username-row">
                             <h2 className="profile-hero__username">
-                                {currentProfile.username || currentProfile.full_name || 'set_username'}
+                                {currentProfile.username ? `@${currentProfile.username}` : (
+                                    <span style={{ color: '#ef4444', fontSize: '1rem', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <IconSettings /> Set a username in Settings
+                                    </span>
+                                )}
                             </h2>
                             <button className="profile-hero__settings-btn" onClick={() => setIsSettingsMenuOpen(true)} title="Settings">
                                 <IconSettings />
