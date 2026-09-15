@@ -1,20 +1,20 @@
 import supabase from '../config/supabase.js';
 
-// Send a friend request by Unique ID
+// Send a friend request by Username
 export const sendFriendRequest = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { targetUid } = req.body;
+        const { targetUsername } = req.body;
 
-        if (!targetUid) {
-            return res.status(400).json({ error: 'Target Unique ID is required' });
+        if (!targetUsername) {
+            return res.status(400).json({ error: 'Target Username is required' });
         }
 
-        // Find user by Unique ID
+        // Find user by Username (case-insensitive)
         const { data: targetUser, error: searchError } = await supabase
             .from('profiles')
-            .select('id, unique_id')
-            .eq('unique_id', targetUid.toUpperCase())
+            .select('id, username')
+            .ilike('username', targetUsername)
             .single();
 
         if (searchError || !targetUser) {

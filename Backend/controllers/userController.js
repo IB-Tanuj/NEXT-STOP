@@ -23,18 +23,18 @@ export const getProfile = async (req, res) => {
     }
 };
 
-// Search profile by Unique ID (for adding friends later)
-export const searchByUniqueId = async (req, res) => {
+// Search profile by Username (for adding friends later)
+export const searchByUsername = async (req, res) => {
     try {
-        const { uid } = req.params;
-        if (!uid) {
-            return res.status(400).json({ error: 'Unique ID is required' });
+        const { username } = req.params;
+        if (!username) {
+            return res.status(400).json({ error: 'Username is required' });
         }
 
         const { data, error } = await supabase
             .from('profiles')
-            .select('id, unique_id, full_name, avatar_url')
-            .eq('unique_id', uid.toUpperCase())
+            .select('id, username, full_name, avatar_url')
+            .ilike('username', username)
             .single();
 
         if (error) {
