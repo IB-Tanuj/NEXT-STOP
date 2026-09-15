@@ -142,6 +142,27 @@ const LandingPage = () => {
         initialMode={authMode} 
       />
 
+      {/* Switch to New View Toggle */}
+      <button 
+        onClick={() => navigate("/")} 
+        style={{
+            position: 'fixed',
+            top: '80px',
+            right: '20px',
+            zIndex: 100,
+            padding: '8px 16px',
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(5px)',
+            border: '1px solid rgba(255, 255, 255, 0.4)',
+            color: '#fff',
+            borderRadius: '20px',
+            cursor: 'pointer',
+            transition: 'background 0.3s'
+        }}
+      >
+        New View ✨
+      </button>
+
       {/* ── HERO ── */}
       <section className="hero" id="home">
         <header className="topbar">

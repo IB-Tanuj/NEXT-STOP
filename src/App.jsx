@@ -18,7 +18,8 @@ const DevAdminPage = lazy(() => import("./components/DevAdminPage"))
 const LegalPage = lazy(() => import("./components/LegalPage"))
 
 import { allIndiaLocations } from "./data/allLocations"
-import LandingPage from "./components/LandingPage"
+const LandingPage = lazy(() => import("./components/LandingPage"))
+const NewLandingPage = lazy(() => import("./components/NewLandingPage"))
 import { useAuth } from "./context/AuthContext"
 import PersonalDashboard from "./components/Dashboard/PersonalDashboard"
 
@@ -243,8 +244,11 @@ function App() {
         <Route path="/privacy" element={<LegalPage type="privacy" />} />
         <Route path="/terms" element={<LegalPage type="terms" />} />
         
-        {/* New Marketing Landing Page */}
-        <Route path="/" element={<LandingPage />} />
+        {/* New Marketing Landing Page (V2) */}
+        <Route path="/" element={<NewLandingPage />} />
+
+        {/* Classic Landing Page (V1) */}
+        <Route path="/classic" element={<LandingPage />} />
         
         {/* Login Page Redirects to Drawer on Landing */}
         <Route path="/login" element={<Navigate to="/?auth=login" replace />} />
