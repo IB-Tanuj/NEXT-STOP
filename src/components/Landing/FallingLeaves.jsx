@@ -25,7 +25,7 @@ const FallingLeaves = () => {
             leaf.innerHTML = leafSVG;
 
             // Randomize leaf characteristics
-            const size = Math.random() * 20 + 15; // 15px to 35px
+            const size = Math.random() * 30 + 25; // 25px to 55px
             const startPositionX = Math.random() * window.innerWidth;
             const duration = Math.random() * 5 + 6; // 6s to 11s animation time
             const delay = Math.random() * -10; // Negative delay ensures instant organic scattering on load

@@ -52,9 +52,9 @@ const LandingAudioV2 = () => {
                 onClick={toggleAudio}
                 style={{
                     position: 'fixed',
-                    top: '20px',
-                    right: '20px',
-                    zIndex: 100,
+                    bottom: 'clamp(16px, 3vw, 28px)',
+                    right: 'clamp(16px, 3vw, 28px)',
+                    zIndex: 60,
                     padding: '10px 20px',
                     background: 'rgba(255, 255, 255, 0.1)',
                     backdropFilter: 'blur(5px)',
