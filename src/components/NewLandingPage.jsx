@@ -112,6 +112,20 @@ const NewLandingPage = () => {
 
   return (
     <div className="landing-page v2-landing" ref={wrapperRef} style={{ position: 'relative', zIndex: 0, background: 'linear-gradient(135deg, #0f172a, #1e1b4b, #2e1065)' }}>
+      {/* V2 specific style overrides */}
+      <style>{`
+        .v2-landing .season-line strong { color: #fde047; }
+        .v2-landing .logo-dash { color: #fde047; }
+        .v2-landing .btn-solid { box-shadow: 0 10px 28px rgba(253, 224, 71, 0.35) !important; }
+        .v2-landing .timer-card { 
+            background: rgba(255, 255, 255, 0.05) !important; 
+            backdrop-filter: blur(24px) !important; 
+            -webkit-backdrop-filter: blur(24px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            font-style: italic;
+        }
+      `}</style>
+
       {/* Background Image Overlay */}
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: -1, opacity: 0.3, pointerEvents: 'none', overflow: 'hidden' }}>
         <img ref={bgRef} src="/landing2/background.webp" alt="background" style={{ width: '100%', height: '185vh', objectFit: 'cover', willChange: 'transform' }} />
@@ -167,6 +181,12 @@ const NewLandingPage = () => {
 
           <h1 className="logo" style={{ color: '#fde047', textShadow: '0 0 20px rgba(253, 224, 71, 0.3)' }}>NEXT<span className="logo-dash">–</span>STOP</h1>
           <p className="tagline" style={{ color: '#e2e8f0' }}>Every stop, every stay, every fare — live. One itinerary built around you.</p>
+          <p className="description" style={{ color: '#cbd5e1' }}>
+            NEXT·STOP is your real-time trip co-pilot: split your budget as you plan,
+            compare live hotel prices from hostel bunks to luxury suites, track train,
+            flight and bus fares as they move, and dive into spot intel — entry fees,
+            permits, rules and expert tips. Then watch it all become a personal itinerary.
+          </p>
           
           <div className="hero-actions" style={{ marginTop: '40px' }}>
             <button className="btn btn-solid btn-lg" type="button" onClick={() => openAuth('signup')} style={{ background: '#fde047', color: '#1e1b4b' }}>
