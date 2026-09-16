@@ -98,8 +98,8 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
                 ) : (
                   user.email.charAt(0).toUpperCase()
                 )}
-                {profile && !profile.username && (
-                  <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '12px', height: '12px', backgroundColor: '#ff4757', borderRadius: '50%', border: `2px solid ${theme.bg}` }} title="Action Required" />
+                {((profile && !profile.username) || pendingCount > 0) && (
+                  <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '12px', height: '12px', backgroundColor: '#ff4757', borderRadius: '50%', border: `2px solid ${theme.bg}` }} title={pendingCount > 0 ? "New Notifications" : "Action Required"} />
                 )}
               </div>
 
@@ -156,12 +156,16 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
                       </span>
                       {item.count > 0 && (
                         <span style={{
-                          background: theme.primary,
+                          background: '#ff4757',
                           color: '#fff',
                           fontSize: '11px',
                           fontWeight: 'bold',
-                          padding: '2px 6px',
-                          borderRadius: '10px'
+                          width: '20px',
+                          height: '20px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '50%'
                         }}>
                           {item.count}
                         </span>
@@ -311,12 +315,16 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
                   </span>
                   {item.count > 0 && (
                     <span style={{
-                      background: theme.primary,
+                      background: '#ff4757',
                       color: '#fff',
                       fontSize: '11px',
                       fontWeight: 'bold',
-                      padding: '2px 6px',
-                      borderRadius: '10px'
+                      width: '20px',
+                      height: '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '50%'
                     }}>
                       {item.count}
                     </span>
