@@ -93,7 +93,7 @@ const FriendRequestsTab = () => {
                                     </div>
                                     <div>
                                         <div style={{ fontWeight: '600' }}>{req.requester.full_name || req.requester.username || 'Unknown User'}</div>
-                                        <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>UID: {req.requester.unique_id}</div>
+                                        {req.requester.username && <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>@{req.requester.username}</div>}
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', gap: '10px' }}>
@@ -136,7 +136,7 @@ const FriendRequestsTab = () => {
                                     </div>
                                     <div>
                                         <div style={{ fontWeight: '600' }}>{req.addressee.full_name || req.addressee.username || 'Unknown User'}</div>
-                                        <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>UID: {req.addressee.unique_id}</div>
+                                        {req.addressee.username && <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>@{req.addressee.username}</div>}
                                     </div>
                                 </div>
                                 <div>

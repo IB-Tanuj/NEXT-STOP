@@ -30,7 +30,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
     if (!budget.trim()) return false
     if (Number(budget) < 2200) return false
     if (budgetType === "group" && !groupSize.trim()) return false
-    if (budgetType === "group" && groupMembers.filter(m => (typeof m === 'object' ? (m?.name || "") : (m || "")).trim()).length === 0) return false
+    if (budgetType === "group" && groupMembers.some(m => !m?.name?.trim())) return false
     if (choice === "specific" && !specificPlace) return false
     return true
   }
@@ -448,8 +448,11 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
 
           {budgetType === "group" && groupSize && (
             <div style={{ marginTop: "24px", animation: "fadeIn 0.4s ease" }}>
-              <div style={{ color: theme.subtext, fontSize: "13px", marginBottom: "12px" }}>
+              <div style={{ color: theme.subtext, fontSize: "13px", marginBottom: "4px" }}>
                 👥 Who's coming with you?
+              </div>
+              <div style={{ color: theme.subtext, fontSize: "11px", marginBottom: "12px", fontStyle: "italic", opacity: 0.8 }}>
+                *Use dummy names for now if your friends do not have an account on Next-Stop
               </div>
               {Array.from({ length: Math.max(0, (isNaN(parseInt(groupSize)) ? 7 : parseInt(groupSize)) - 1) }).map((_, i) => (
                 <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "10px", flexWrap: "wrap" }}>
@@ -480,35 +483,35 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                           setGroupMembers(newMembers);
                           return;
                         }
-                        const uid = prompt("Enter the friend's 8-character Unique ID (e.g. A4B9F1XC):");
-                        if (!uid || !uid.trim()) return;
+                        const usernameInput = prompt("Enter the friend's Username (e.g. tanuj):");
+                        if (!usernameInput || !usernameInput.trim()) return;
                         try {
                           const reqRes = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/friends/request`, {
-                              method: 'POST',
-                              headers: {
-                                  'Content-Type': 'application/json',
-                                  'Authorization': `Bearer ${session?.access_token || ''}`
-                              },
-                              body: JSON.stringify({ targetUid: uid.trim() })
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${session?.access_token || ''}`
+                            },
+                            body: JSON.stringify({ targetUsername: usernameInput.trim() })
                           });
                           const data = await reqRes.json();
                           if (reqRes.ok) {
-                              alert(data.message || "Friend request sent! They can be added to the trip once they accept.");
+                            alert(data.message || "Friend request sent! They can be added to the trip once they accept.");
                           } else {
-                              // If they are already friends, we can fetch their info and add them directly
-                              if (data.error === 'You are already friends') {
-                                  const userRes = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/user/search/${uid.trim().toUpperCase()}`);
-                                  if (userRes.ok) {
-                                      const userData = await userRes.json();
-                                      const newMembers = [...groupMembers];
-                                      newMembers[i] = { name: userData.full_name || userData.username || userData.unique_id, uid: userData.unique_id, id: userData.id };
-                                      setGroupMembers(newMembers);
-                                  } else {
-                                      alert("User not found");
-                                  }
+                            // If they are already friends, we can fetch their info and add them directly
+                            if (data.error === 'You are already friends') {
+                              const userRes = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/user/search/${usernameInput.trim()}`);
+                              if (userRes.ok) {
+                                const userData = await userRes.json();
+                                const newMembers = [...groupMembers];
+                                newMembers[i] = { name: userData.full_name || userData.username || userData.unique_id, uid: userData.username, id: userData.id };
+                                setGroupMembers(newMembers);
                               } else {
-                                  alert(data.error || "Failed to send friend request");
+                                alert("User not found");
                               }
+                            } else {
+                              alert(data.error || "Failed to send friend request");
+                            }
                           }
                         } catch (err) {
                           alert("Failed to process request");
@@ -521,7 +524,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                         padding: "0 14px", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer"
                       }}
                     >
-                      {groupMembers[i]?.uid ? "Unlink" : "Add by UID"}
+                      {groupMembers[i]?.uid ? "Unlink" : "Add by Username"}
                     </button>
                     {!groupMembers[i]?.uid && (
                       <button
@@ -744,32 +747,32 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
               ) : (
                 friends.map(friend => (
                   <div key={friend.id}
-                       onClick={() => {
-                         const newMembers = [...groupMembers];
-                         newMembers[showFriendsModal.index] = { name: friend.full_name || friend.username || friend.unique_id, uid: friend.unique_id, id: friend.id };
-                         setGroupMembers(newMembers);
-                         setShowFriendsModal({ show: false, index: null });
-                       }}
-                       style={{
-                         display: 'flex',
-                         alignItems: 'center',
-                         gap: '15px',
-                         padding: '12px',
-                         background: `${theme.primary}11`,
-                         borderRadius: '12px',
-                         cursor: 'pointer',
-                         border: `1px solid ${theme.primary}22`
-                       }}>
+                    onClick={() => {
+                      const newMembers = [...groupMembers];
+                      newMembers[showFriendsModal.index] = { name: friend.full_name || friend.username || friend.unique_id, uid: friend.username, id: friend.id };
+                      setGroupMembers(newMembers);
+                      setShowFriendsModal({ show: false, index: null });
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '15px',
+                      padding: '12px',
+                      background: `${theme.primary}11`,
+                      borderRadius: '12px',
+                      cursor: 'pointer',
+                      border: `1px solid ${theme.primary}22`
+                    }}>
                     <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: theme.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', overflow: 'hidden' }}>
                       {friend.avatar_url ? (
-                          <img src={friend.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={friend.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
-                          friend.full_name?.charAt(0) || friend.username?.charAt(0) || 'U'
+                        friend.full_name?.charAt(0) || friend.username?.charAt(0) || 'U'
                       )}
                     </div>
                     <div>
                       <div style={{ color: theme.text, fontWeight: 'bold' }}>{friend.full_name || friend.username}</div>
-                      <div style={{ color: theme.subtext, fontSize: '12px' }}>UID: {friend.unique_id}</div>
+                      {friend.username && <div style={{ color: theme.subtext, fontSize: '12px' }}>@{friend.username}</div>}
                     </div>
                   </div>
                 ))
