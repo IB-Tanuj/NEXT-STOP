@@ -85,7 +85,7 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
                                 </div>
                                 <div>
                                     <h4 style={{ margin: 0, color: '#fff', fontSize: '16px' }}>{friend.full_name || friend.username}</h4>
-                                    <p style={{ margin: '4px 0 0', color: '#94a3b8', fontSize: '13px' }}>UID: {friend.unique_id}</p>
+                                    {friend.username && <p style={{ margin: '4px 0 0', color: '#94a3b8', fontSize: '13px' }}>@{friend.username}</p>}
                                 </div>
                             </div>
                             <button 
