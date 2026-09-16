@@ -88,6 +88,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontWeight: 'bold', fontSize: '14px', cursor: 'pointer',
                 transition: "transform 0.2s ease",
+                position: 'relative'
               }} title="Profile Menu"
               onMouseEnter={e => e.currentTarget.style.transform = "scale(1.1)"}
               onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
@@ -96,6 +97,9 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
                   <img src={profile.avatar_url} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                 ) : (
                   user.email.charAt(0).toUpperCase()
+                )}
+                {profile && !profile.username && (
+                  <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '12px', height: '12px', backgroundColor: '#ff4757', borderRadius: '50%', border: `2px solid ${theme.bg}` }} title="Action Required" />
                 )}
               </div>
 
@@ -120,7 +124,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
                     {user.email}
                   </div>
                   {[
-                    { label: 'Profile', path: '/dashboard/profile' },
+                    { label: 'Profile', path: '/dashboard/profile', alert: profile && !profile.username },
                     { label: 'Saved Trips', path: '/dashboard/trips' },
                     { label: 'Savings Track', path: '/dashboard/savings' },
                     { label: 'Friend Requests', path: '/dashboard/requests', count: pendingCount },
@@ -146,7 +150,10 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
                       onMouseEnter={e => e.currentTarget.style.backgroundColor = `${theme.primary}22`}
                       onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
-                      <span>{item.label}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {item.label}
+                        {item.alert && <div style={{ width: '8px', height: '8px', backgroundColor: '#ff4757', borderRadius: '50%' }} />}
+                      </span>
                       {item.count > 0 && (
                         <span style={{
                           background: theme.primary,
@@ -279,7 +286,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
                 Logged in as {user.email}
               </div>
               {[
-                { label: 'Profile', path: '/dashboard/profile' },
+                { label: 'Profile', path: '/dashboard/profile', alert: profile && !profile.username },
                 { label: 'Saved Trips', path: '/dashboard/trips' },
                 { label: 'Savings Track', path: '/dashboard/savings' },
                 { label: 'Friend Requests', path: '/dashboard/requests', count: pendingCount },
@@ -298,7 +305,10 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
                     borderBottom: `1px solid ${theme.primary}22`
                   }}
                 >
-                  <span>{item.label}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {item.label}
+                    {item.alert && <div style={{ width: '8px', height: '8px', backgroundColor: '#ff4757', borderRadius: '50%' }} />}
+                  </span>
                   {item.count > 0 && (
                     <span style={{
                       background: theme.primary,
