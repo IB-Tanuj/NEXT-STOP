@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import ViewProfileModal from './ViewProfileModal';
 import './Dashboard.css';
 
 const IconCheck = () => (
@@ -20,6 +21,7 @@ const FriendRequestsTab = () => {
     const [incomingRequests, setIncomingRequests] = useState([]);
     const [outgoingRequests, setOutgoingRequests] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedProfile, setSelectedProfile] = useState(null);
 
     const fetchRequests = async () => {
         try {
@@ -83,7 +85,10 @@ const FriendRequestsTab = () => {
                     <div style={{ display: 'grid', gap: '15px' }}>
                         {incomingRequests.map(req => (
                             <div key={req.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                <div 
+                                    style={{ display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}
+                                    onClick={() => setSelectedProfile(req.requester)}
+                                >
                                     <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #06b6d4, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', overflow: 'hidden' }}>
                                         {req.requester.avatar_url ? (
                                             <img src={req.requester.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -126,7 +131,10 @@ const FriendRequestsTab = () => {
                     <div style={{ display: 'grid', gap: '15px' }}>
                         {outgoingRequests.map(req => (
                             <div key={req.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                <div 
+                                    style={{ display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}
+                                    onClick={() => setSelectedProfile(req.addressee)}
+                                >
                                     <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #64748b, #475569)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', overflow: 'hidden' }}>
                                         {req.addressee.avatar_url ? (
                                             <img src={req.addressee.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -147,6 +155,13 @@ const FriendRequestsTab = () => {
                     </div>
                 )}
             </div>
+
+            {selectedProfile && (
+                <ViewProfileModal 
+                    userProfile={selectedProfile} 
+                    onClose={() => setSelectedProfile(null)} 
+                />
+            )}
         </div>
     );
 };
