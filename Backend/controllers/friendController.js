@@ -141,7 +141,7 @@ export const getPendingRequests = async (req, res) => {
             .from('friendships')
             .select(`
                 id, created_at, status,
-                requester:profiles!requester_id(id, unique_id, full_name, username, avatar_url)
+                requester:profiles!requester_id(id, unique_id, full_name, username, avatar_url, bio, tags)
             `)
             .eq('addressee_id', userId)
             .eq('status', 'pending');
@@ -153,7 +153,7 @@ export const getPendingRequests = async (req, res) => {
             .from('friendships')
             .select(`
                 id, created_at, status,
-                addressee:profiles!addressee_id(id, unique_id, full_name, username, avatar_url)
+                addressee:profiles!addressee_id(id, unique_id, full_name, username, avatar_url, bio, tags)
             `)
             .eq('requester_id', userId)
             .eq('status', 'pending');
@@ -176,8 +176,8 @@ export const getAcceptedFriends = async (req, res) => {
             .from('friendships')
             .select(`
                 id, requester_id, addressee_id,
-                requester:profiles!requester_id(id, unique_id, full_name, username, avatar_url),
-                addressee:profiles!addressee_id(id, unique_id, full_name, username, avatar_url)
+                requester:profiles!requester_id(id, unique_id, full_name, username, avatar_url, bio, tags),
+                addressee:profiles!addressee_id(id, unique_id, full_name, username, avatar_url, bio, tags)
             `)
             .eq('status', 'accepted')
             .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
