@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import ViewProfileModal from './ViewProfileModal';
 import './ProfileTab.css';
 
 const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
@@ -7,6 +8,7 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
     const [friends, setFriends] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [selectedProfile, setSelectedProfile] = useState(null);
 
     useEffect(() => {
         if (isOpen && session?.access_token) {
@@ -75,7 +77,10 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
                     )}
                     {friends.map(friend => (
                         <div key={friend.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                            <div 
+                                style={{ display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}
+                                onClick={() => setSelectedProfile(friend)}
+                            >
                                 <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '18px', overflow: 'hidden' }}>
                                     {friend.avatar_url ? (
                                         <img src={friend.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -107,6 +112,13 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
                     ))}
                 </div>
             </div>
+            
+            {selectedProfile && (
+                <ViewProfileModal 
+                    userProfile={selectedProfile} 
+                    onClose={() => setSelectedProfile(null)} 
+                />
+            )}
         </div>
     );
 };
