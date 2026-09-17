@@ -35,7 +35,11 @@ const ViewProfileModal = ({ userProfile, onClose }) => {
     if (!userProfile) return null;
 
     return (
-        <div className="modal-overlay" style={{ zIndex: 1000, background: '#0f172a', alignItems: 'flex-start' }}>
+        <div 
+            className="modal-overlay" 
+            style={{ zIndex: 1000, background: '#0f172a', alignItems: 'flex-start' }}
+            onClick={e => e.stopPropagation()}
+        >
             <div style={{ width: '100%', height: '100%', overflowY: 'auto', background: '#0f172a' }}>
                 
                 {/* Top Nav Header */}
