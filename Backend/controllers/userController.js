@@ -23,31 +23,32 @@ export const getProfile = async (req, res) => {
     }
 };
 
-// Search profile by Username (for adding friends later)
+// Search profile by Username (returns array of matches)
 export const searchByUsername = async (req, res) => {
     try {
         const { username } = req.params;
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = parseInt(req.query.offset) || 0;
+
         if (!username) {
             return res.status(400).json({ error: 'Username is required' });
         }
 
         const { data, error } = await supabase
             .from('profiles')
-            .select('id, username, full_name, avatar_url')
-            .ilike('username', username)
-            .single();
+            .select('id, username, full_name, avatar_url, bio, tags')
+            .ilike('username', `%${username}%`)
+            .range(offset, offset + limit - 1)
+            .order('username', { ascending: true });
 
         if (error) {
-            if (error.code === 'PGRST116') {
-                return res.status(404).json({ error: 'User not found' });
-            }
             console.error('Error searching profile:', error);
             return res.status(500).json({ error: 'Failed to search profile' });
         }
 
         res.json(data);
     } catch (error) {
-        console.error('searchByUniqueId error:', error);
+        console.error('searchByUsername error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 };
