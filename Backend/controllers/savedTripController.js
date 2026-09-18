@@ -231,3 +231,46 @@ export const deleteTrip = async (req, res) => {
         res.status(500).json({ error: "Failed to delete trip" });
     }
 };
+
+export const leaveTrip = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const { data: trip, error: fetchError } = await supabase
+            .from('saved_trips')
+            .select('id, user_id, member_ids')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !trip) {
+            return res.status(404).json({ error: 'Trip not found' });
+        }
+
+        if (trip.user_id === userId) {
+            return res.status(400).json({ error: 'The creator of a trip cannot leave it. You must delete the trip instead.' });
+        }
+
+        if (!trip.member_ids || !trip.member_ids.includes(userId)) {
+            return res.status(400).json({ error: 'You are not a member of this trip' });
+        }
+
+        const newMembers = trip.member_ids.filter(mId => mId !== userId);
+
+        const { error: updateError } = await supabase
+            .from('saved_trips')
+            .update({ member_ids: newMembers })
+            .eq('id', id);
+
+        if (updateError) throw updateError;
+
+        res.json({ message: 'You have left the trip successfully' });
+    } catch (error) {
+        console.error("Leave trip error:", error);
+        res.status(500).json({ error: "Failed to leave trip" });
+    }
+};

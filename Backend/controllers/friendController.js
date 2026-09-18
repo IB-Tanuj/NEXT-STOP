@@ -124,7 +124,37 @@ export const removeFriend = async (req, res) => {
             .or(`and(requester_id.eq.${userId},addressee_id.eq.${friendId}),and(requester_id.eq.${friendId},addressee_id.eq.${userId})`);
 
         if (error) throw error;
-        res.json({ message: 'Friend removed' });
+
+        // Cleanup: Remove the non-owner from trips where the other is the owner
+        // 1. Trips where userId is owner, and friendId is in member_ids
+        const { data: userTrips } = await supabase
+            .from('saved_trips')
+            .select('id, member_ids')
+            .eq('user_id', userId)
+            .contains('member_ids', [friendId]);
+        
+        if (userTrips && userTrips.length > 0) {
+            for (let trip of userTrips) {
+                const newMembers = trip.member_ids.filter(id => id !== friendId);
+                await supabase.from('saved_trips').update({ member_ids: newMembers }).eq('id', trip.id);
+            }
+        }
+
+        // 2. Trips where friendId is owner, and userId is in member_ids
+        const { data: friendTrips } = await supabase
+            .from('saved_trips')
+            .select('id, member_ids')
+            .eq('user_id', friendId)
+            .contains('member_ids', [userId]);
+        
+        if (friendTrips && friendTrips.length > 0) {
+            for (let trip of friendTrips) {
+                const newMembers = trip.member_ids.filter(id => id !== userId);
+                await supabase.from('saved_trips').update({ member_ids: newMembers }).eq('id', trip.id);
+            }
+        }
+
+        res.json({ message: 'Friend removed and shared trips updated' });
     } catch (error) {
         console.error('removeFriend error:', error);
         res.status(500).json({ error: 'Server error' });
