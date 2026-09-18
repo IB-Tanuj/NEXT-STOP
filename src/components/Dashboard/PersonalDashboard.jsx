@@ -5,6 +5,7 @@ import TripDetailsTab from './TripDetailsTab';
 import SavingsPlannerTab from './SavingsPlannerTab';
 import ProfileTab from './ProfileTab';
 import FriendRequestsTab from './FriendRequestsTab';
+import ConfirmLeaveModal from './ConfirmLeaveModal';
 import './Dashboard.css';
 
 /* ─── Monochrome SVG Icon ─── */
@@ -12,6 +13,14 @@ const IconTrash = () => (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }}>
         <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
         <line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+    </svg>
+);
+
+const IconLeave = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }}>
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+        <polyline points="16 17 21 12 16 7"></polyline>
+        <line x1="21" y1="12" x2="9" y2="12"></line>
     </svg>
 );
 
@@ -23,6 +32,8 @@ const PersonalDashboard = () => {
     const [selectedTrip, setSelectedTrip] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+    const [isLeaving, setIsLeaving] = useState(false);
 
     useEffect(() => {
         const fetchTrips = async () => {
@@ -91,6 +102,36 @@ const PersonalDashboard = () => {
         }
     };
 
+    const handleLeaveTrip = async () => {
+        if (!selectedTrip) return;
+        setIsLeaving(true);
+
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/saved-trips/${selectedTrip.id}/leave`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${session?.access_token || ''}`
+                }
+            });
+
+            if (!res.ok) throw new Error('Failed to leave trip');
+
+            const updatedTrips = trips.filter(t => t.id !== selectedTrip.id);
+            setTrips(updatedTrips);
+            if (updatedTrips.length > 0) {
+                setSelectedTrip(updatedTrips[0]);
+            } else {
+                setSelectedTrip(null);
+            }
+            setIsLeaveModalOpen(false);
+        } catch (err) {
+            console.error("Error leaving trip:", err);
+            alert("Failed to leave trip");
+        } finally {
+            setIsLeaving(false);
+        }
+    };
+
     const renderContent = () => {
         if (section === 'profile') {
             return <ProfileTab />;
@@ -154,25 +195,48 @@ const PersonalDashboard = () => {
                                             </option>
                                         ))}
                                     </select>
-                                    <button 
-                                        onClick={handleDeleteTrip}
-                                        style={{ 
-                                            background: 'rgba(239,68,68,0.08)', 
-                                            border: '1px solid rgba(239,68,68,0.3)', 
-                                            color: '#ef4444', 
-                                            padding: '8px 14px', 
-                                            borderRadius: '10px', 
-                                            cursor: 'pointer', 
-                                            marginLeft: '10px',
-                                            transition: 'all 0.3s',
-                                            fontWeight: '600',
-                                        }}
-                                        title="Delete Trip"
-                                        onMouseEnter={e => { e.target.style.background = 'rgba(239,68,68,0.15)'; e.target.style.borderColor = '#ef4444'; e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 4px 16px rgba(239,68,68,0.2)'; }}
-                                        onMouseLeave={e => { e.target.style.background = 'rgba(239,68,68,0.08)'; e.target.style.borderColor = 'rgba(239,68,68,0.3)'; e.target.style.transform = 'none'; e.target.style.boxShadow = 'none'; }}
-                                    >
-                                        <IconTrash /> Delete
-                                    </button>
+                                    
+                                    {selectedTrip.user_id === user.id ? (
+                                        <button 
+                                            onClick={handleDeleteTrip}
+                                            style={{ 
+                                                background: 'rgba(239,68,68,0.08)', 
+                                                border: '1px solid rgba(239,68,68,0.3)', 
+                                                color: '#ef4444', 
+                                                padding: '8px 14px', 
+                                                borderRadius: '10px', 
+                                                cursor: 'pointer', 
+                                                marginLeft: '10px',
+                                                transition: 'all 0.3s',
+                                                fontWeight: '600',
+                                            }}
+                                            title="Delete Trip"
+                                            onMouseEnter={e => { e.target.style.background = 'rgba(239,68,68,0.15)'; e.target.style.borderColor = '#ef4444'; e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 4px 16px rgba(239,68,68,0.2)'; }}
+                                            onMouseLeave={e => { e.target.style.background = 'rgba(239,68,68,0.08)'; e.target.style.borderColor = 'rgba(239,68,68,0.3)'; e.target.style.transform = 'none'; e.target.style.boxShadow = 'none'; }}
+                                        >
+                                            <IconTrash /> Delete
+                                        </button>
+                                    ) : (
+                                        <button 
+                                            onClick={() => setIsLeaveModalOpen(true)}
+                                            style={{ 
+                                                background: 'rgba(245, 158, 11, 0.08)', 
+                                                border: '1px solid rgba(245, 158, 11, 0.3)', 
+                                                color: '#f59e0b', 
+                                                padding: '8px 14px', 
+                                                borderRadius: '10px', 
+                                                cursor: 'pointer', 
+                                                marginLeft: '10px',
+                                                transition: 'all 0.3s',
+                                                fontWeight: '600',
+                                            }}
+                                            title="Leave Trip"
+                                            onMouseEnter={e => { e.target.style.background = 'rgba(245, 158, 11, 0.15)'; e.target.style.borderColor = '#f59e0b'; e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 4px 16px rgba(245, 158, 11, 0.2)'; }}
+                                            onMouseLeave={e => { e.target.style.background = 'rgba(245, 158, 11, 0.08)'; e.target.style.borderColor = 'rgba(245, 158, 11, 0.3)'; e.target.style.transform = 'none'; e.target.style.boxShadow = 'none'; }}
+                                        >
+                                            <IconLeave /> Leave
+                                        </button>
+                                    )}
                                 </div>
                                 )}
                             </header>
