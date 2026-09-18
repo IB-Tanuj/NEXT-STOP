@@ -11,5 +11,6 @@ router.get('/', getTrips);
 router.put('/:id', updateTripData);
 router.post('/savings', addSavings);
 router.delete('/:id', deleteTrip);
+router.post('/:id/leave', leaveTrip);
 
 export default router;
