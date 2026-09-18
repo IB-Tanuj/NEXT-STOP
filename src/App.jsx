@@ -111,7 +111,7 @@ const FallbackSpinner = ({ theme }) => (
 );
 
 function App() {
-  const { theme, setLocationTheme, resetToSeason } = useTheme()
+  const { theme, setLocationTheme, resolveLocationTheme, prepareThemeChange, commitPendingTheme, resetToSeason } = useTheme()
   const navigate = useNavigate()
   const [spotlightLocation, setSpotlightLocation] = useState(null)
   const { isMobile, isTablet } = useScreenSize()
@@ -268,6 +268,9 @@ function App() {
               <Hero
                 theme={theme}
                 setLocationTheme={handleThemeOnly}
+                resolveLocationTheme={resolveLocationTheme}
+                prepareThemeChange={prepareThemeChange}
+                commitPendingTheme={commitPendingTheme}
                 onExplore={handleExplore}
                 isMobile={isMobile}
               />
