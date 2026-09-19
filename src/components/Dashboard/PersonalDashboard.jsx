@@ -34,6 +34,7 @@ const PersonalDashboard = () => {
     const [error, setError] = useState(null);
     const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
     const [isLeaving, setIsLeaving] = useState(false);
+    const [tripType, setTripType] = useState('solo'); // 'solo' or 'group'
 
     useEffect(() => {
         const fetchTrips = async () => {
@@ -63,7 +64,17 @@ const PersonalDashboard = () => {
         };
 
         fetchTrips();
-    }, [user]);
+    }, [user, session]);
+
+    const filteredTrips = trips.filter(t => tripType === 'solo' ? (!t.member_ids || t.member_ids.length === 0) : (t.member_ids && t.member_ids.length > 0));
+
+    useEffect(() => {
+        if (filteredTrips.length > 0 && !filteredTrips.find(t => t.id === selectedTrip?.id)) {
+            setSelectedTrip(filteredTrips[0]);
+        } else if (filteredTrips.length === 0) {
+            setSelectedTrip(null);
+        }
+    }, [tripType, trips]);
 
     if (!user) return <div className="dashboard-container" style={{ paddingTop: '100px' }}><h2>Please log in to view your dashboard.</h2></div>;
     if (loading) return <div className="dashboard-container" style={{ paddingTop: '100px' }}><div className="loader"></div></div>;
@@ -176,25 +187,60 @@ const PersonalDashboard = () => {
                                 </div>
                                 
                                 {section !== 'requests' && (
-                                <div className="trip-selector">
-                                    <label style={{ color: '#94a3b8' }}>Select Trip: </label>
-                                    <select 
-                                        value={selectedTrip?.id || ''} 
-                                        onChange={(e) => setSelectedTrip(trips.find(t => t.id === e.target.value))}
-                                        style={{ 
-                                            padding: '8px 12px', borderRadius: '10px', border: '1px solid rgba(6,182,212,0.2)', 
-                                            background: '#0f172a', color: '#eef7f1', cursor: 'pointer', outline: 'none',
-                                            transition: 'border-color 0.3s, box-shadow 0.3s',
-                                        }}
-                                        onFocus={e => { e.target.style.borderColor = '#06b6d4'; e.target.style.boxShadow = '0 0 0 3px rgba(6,182,212,0.15)'; }}
-                                        onBlur={e => { e.target.style.borderColor = 'rgba(6,182,212,0.2)'; e.target.style.boxShadow = 'none'; }}
-                                    >
-                                        {trips.map(trip => (
-                                            <option key={trip.id} value={trip.id} style={{ background: '#0a0a0a', color: '#fff' }}>
-                                                {trip.trip_data?.preferences?.days ? `${trip.trip_data.preferences.days}-days , ` : ''}{trip.destination}
-                                            </option>
-                                        ))}
-                                    </select>
+                                <div className="trip-selector" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    <div style={{ display: 'flex', gap: '10px', alignSelf: 'flex-start' }}>
+                                        <button 
+                                            onClick={() => setTripType('solo')}
+                                            style={{
+                                                padding: '6px 16px',
+                                                borderRadius: '20px',
+                                                border: '1px solid',
+                                                borderColor: tripType === 'solo' ? '#06b6d4' : 'rgba(255,255,255,0.1)',
+                                                background: tripType === 'solo' ? 'rgba(6,182,212,0.1)' : 'transparent',
+                                                color: tripType === 'solo' ? '#06b6d4' : '#94a3b8',
+                                                fontWeight: 'bold',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.3s'
+                                            }}
+                                        >
+                                            SOLO
+                                        </button>
+                                        <button 
+                                            onClick={() => setTripType('group')}
+                                            style={{
+                                                padding: '6px 16px',
+                                                borderRadius: '20px',
+                                                border: '1px solid',
+                                                borderColor: tripType === 'group' ? '#06b6d4' : 'rgba(255,255,255,0.1)',
+                                                background: tripType === 'group' ? 'rgba(6,182,212,0.1)' : 'transparent',
+                                                color: tripType === 'group' ? '#06b6d4' : '#94a3b8',
+                                                fontWeight: 'bold',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.3s'
+                                            }}
+                                        >
+                                            GROUP
+                                        </button>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <label style={{ color: '#94a3b8', marginRight: '8px' }}>Select Trip: </label>
+                                        <select 
+                                            value={selectedTrip?.id || ''} 
+                                            onChange={(e) => setSelectedTrip(trips.find(t => t.id === e.target.value))}
+                                            style={{ 
+                                                padding: '8px 12px', borderRadius: '10px', border: '1px solid rgba(6,182,212,0.2)', 
+                                                background: '#0f172a', color: '#eef7f1', cursor: 'pointer', outline: 'none',
+                                                transition: 'border-color 0.3s, box-shadow 0.3s',
+                                            }}
+                                            onFocus={e => { e.target.style.borderColor = '#06b6d4'; e.target.style.boxShadow = '0 0 0 3px rgba(6,182,212,0.15)'; }}
+                                            onBlur={e => { e.target.style.borderColor = 'rgba(6,182,212,0.2)'; e.target.style.boxShadow = 'none'; }}
+                                        >
+                                            {filteredTrips.map(trip => (
+                                                <option key={trip.id} value={trip.id} style={{ background: '#0a0a0a', color: '#fff' }}>
+                                                    {trip.trip_data?.preferences?.days ? `${trip.trip_data.preferences.days}-days , ` : ''}{trip.destination}
+                                                </option>
+                                            ))}
+                                        </select>
                                     
                                     {selectedTrip.user_id === user.id ? (
                                         <button 
@@ -237,6 +283,7 @@ const PersonalDashboard = () => {
                                             <IconLeave /> Leave
                                         </button>
                                     )}
+                                    </div>
                                 </div>
                                 )}
                             </header>
