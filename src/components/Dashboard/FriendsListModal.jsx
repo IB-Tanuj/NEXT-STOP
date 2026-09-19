@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import ViewProfileModal from './ViewProfileModal';
+import UnfriendConfirmModal from './UnfriendConfirmModal';
 import './ProfileTab.css';
 
 const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
@@ -9,6 +10,12 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [selectedProfile, setSelectedProfile] = useState(null);
+    
+    // State for unfriending
+    const [unfriendModalOpen, setUnfriendModalOpen] = useState(false);
+    const [unfriendingId, setUnfriendingId] = useState(null);
+    const [sharedTripsCount, setSharedTripsCount] = useState(0);
+    const [isUnfriending, setIsUnfriending] = useState(false);
 
     useEffect(() => {
         if (isOpen && session?.access_token) {
@@ -36,9 +43,30 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
         }
     };
 
-    const handleUnfriend = async (friendId, e) => {
+    const handleUnfriendClick = async (friendId, e) => {
         e.stopPropagation();
-        if (!window.confirm("Are you sure you want to unfriend this user?")) return;
+        setUnfriendingId(friendId);
+        setSharedTripsCount(0); // Reset before fetch
+        
+        try {
+            // Check for shared trips
+            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/friends/${friendId}/shared-trips-count`, {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setSharedTripsCount(data.sharedTripsCount || 0);
+            }
+        } catch (err) {
+            console.error('Error fetching shared trips count:', err);
+        }
+        
+        setUnfriendModalOpen(true);
+    };
+
+    const handleConfirmUnfriend = async () => {
+        if (!unfriendingId) return;
+        setIsUnfriending(true);
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/friends/remove`, {
                 method: 'DELETE',
@@ -46,16 +74,19 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
                     'Authorization': `Bearer ${session.access_token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ friendId })
+                body: JSON.stringify({ friendId: unfriendingId })
             });
             if (res.ok) {
-                setFriends(friends.filter(f => f.id !== friendId));
+                setFriends(friends.filter(f => f.id !== unfriendingId));
+                setUnfriendModalOpen(false);
                 if (onFriendRemoved) onFriendRemoved();
             } else {
                 alert('Failed to unfriend');
             }
         } catch (err) {
             alert('Error unfriending user');
+        } finally {
+            setIsUnfriending(false);
         }
     };
 
@@ -93,21 +124,28 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
                                     {friend.username && <p style={{ margin: '4px 0 0', color: '#94a3b8', fontSize: '13px' }}>@{friend.username}</p>}
                                 </div>
                             </div>
-                            <button 
-                                onClick={(e) => handleUnfriend(friend.id, e)}
-                                style={{
-                                    background: 'rgba(255, 71, 87, 0.2)',
-                                    color: '#ff4757',
-                                    border: 'none',
-                                    padding: '8px 16px',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer',
-                                    fontWeight: 'bold',
-                                    fontSize: '13px'
-                                }}
-                            >
-                                Unfriend
-                            </button>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button 
+                                    className="unfriend-btn"
+                                    onClick={(e) => handleUnfriendClick(friend.id, e)}
+                                    title="Unfriend"
+                                    style={{
+                                        background: 'rgba(239, 68, 68, 0.1)',
+                                        color: '#ef4444',
+                                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                                        padding: '6px 12px',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        fontSize: '13px',
+                                        fontWeight: '500'
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; e.currentTarget.style.borderColor = '#ef4444'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.2)'; }}
+                                >
+                                    Unfriend
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -119,6 +157,14 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
                     onClose={() => setSelectedProfile(null)} 
                 />
             )}
+
+            <UnfriendConfirmModal
+                isOpen={unfriendModalOpen}
+                onClose={() => setUnfriendModalOpen(false)}
+                onConfirm={handleConfirmUnfriend}
+                sharedTripsCount={sharedTripsCount}
+                loading={isUnfriending}
+            />
         </div>
     );
 };
