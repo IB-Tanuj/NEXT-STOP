@@ -1,9 +1,7 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { getCurrentSeason } from "../data/homepageData"
 import { themes } from "../themes"
 import { allIndiaLocations } from "../data/allLocations"
-import { MoText } from 'motion-organic/react'
-import { useCityTransition } from '../hooks/useCityTransition'
 
 const seasonMessages = {
   shishir: [
@@ -67,7 +65,7 @@ const Particles = ({ color }) => {
       duration: Math.random() * 10 + 12,
       opacity: Math.random() * 0.5 + 0.1,
     })),
-  [])
+    [])
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
@@ -179,7 +177,7 @@ const MessageBubble = ({ msg, visible, side, theme }) => (
 
 /* ══════════════════════ HERO ══════════════════════ */
 
-const Hero = ({ theme, setLocationTheme, resolveLocationTheme, prepareThemeChange, commitPendingTheme, onExplore, isMobile }) => {
+const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
   const [search, setSearch] = useState("")
   const [searchError, setSearchError] = useState(false)
   const [leftMsg, setLeftMsg] = useState("")
@@ -190,33 +188,6 @@ const Hero = ({ theme, setLocationTheme, resolveLocationTheme, prepareThemeChang
   const [loaded, setLoaded] = useState(false)
   const [stateResults, setStateResults] = useState(null)
   const inputRef = useRef(null)
-  const lastMatchedCityRef = useRef(null)
-
-  // motion-organic transition hook
-  const { fireTransition, isAnimating } = useCityTransition()
-
-  /**
-   * Apply a city theme with a random cinema-grade transition effect.
-   * The transition overlay covers the screen → theme swaps at midpoint → reveals new colors.
-   */
-  const applyCityWithTransition = useCallback((locationInput) => {
-    if (isAnimating) return
-
-    // Check if this is actually a new city (avoid re-triggering same city)
-    const clean = locationInput.toLowerCase().trim()
-    if (clean === lastMatchedCityRef.current) return
-
-    // Prepare the theme (stores it without applying)
-    const hasMatch = prepareThemeChange(locationInput)
-    if (!hasMatch) return
-
-    lastMatchedCityRef.current = clean
-
-    // Fire random transition → commit theme at midpoint
-    fireTransition(() => {
-      commitPendingTheme()
-    })
-  }, [isAnimating, prepareThemeChange, commitPendingTheme, fireTransition])
 
   const subtitle = "Smart trip planning with budget distribution, routes, local phrases and more — all in one place."
   const { displayed: typedSubtitle, done: typingDone } = useTypewriter(subtitle, 25)
@@ -298,12 +269,12 @@ const Hero = ({ theme, setLocationTheme, resolveLocationTheme, prepareThemeChang
       <GradientOrbs colors={theme.orbColors || [theme.primary, theme.accent, theme.secondary]} />
 
       {/* — Side Message Bubbles — */}
-{!isMobile && (
-  <>
-    <MessageBubble msg={leftMsg} visible={leftVisible} side="left" theme={theme} />
-    <MessageBubble msg={rightMsg} visible={rightVisible} side="right" theme={theme} />
-  </>
-)}
+      {!isMobile && (
+        <>
+          <MessageBubble msg={leftMsg} visible={leftVisible} side="left" theme={theme} />
+          <MessageBubble msg={rightMsg} visible={rightVisible} side="right" theme={theme} />
+        </>
+      )}
 
       {/* ── Main Content ── */}
       <div style={{
@@ -351,20 +322,17 @@ const Hero = ({ theme, setLocationTheme, resolveLocationTheme, prepareThemeChang
           transition: "all 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.1s",
         }}>
           WHERE'S YOUR{" "}
-          <MoText
-            as="span"
-            effect="liquid-sheen"
-            style={{
-              display: "inline",
-              fontSize: "inherit",
-              fontFamily: "inherit",
-              fontWeight: "inherit",
-              letterSpacing: "inherit",
-              lineHeight: "inherit",
-            }}
-          >
+          <span style={{
+            backgroundImage: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary}, ${theme.accent}, ${theme.primary})`,
+            backgroundSize: "300% 300%",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            color: "transparent",
+            animation: "gradientShift 4s ease infinite",
+          }}>
             NEXT STOP?
-          </MoText>
+          </span>
         </h1>
 
         {/* Typewriter Subtitle */}
@@ -417,40 +385,35 @@ const Hero = ({ theme, setLocationTheme, resolveLocationTheme, prepareThemeChang
             id="hero-search"
             type="text"
             value={search}
-            onChange={(e) => { 
+            onChange={(e) => {
               const text = e.target.value;
-              setSearch(text); 
+              setSearch(text);
+              setLocationTheme(text);
               setSearchError(false);
-              
+
               const clean = text.trim().toLowerCase();
-              
-              // Only match on exact full city/state name — no partial matching
-              if (clean.length >= 2) {
-                // Check exact city match → fire transition
-                const resolved = resolveLocationTheme ? resolveLocationTheme(clean) : null;
-                if (resolved) {
-                  applyCityWithTransition(clean);
+              if (clean.length >= 3) {
+                const exactStateMatches = allIndiaLocations.filter(l => l.state.toLowerCase() === clean);
+                let matchedState = null;
+                let cities = [];
+                if (exactStateMatches.length > 0) {
+                  matchedState = exactStateMatches[0].state;
+                  cities = exactStateMatches;
                 } else {
-                  // If user cleared to a non-match and we had a previous match, reset
-                  if (lastMatchedCityRef.current && !resolved) {
-                    // Don't reset while they're still typing — only reset on empty
+                  const startsWithStateMatches = allIndiaLocations.filter(l => l.state.toLowerCase().startsWith(clean));
+                  if (startsWithStateMatches.length > 0) {
+                    matchedState = startsWithStateMatches[0].state;
+                    cities = startsWithStateMatches;
                   }
                 }
-                
-                // Check exact state match for state results dropdown
-                const exactStateMatches = allIndiaLocations.filter(l => l.state.toLowerCase() === clean);
-                if (exactStateMatches.length > 0) {
-                  setStateResults({ stateName: exactStateMatches[0].state, cities: exactStateMatches });
+
+                if (matchedState) {
+                  setStateResults({ stateName: matchedState, cities });
                 } else {
                   setStateResults(null);
                 }
               } else {
                 setStateResults(null);
-                if (!clean) {
-                  // Input cleared — reset to season theme (no transition)
-                  lastMatchedCityRef.current = null;
-                  setLocationTheme('');
-                }
               }
             }}
             onFocus={() => setFocused(true)}
@@ -533,7 +496,7 @@ const Hero = ({ theme, setLocationTheme, resolveLocationTheme, prepareThemeChang
                 key={city.locationKey}
                 onClick={() => {
                   setSearch(city.name);
-                  applyCityWithTransition(city.locationKey);
+                  setLocationTheme(city.locationKey);
                   setStateResults(null);
                 }}
                 style={{
@@ -585,7 +548,7 @@ const Hero = ({ theme, setLocationTheme, resolveLocationTheme, prepareThemeChang
             {suggestions.map((place, i) => (
               <span
                 key={place}
-                onClick={() => { setSearch(place); applyCityWithTransition(place) }}
+                onClick={() => { setSearch(place); setLocationTheme(place) }}
                 style={{
                   backgroundColor: `${theme.primary}15`,
                   border: `1px solid ${theme.primary}35`,

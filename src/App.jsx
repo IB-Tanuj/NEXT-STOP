@@ -93,7 +93,7 @@ function EmailVerificationBanner({ theme }) {
 
 function TripPageWrapper({ theme, onBack, setLocationTheme }) {
   const { locationId } = useParams();
-  
+
   useEffect(() => {
     if (locationId) {
       setLocationTheme(locationId);
@@ -111,7 +111,7 @@ const FallbackSpinner = ({ theme }) => (
 );
 
 function App() {
-  const { theme, setLocationTheme, resolveLocationTheme, prepareThemeChange, commitPendingTheme, resetToSeason } = useTheme()
+  const { theme, setLocationTheme, resetToSeason } = useTheme()
   const navigate = useNavigate()
   const [spotlightLocation, setSpotlightLocation] = useState(null)
   const { isMobile, isTablet } = useScreenSize()
@@ -132,10 +132,10 @@ function App() {
 
   const handleExplore = (location) => {
     let resolvedKey = location;
-    
+
     if (location && typeof location === "string") {
       const clean = location.trim().toLowerCase();
-      
+
       // 1. Direct match on locationKey
       let match = allIndiaLocations.find(l => l.locationKey === clean);
       if (match) {
@@ -218,7 +218,7 @@ function App() {
       navigate(`/trip/${resolvedKey}`)
       return true
     }
-    
+
     // If not found (e.g. they typed numbers or unsupported city), return false
     return false
   }
@@ -227,7 +227,7 @@ function App() {
     navigate("/app")
     resetToSeason()
   }
-  
+
 
   return (
     <div style={{
@@ -237,111 +237,108 @@ function App() {
       transition: "all 0.8s ease",
     }}>
       <Suspense fallback={<FallbackSpinner theme={theme} />}>
-      <Routes>
-        <Route path="/dev" element={<DevAdminPage theme={theme} setLocationTheme={setLocationTheme} />} />
-        
-        {/* Legal Pages */}
-        <Route path="/privacy" element={<LegalPage type="privacy" />} />
-        <Route path="/terms" element={<LegalPage type="terms" />} />
-        
-        {/* New Marketing Landing Page (V2) */}
-        <Route path="/" element={<NewLandingPage />} />
+        <Routes>
+          <Route path="/dev" element={<DevAdminPage theme={theme} setLocationTheme={setLocationTheme} />} />
 
-        {/* Classic Landing Page (V1) */}
-        <Route path="/classic" element={<LandingPage />} />
-        
-        {/* Login Page Redirects to Drawer on Landing */}
-        <Route path="/login" element={<Navigate to="/?auth=login" replace />} />
+          {/* Legal Pages */}
+          <Route path="/privacy" element={<LegalPage type="privacy" />} />
+          <Route path="/terms" element={<LegalPage type="terms" />} />
 
-        {/* Protected Dashboard / Search App */}
-        <Route path="/app" element={
-          <ProtectedRoute>
-            <>
-              <EmailVerificationBanner theme={theme} />
-              <Navbar theme={theme} isMobile={isMobile} 
-              onAbout={() => setShowAbout(true)}
-              onExplore={() => setShowExplore(true)}
-              onBudget={() => setShowBudget(true)}
-              onPlanTrip={() => setShowPlanTrip(true)}
-              onBusLovers={() => setShowBusLovers(true)}
-              />
-              <Hero
-                theme={theme}
-                setLocationTheme={handleThemeOnly}
-                resolveLocationTheme={resolveLocationTheme}
-                prepareThemeChange={prepareThemeChange}
-                commitPendingTheme={commitPendingTheme}
-                onExplore={handleExplore}
-                isMobile={isMobile}
-              />
-              {/* Season section — only when no location searched */}
-              {!spotlightLocation && (
-                <SeasonSection
-                  theme={theme}
-                  isMobile={isMobile}
-                  onLocationClick={(name) => {
-                    handleExplore(name)
-                  }}
+          {/* New Marketing Landing Page (V2) */}
+          <Route path="/" element={<NewLandingPage />} />
+
+          {/* Classic Landing Page (V1) */}
+          <Route path="/classic" element={<LandingPage />} />
+
+          {/* Login Page Redirects to Drawer on Landing */}
+          <Route path="/login" element={<Navigate to="/?auth=login" replace />} />
+
+          {/* Protected Dashboard / Search App */}
+          <Route path="/app" element={
+            <ProtectedRoute>
+              <>
+                <EmailVerificationBanner theme={theme} />
+                <Navbar theme={theme} isMobile={isMobile}
+                  onAbout={() => setShowAbout(true)}
+                  onExplore={() => setShowExplore(true)}
+                  onBudget={() => setShowBudget(true)}
+                  onPlanTrip={() => setShowPlanTrip(true)}
+                  onBusLovers={() => setShowBusLovers(true)}
                 />
-              )}
-              {/* Location spotlight — only when a location IS searched */}
-              {spotlightLocation && (
-                <LocationSpotlight
+                <Hero
                   theme={theme}
+                  setLocationTheme={handleThemeOnly}
+                  onExplore={handleExplore}
                   isMobile={isMobile}
-                  activeLocation={spotlightLocation}
-                  locationData={locationData}
                 />
-              )}
-            </>
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/dashboard" element={<Navigate to="/dashboard/profile" replace />} />
-        <Route path="/dashboard/:section" element={
-          <ProtectedRoute>
-            <PersonalDashboard />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/trip/:locationId" element={
-          <TripPageWrapper theme={theme} onBack={handleBack} setLocationTheme={setLocationTheme} />
-        } />
-      </Routes>
+                {/* Season section — only when no location searched */}
+                {!spotlightLocation && (
+                  <SeasonSection
+                    theme={theme}
+                    isMobile={isMobile}
+                    onLocationClick={(name) => {
+                      handleExplore(name)
+                    }}
+                  />
+                )}
+                {/* Location spotlight — only when a location IS searched */}
+                {spotlightLocation && (
+                  <LocationSpotlight
+                    theme={theme}
+                    isMobile={isMobile}
+                    activeLocation={spotlightLocation}
+                    locationData={locationData}
+                  />
+                )}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/dashboard" element={<Navigate to="/dashboard/profile" replace />} />
+          <Route path="/dashboard/:section" element={
+            <ProtectedRoute>
+              <PersonalDashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/trip/:locationId" element={
+            <TripPageWrapper theme={theme} onBack={handleBack} setLocationTheme={setLocationTheme} />
+          } />
+        </Routes>
       </Suspense>
       {showAbout && (
-  <Suspense fallback={null}>
-  <AboutPage theme={theme} onClose={() => setShowAbout(false)} />
-  </Suspense>
-)}
-<Suspense fallback={null}>
-<ExploreSidebar
-  theme={theme}
-  isOpen={showExplore}
-  onClose={() => setShowExplore(false)}
-  onLocationSelect={(locationKey) => {
-    handleThemeOnly(locationKey)
-    handleExplore(locationKey)
-  }}
-/>
-</Suspense>
-{showBudget && (
-  <Suspense fallback={null}>
-  <BudgetPage theme={theme} onClose={() => setShowBudget(false)} onLocationSelect={(locationKey) => { setShowBudget(false); handleThemeOnly(locationKey); handleExplore(locationKey); }} />
-  </Suspense>
-)}
+        <Suspense fallback={null}>
+          <AboutPage theme={theme} onClose={() => setShowAbout(false)} />
+        </Suspense>
+      )}
+      <Suspense fallback={null}>
+        <ExploreSidebar
+          theme={theme}
+          isOpen={showExplore}
+          onClose={() => setShowExplore(false)}
+          onLocationSelect={(locationKey) => {
+            handleThemeOnly(locationKey)
+            handleExplore(locationKey)
+          }}
+        />
+      </Suspense>
+      {showBudget && (
+        <Suspense fallback={null}>
+          <BudgetPage theme={theme} onClose={() => setShowBudget(false)} onLocationSelect={(locationKey) => { setShowBudget(false); handleThemeOnly(locationKey); handleExplore(locationKey); }} />
+        </Suspense>
+      )}
 
-{showPlanTrip && (
-  <Suspense fallback={null}>
-  <PlanTripPage theme={theme} onClose={() => setShowPlanTrip(false)} onStartPlanning={() => { const searchBar = document.getElementById("hero-search"); if (searchBar) { searchBar.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => searchBar.focus(), 600); } }} />
-  </Suspense>
-)}
+      {showPlanTrip && (
+        <Suspense fallback={null}>
+          <PlanTripPage theme={theme} onClose={() => setShowPlanTrip(false)} onStartPlanning={() => { const searchBar = document.getElementById("hero-search"); if (searchBar) { searchBar.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => searchBar.focus(), 600); } }} />
+        </Suspense>
+      )}
 
-{showBusLovers && (
-  <Suspense fallback={null}>
-  <BusLoversPage theme={theme} onClose={() => setShowBusLovers(false)} />
-  </Suspense>
-)}
+      {showBusLovers && (
+        <Suspense fallback={null}>
+          <BusLoversPage theme={theme} onClose={() => setShowBusLovers(false)} />
+        </Suspense>
+      )}
     </div>
   )
 }
