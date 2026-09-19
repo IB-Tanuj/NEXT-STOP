@@ -98,7 +98,10 @@ export const getTrips = async (req, res) => {
             .from('saved_trips')
             .select(`
                 *,
-                trip_wallets (*)
+                trip_wallets (
+                    *,
+                    wallet_transactions (*)
+                )
             `)
             .or(`user_id.eq.${userId},member_ids.cs.{${userId}}`)
             .order('created_at', { ascending: false });

@@ -113,6 +113,37 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
     const [justFunded, setJustFunded] = useState(null);
     const [membersOpen, setMembersOpen] = useState(true);
 
+    const isOwner = session?.user?.id === trip.user_id;
+
+    // Ensure non-owners can only contribute as themselves
+    useEffect(() => {
+        if (!isOwner) {
+            setContributorName(defaultName);
+        } else if (!contributorName || !allContributors.includes(contributorName)) {
+            setContributorName(allContributors[0]);
+        }
+    }, [isOwner, defaultName, allContributors, contributorName]);
+
+    // Calculate Member Contributions
+    const personalTarget = allContributors.length > 0 ? Math.round(totalTarget / allContributors.length) : totalTarget;
+    
+    const memberContributions = {};
+    allContributors.forEach(name => {
+        memberContributions[name] = 0;
+    });
+
+    wallets.forEach(w => {
+        if (w.wallet_transactions) {
+            w.wallet_transactions.forEach(tx => {
+                if (memberContributions[tx.contributor_name] !== undefined) {
+                    memberContributions[tx.contributor_name] += Number(tx.amount);
+                } else {
+                    memberContributions[tx.contributor_name] = Number(tx.amount);
+                }
+            });
+        }
+    });
+
     // Animated counters
     const animTarget = useAnimatedCounter(totalTarget);
     const animSaved = useAnimatedCounter(totalSaved);
@@ -151,13 +182,32 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
         const wallet = sortedWallets.find(w => w.id === selectedWallet);
         if (!wallet) return;
 
-        const maxAllowed = Number(wallet.target_amount) - Number(wallet.saved_amount);
-        const amountToAdd = Math.min(Number(fundingAmount), maxAllowed > 0 ? maxAllowed : 0);
+        const maxWalletAllowed = Number(wallet.target_amount) - Number(wallet.saved_amount);
+        const contributedSoFar = memberContributions[contributorName] || 0;
+        const remainingPersonalBudget = personalTarget - contributedSoFar;
 
-        if (amountToAdd <= 0) {
+        if (maxWalletAllowed <= 0) {
             alert("This wallet is already fully funded!");
             return;
         }
+
+        if (remainingPersonalBudget <= 0) {
+            alert(`${contributorName} has already reached their funding target of ₹${personalTarget}!`);
+            return;
+        }
+
+        const actualMaxAllowed = Math.min(maxWalletAllowed, remainingPersonalBudget);
+        
+        if (Number(fundingAmount) > actualMaxAllowed) {
+            if (remainingPersonalBudget < maxWalletAllowed) {
+                alert(`Cannot fund ₹${fundingAmount}. ${contributorName} only has ₹${remainingPersonalBudget} left in their personal budget.`);
+            } else {
+                alert(`Cannot fund ₹${fundingAmount}. This wallet only needs ₹${maxWalletAllowed} to be fully funded.`);
+            }
+            return;
+        }
+
+        const amountToAdd = Number(fundingAmount);
 
         setIsSaving(true);
         try {
@@ -180,7 +230,12 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
             if (!res.ok) throw new Error('Failed to save to backend');
             const newWallets = wallets.map(w => {
                 if (w.id === wallet.id) {
-                    return { ...w, saved_amount: Number(w.saved_amount) + amountToAdd };
+                    const newTx = { contributor_name: contributorName, amount: amountToAdd };
+                    return { 
+                        ...w, 
+                        saved_amount: Number(w.saved_amount) + amountToAdd,
+                        wallet_transactions: w.wallet_transactions ? [...w.wallet_transactions, newTx] : [newTx]
+                    };
                 }
                 return w;
             });
@@ -280,16 +335,49 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                 </div>
             )}
 
+            {/* ─── Member Wallets Section ─── */}
+            <div className="animate-entrance" style={{ margin: '28px 0', animationDelay: '0.14s' }}>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>
+                    Member Wallets (Target: ₹{personalTarget.toLocaleString()} each)
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                    {allContributors.map((name, idx) => {
+                        const contributed = memberContributions[name] || 0;
+                        const percent = personalTarget > 0 ? Math.min(100, Math.round((contributed / personalTarget) * 100)) : 0;
+                        return (
+                            <div key={idx} className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontWeight: 600, color: '#f1f5f9', fontSize: '15px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }} title={name}>
+                                        {name}
+                                    </span>
+                                    <span style={{ color: '#0ea5e9', fontWeight: 700, fontSize: '14px', flexShrink: 0 }}>
+                                        ₹{contributed.toLocaleString()} <span style={{ color: '#64748b', fontSize: '12px', fontWeight: 500 }}>/ ₹{personalTarget.toLocaleString()}</span>
+                                    </span>
+                                </div>
+                                <div className="progress-bar-bg" style={{ height: '6px', background: 'rgba(255,255,255,0.06)' }}>
+                                    <div 
+                                        className="progress-bar-fill" 
+                                        style={{ width: `${percent}%`, background: 'linear-gradient(90deg, #0ea5e9, #10b981)' }} 
+                                    />
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+
             <div className="planner-grid" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 
                 {/* ─── Contributor Selector ─── */}
                 <div className="animate-entrance" style={{ 
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', 
                     padding: '16px 24px', background: 'rgba(255,255,255,0.055)', borderRadius: '14px',
-                    border: '1px solid rgba(255,255,255,0.08)', animationDelay: '0.18s'
+                    border: '1px solid rgba(255,255,255,0.08)', animationDelay: '0.18s',
+                    flexWrap: 'wrap'
                 }}>
                     <label style={{ fontWeight: 700, color: '#64748b', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px' }}>Contributor</label>
-                    {hasMembers ? (
+                    {isOwner && hasMembers ? (
                         <select 
                             className="glass-select"
                             value={contributorName}
@@ -301,14 +389,16 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                             ))}
                         </select>
                     ) : (
-                        <input 
-                            type="text" 
-                            className="glass-input"
-                            placeholder="Your name or friend's name" 
-                            value={contributorName}
-                            onChange={(e) => setContributorName(e.target.value)}
-                            style={{ width: '250px' }}
-                        />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <input 
+                                type="text" 
+                                className="glass-input"
+                                value={defaultName}
+                                disabled
+                                style={{ width: '250px', cursor: 'not-allowed', color: '#94a3b8', background: 'rgba(255,255,255,0.03)' }}
+                            />
+                            {!isOwner && <span style={{ fontSize: '12px', color: '#64748b' }} title="Only the trip owner can fund on behalf of others">🔒</span>}
+                        </div>
                     )}
                 </div>
 
