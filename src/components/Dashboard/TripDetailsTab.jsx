@@ -383,10 +383,14 @@ const TripDetailsTab = ({ trip, onUpdate }) => {
 
     /* ─── Section Renderer Helper ─── */
     const renderAccordion = (key, title, children, dotColor) => (
-        <div className="accordion-card animate-entrance">
+        <div className="accordion-card animate-entrance" style={{ 
+            borderLeft: expandedSections[key] ? `3px solid ${dotColor}` : '3px solid transparent',
+            transition: 'border-color 0.3s, box-shadow 0.3s, background 0.3s',
+            ...(expandedSections[key] ? { boxShadow: `inset 3px 0 12px -6px ${dotColor}44` } : {})
+        }}>
             <div className="accordion-header" onClick={() => toggleSection(key)}>
                 <h3>
-                    <span className="section-dot" style={{ background: dotColor }} />
+                    <span className="section-dot" style={{ background: dotColor, boxShadow: `0 0 8px ${dotColor}66` }} />
                     {title}
                 </h3>
                 <span className={`accordion-chevron ${expandedSections[key] ? 'open' : ''}`}>
