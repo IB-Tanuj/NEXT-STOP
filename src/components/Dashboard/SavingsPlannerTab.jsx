@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import LiquidCityAnimation from './LiquidCityAnimation';
 import { useAuth } from '../../context/AuthContext';
+import ViewProfileModal from './ViewProfileModal';
 
 /* ─── Monochrome SVG Icons for Wallets ─── */
 const IconTrain = ({ color = 'currentColor' }) => (
@@ -110,6 +111,32 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
     const animSaved = useAnimatedCounter(totalSaved);
     const animRemaining = useAnimatedCounter(Math.max(0, totalTarget - totalSaved));
 
+    // Group members fetch state
+    const [members, setMembers] = useState([]);
+    const [loadingMembers, setLoadingMembers] = useState(false);
+    const [viewProfile, setViewProfile] = useState(null);
+
+    useEffect(() => {
+        const fetchMembers = async () => {
+            if (!trip.member_ids || trip.member_ids.length === 0) return;
+            setLoadingMembers(true);
+            try {
+                const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/saved-trips/${trip.id}/members`, {
+                    headers: { 'Authorization': `Bearer ${session.access_token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setMembers(data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch members:", err);
+            } finally {
+                setLoadingMembers(false);
+            }
+        };
+        fetchMembers();
+    }, [trip.id, trip.member_ids, session]);
+
     const handleAddFunds = async (e) => {
         e.preventDefault();
         if (!fundingAmount || isNaN(fundingAmount) || Number(fundingAmount) <= 0) return;
@@ -187,6 +214,55 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                     </div>
                 </div>
             </div>
+
+            {/* Group Members Section */}
+            {trip.member_ids && trip.member_ids.length > 0 && (
+                <div className="accordion-card animate-entrance" style={{ marginBottom: '24px', padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <h3 style={{ margin: '0 0 16px 0', color: '#fff', fontSize: '18px' }}>Group Members</h3>
+                    {loadingMembers ? (
+                        <p style={{ color: '#aaa', margin: 0 }}>Loading members...</p>
+                    ) : (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
+                            {members.map(member => (
+                                <div key={member.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.05)', padding: '10px 15px', borderRadius: '12px', flex: '1 1 250px' }}>
+                                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '16px', overflow: 'hidden' }}>
+                                        {member.avatar_url ? (
+                                            <img src={member.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        ) : (
+                                            member.full_name?.charAt(0) || member.username?.charAt(0) || 'U'
+                                        )}
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <h4 style={{ margin: 0, color: '#fff', fontSize: '14px' }}>
+                                            {member.full_name || member.username}
+                                            {member.id === trip.user_id && <span style={{ marginLeft: '6px', fontSize: '10px', background: '#3b82f6', padding: '2px 6px', borderRadius: '4px' }}>Owner</span>}
+                                        </h4>
+                                        {member.username && <p style={{ margin: '2px 0 0', color: '#94a3b8', fontSize: '12px' }}>@{member.username}</p>}
+                                    </div>
+                                    <button 
+                                        onClick={() => setViewProfile(member)}
+                                        style={{
+                                            background: 'rgba(6, 182, 212, 0.1)',
+                                            color: '#06b6d4',
+                                            border: '1px solid rgba(6, 182, 212, 0.2)',
+                                            padding: '4px 10px',
+                                            borderRadius: '6px',
+                                            fontSize: '12px',
+                                            fontWeight: 'bold',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(6, 182, 212, 0.2)'; }}
+                                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(6, 182, 212, 0.1)'; }}
+                                    >
+                                        View
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
             <div className="planner-grid" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div className="contributor-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', margin: '20px 0' }}>
@@ -356,6 +432,10 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                     <LiquidCityAnimation percentage={percentage} city={trip.destination} />
                 </div>
             </div>
+
+            {viewProfile && (
+                <ViewProfileModal userProfile={viewProfile} onClose={() => setViewProfile(null)} />
+            )}
         </div>
     );
 };

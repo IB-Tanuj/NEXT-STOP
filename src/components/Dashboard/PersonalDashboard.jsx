@@ -292,6 +292,16 @@ const PersonalDashboard = () => {
                         </>
                     );
                 })()}
+
+                {isLeaveModalOpen && selectedTrip && (
+                    <ConfirmLeaveModal
+                        isOpen={isLeaveModalOpen}
+                        trip={selectedTrip}
+                        onClose={() => setIsLeaveModalOpen(false)}
+                        onConfirm={handleLeaveTrip}
+                        loading={isLeaving}
+                    />
+                )}
             </div>
         );
     };
