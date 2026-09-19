@@ -29,7 +29,7 @@ const ViewProfileModal = ({ userProfile, onClose }) => {
     const [activeTab, setActiveTab] = useState('posts');
     const [stats, setStats] = useState({ posts: 0, friends: 0, mutuals: 0 });
     
-    const [requestStatus, setRequestStatus] = useState('none'); // 'none', 'sending', 'sent'
+    const [requestStatus, setRequestStatus] = useState('loading'); // 'loading', 'none', 'sending', 'pending_outgoing', 'pending_incoming', 'accepted'
 
     const handleSendRequest = async () => {
         if (!session?.access_token) return;
@@ -44,7 +44,7 @@ const ViewProfileModal = ({ userProfile, onClose }) => {
                 body: JSON.stringify({ addresseeId: userProfile.id })
             });
             if (res.ok) {
-                setRequestStatus('sent');
+                setRequestStatus('pending_outgoing');
             } else {
                 setRequestStatus('none');
                 alert('Failed to send request, or request already exists.');
@@ -57,9 +57,27 @@ const ViewProfileModal = ({ userProfile, onClose }) => {
     };
 
     useEffect(() => {
-        // This is where you would fetch the user's actual stats and mutuals from the backend
-        // For now, it defaults to 0 until the endpoints are ready
-    }, [userProfile.id]);
+        // Fetch actual friendship status
+        const fetchStatus = async () => {
+            if (!session?.access_token || !userProfile?.id || user?.id === userProfile.id) return;
+            try {
+                const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/friends/status/${userProfile.id}`, {
+                    headers: { 'Authorization': `Bearer ${session.access_token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.status) setRequestStatus(data.status); // 'none', 'accepted', 'pending_incoming', 'pending_outgoing', 'self'
+                } else {
+                    setRequestStatus('none');
+                }
+            } catch (err) {
+                console.error("Failed to check status", err);
+                setRequestStatus('none');
+            }
+        };
+
+        fetchStatus();
+    }, [userProfile.id, session, user]);
 
     if (!userProfile) return null;
 
@@ -122,15 +140,15 @@ const ViewProfileModal = ({ userProfile, onClose }) => {
                                 </div>
                             )}
 
-                            {user?.id !== userProfile.id && (
+                            {user?.id !== userProfile.id && requestStatus !== 'loading' && requestStatus !== 'self' && (
                                 <div style={{ marginTop: '20px' }}>
                                     <button 
                                         onClick={handleSendRequest}
                                         disabled={requestStatus !== 'none'}
                                         style={{
-                                            background: requestStatus === 'sent' ? 'rgba(74, 222, 128, 0.1)' : '#06b6d4',
-                                            color: requestStatus === 'sent' ? '#4ade80' : '#fff',
-                                            border: requestStatus === 'sent' ? '1px solid rgba(74, 222, 128, 0.3)' : 'none',
+                                            background: requestStatus === 'accepted' ? 'transparent' : requestStatus !== 'none' ? 'rgba(74, 222, 128, 0.1)' : '#06b6d4',
+                                            color: requestStatus === 'accepted' ? '#fff' : requestStatus !== 'none' ? '#4ade80' : '#fff',
+                                            border: requestStatus === 'accepted' ? '1px solid rgba(255,255,255,0.2)' : requestStatus !== 'none' ? '1px solid rgba(74, 222, 128, 0.3)' : 'none',
                                             padding: '8px 20px',
                                             borderRadius: '8px',
                                             fontWeight: 'bold',
@@ -138,7 +156,11 @@ const ViewProfileModal = ({ userProfile, onClose }) => {
                                             transition: 'all 0.2s'
                                         }}
                                     >
-                                        {requestStatus === 'none' ? 'Send Friend Request' : requestStatus === 'sending' ? 'Sending...' : 'Request Sent'}
+                                        {requestStatus === 'none' ? 'Send Friend Request' : 
+                                         requestStatus === 'sending' ? 'Sending...' : 
+                                         requestStatus === 'accepted' ? 'Friends' :
+                                         requestStatus === 'pending_incoming' ? 'Has sent you a request' :
+                                         'Request Sent'}
                                     </button>
                                 </div>
                             )}
