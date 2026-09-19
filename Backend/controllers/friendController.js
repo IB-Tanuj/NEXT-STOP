@@ -229,3 +229,41 @@ export const getAcceptedFriends = async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 };
+
+// Check if two users have any shared trips
+export const getSharedTripsCount = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { id: friendId } = req.params;
+
+        if (!friendId) {
+            return res.status(400).json({ error: 'Friend ID is required' });
+        }
+
+        // We check for trips where:
+        // (user_id = userId AND member_ids contains friendId)
+        // OR (user_id = friendId AND member_ids contains userId)
+        const { data: userOwnedTrips, error: userOwnedError } = await supabase
+            .from('saved_trips')
+            .select('id')
+            .eq('user_id', userId)
+            .contains('member_ids', [friendId]);
+            
+        if (userOwnedError) throw userOwnedError;
+
+        const { data: friendOwnedTrips, error: friendOwnedError } = await supabase
+            .from('saved_trips')
+            .select('id')
+            .eq('user_id', friendId)
+            .contains('member_ids', [userId]);
+
+        if (friendOwnedError) throw friendOwnedError;
+
+        const count = (userOwnedTrips?.length || 0) + (friendOwnedTrips?.length || 0);
+
+        res.json({ sharedTripsCount: count });
+    } catch (error) {
+        console.error('getSharedTripsCount error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};

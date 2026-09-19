@@ -5,7 +5,8 @@ import {
     rejectFriendRequest, 
     removeFriend, 
     getPendingRequests, 
-    getAcceptedFriends 
+    getAcceptedFriends,
+    getSharedTripsCount
 } from '../controllers/friendController.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
 
@@ -19,5 +20,6 @@ router.put('/reject', rejectFriendRequest);
 router.delete('/remove', removeFriend);
 router.get('/requests', getPendingRequests);
 router.get('/', getAcceptedFriends);
+router.get('/:id/shared-trips-count', getSharedTripsCount);
 
 export default router;
