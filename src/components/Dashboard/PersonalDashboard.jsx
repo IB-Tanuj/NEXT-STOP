@@ -242,47 +242,37 @@ const PersonalDashboard = () => {
                                             ))}
                                         </select>
                                     
-                                    {selectedTrip.user_id === user.id ? (
+                                    {selectedTrip && selectedTrip.user_id === user.id ? (
                                         <button 
                                             onClick={handleDeleteTrip}
                                             style={{ 
                                                 background: 'rgba(239,68,68,0.08)', 
                                                 border: '1px solid rgba(239,68,68,0.3)', 
-                                                color: '#ef4444', 
-                                                padding: '8px 14px', 
-                                                borderRadius: '10px', 
-                                                cursor: 'pointer', 
-                                                marginLeft: '10px',
-                                                transition: 'all 0.3s',
-                                                fontWeight: '600',
+                                                color: '#ef4444', padding: '6px 14px', borderRadius: '8px', 
+                                                cursor: 'pointer', transition: 'all 0.3s', fontWeight: 'bold',
+                                                marginLeft: '15px', display: 'flex', alignItems: 'center', gap: '6px'
                                             }}
-                                            title="Delete Trip"
-                                            onMouseEnter={e => { e.target.style.background = 'rgba(239,68,68,0.15)'; e.target.style.borderColor = '#ef4444'; e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 4px 16px rgba(239,68,68,0.2)'; }}
-                                            onMouseLeave={e => { e.target.style.background = 'rgba(239,68,68,0.08)'; e.target.style.borderColor = 'rgba(239,68,68,0.3)'; e.target.style.transform = 'none'; e.target.style.boxShadow = 'none'; }}
+                                            onMouseEnter={e => { e.target.style.background = 'rgba(239,68,68,0.15)'; e.target.style.boxShadow = '0 0 10px rgba(239,68,68,0.2)'; }}
+                                            onMouseLeave={e => { e.target.style.background = 'rgba(239,68,68,0.08)'; e.target.style.boxShadow = 'none'; }}
                                         >
-                                            <IconTrash /> Delete
+                                            <IconTrash /> Delete Trip
                                         </button>
-                                    ) : (
+                                    ) : selectedTrip ? (
                                         <button 
                                             onClick={() => setIsLeaveModalOpen(true)}
                                             style={{ 
-                                                background: 'rgba(245, 158, 11, 0.08)', 
-                                                border: '1px solid rgba(245, 158, 11, 0.3)', 
-                                                color: '#f59e0b', 
-                                                padding: '8px 14px', 
-                                                borderRadius: '10px', 
-                                                cursor: 'pointer', 
-                                                marginLeft: '10px',
-                                                transition: 'all 0.3s',
-                                                fontWeight: '600',
+                                                background: 'rgba(239,68,68,0.08)', 
+                                                border: '1px solid rgba(239,68,68,0.3)', 
+                                                color: '#ef4444', padding: '6px 14px', borderRadius: '8px', 
+                                                cursor: 'pointer', transition: 'all 0.3s', fontWeight: 'bold',
+                                                marginLeft: '15px', display: 'flex', alignItems: 'center', gap: '6px'
                                             }}
-                                            title="Leave Trip"
-                                            onMouseEnter={e => { e.target.style.background = 'rgba(245, 158, 11, 0.15)'; e.target.style.borderColor = '#f59e0b'; e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 4px 16px rgba(245, 158, 11, 0.2)'; }}
-                                            onMouseLeave={e => { e.target.style.background = 'rgba(245, 158, 11, 0.08)'; e.target.style.borderColor = 'rgba(245, 158, 11, 0.3)'; e.target.style.transform = 'none'; e.target.style.boxShadow = 'none'; }}
+                                            onMouseEnter={e => { e.target.style.background = 'rgba(239,68,68,0.15)'; e.target.style.boxShadow = '0 0 10px rgba(239,68,68,0.2)'; }}
+                                            onMouseLeave={e => { e.target.style.background = 'rgba(239,68,68,0.08)'; e.target.style.boxShadow = 'none'; }}
                                         >
                                             <IconLeave /> Leave
                                         </button>
-                                    )}
+                                    ) : null}
                                     </div>
                                 </div>
                                 )}

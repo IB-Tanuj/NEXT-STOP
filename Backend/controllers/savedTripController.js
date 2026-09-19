@@ -274,3 +274,43 @@ export const leaveTrip = async (req, res) => {
         res.status(500).json({ error: "Failed to leave trip" });
     }
 };
+
+export const getTripMembers = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const { data: trip, error: fetchError } = await supabase
+            .from('saved_trips')
+            .select('user_id, member_ids')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !trip) {
+            return res.status(404).json({ error: 'Trip not found' });
+        }
+
+        // Must be part of the trip to view members
+        if (trip.user_id !== userId && (!trip.member_ids || !trip.member_ids.includes(userId))) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        const allMemberIds = [trip.user_id, ...(trip.member_ids || [])];
+
+        const { data: profiles, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, unique_id, full_name, username, avatar_url, bio, tags')
+            .in('id', allMemberIds);
+
+        if (profileError) throw profileError;
+
+        res.json(profiles);
+    } catch (error) {
+        console.error("Get trip members error:", error);
+        res.status(500).json({ error: "Failed to get trip members" });
+    }
+};
