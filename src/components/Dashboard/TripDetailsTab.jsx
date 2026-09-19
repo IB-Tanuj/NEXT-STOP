@@ -5,7 +5,13 @@ import { ItineraryView } from '../TripPlan/ItineraryView';
 import ViewProfileModal from './ViewProfileModal';
 import './Dashboard.css';
 
-/* ─── Monochrome SVG Icons ─── */
+/* ─── SVG Icons ─── */
+const IconChevronDown = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="6 9 12 15 18 9"/>
+    </svg>
+);
+
 const IconAlert = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }}>
         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
@@ -54,33 +60,44 @@ const IconSparkle = () => (
     </svg>
 );
 
+const IconDownload = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }}>
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+);
+
+/* ─── Spot Item Component ─── */
 const SpotItem = ({ spot, theme, groupSize = 1 }) => {
     const [open, setOpen] = useState(false);
     const cost = (spot.cost ?? spot.total ?? 0) * groupSize;
     return (
-        <li style={{ padding: '12px 0', borderBottom: '1px solid #ffffff11' }}>
-            <div 
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
-                onClick={() => setOpen(!open)}
-            >
+        <li className="spot-item">
+            <div className="spot-item-header" onClick={() => setOpen(!open)}>
                 <div>
-                    <div style={{ fontWeight: '500', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', color: open ? theme.primary : '#eef7f1' }}>
-                        {spot.name} <span style={{ fontSize: '10px' }}>{open ? '▼' : '▶'}</span>
+                    <div style={{ fontWeight: 600, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', color: open ? theme.primary : '#e2e8f0', transition: 'color 0.2s' }}>
+                        {spot.name} 
+                        <span style={{ 
+                            fontSize: '10px', 
+                            transition: 'transform 0.3s',
+                            transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
+                            display: 'inline-block',
+                            color: '#64748b'
+                        }}>▶</span>
                     </div>
-                    <div style={{ fontSize: '12px', color: '#aaa', marginTop: '4px' }}>
-                        {(spot.cost === 0 || spot.total === 0) ? 'Free/Variable' : 'Ticket Required'}
+                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '3px' }}>
+                        {(spot.cost === 0 || spot.total === 0) ? 'Free / Variable' : 'Ticket Required'}
                     </div>
                 </div>
-                <div style={{ fontWeight: 'bold', fontSize: '16px' }}>₹{cost}</div>
+                <div style={{ fontWeight: 700, fontSize: '15px', color: '#e2e8f0' }}>₹{cost}</div>
             </div>
             {open && (
-                <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '13px', color: '#ccc', lineHeight: '1.5' }}>
-                    {spot.info?.openingHours && <p style={{ marginBottom: '4px' }}><strong>Hours:</strong> {spot.info.openingHours.open} - {spot.info.openingHours.close} {spot.info.openingHours.closedOn && <span style={{color: '#ff6b6b'}}>(Closed: {spot.info.openingHours.closedOn})</span>}</p>}
+                <div className="spot-detail-panel">
+                    {spot.info?.openingHours && <p style={{ marginBottom: '4px' }}><strong>Hours:</strong> {spot.info.openingHours.open} - {spot.info.openingHours.close} {spot.info.openingHours.closedOn && <span style={{color: '#fb7185'}}>(Closed: {spot.info.openingHours.closedOn})</span>}</p>}
                     {(spot.info?.rules?.length > 0 || spot.info?.permit?.required) && (
                         <div style={{ marginBottom: "8px", marginTop: "8px" }}>
-                            <strong style={{ color: '#FFE66D' }}><IconAlert /> Rules & Permits:</strong>
+                            <strong style={{ color: '#fbbf24' }}><IconAlert /> Rules & Permits:</strong>
                             {spot.info.permit?.required && (
-                                <p style={{ margin: '4px 0', color: '#FFE66D' }}>Permit Required: {spot.info.permit.details} {spot.info.permit.cost ? `(₹${spot.info.permit.cost})` : ""}</p>
+                                <p style={{ margin: '4px 0', color: '#fbbf24' }}>Permit Required: {spot.info.permit.details} {spot.info.permit.cost ? `(₹${spot.info.permit.cost})` : ""}</p>
                             )}
                             {spot.info.rules?.length > 0 && (
                                 <ul style={{ paddingLeft: '20px', margin: '4px 0 0 0' }}>
@@ -105,7 +122,7 @@ const SpotItem = ({ spot, theme, groupSize = 1 }) => {
                         </div>
                     )}
                     {(!spot.info || (!spot.info.openingHours && !spot.info.recommendedDuration && !spot.info.accessibility && !spot.info.rules?.length && !spot.info.permit?.required && !spot.info.photographyPolicy && (!spot.info.tips || spot.info.tips.length === 0))) && (
-                        <p style={{ fontStyle: 'italic', margin: 0 }}>No detailed information available for this spot.</p>
+                        <p style={{ fontStyle: 'italic', margin: 0, color: '#64748b' }}>No detailed information available for this spot.</p>
                     )}
                 </div>
             )}
@@ -128,8 +145,8 @@ const DonutChart = ({ segments, total }) => {
         return () => observer.disconnect();
     }, []);
 
-    const size = 240;
-    const strokeWidth = 36;
+    const size = 220;
+    const strokeWidth = 34;
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const center = size / 2;
@@ -138,15 +155,14 @@ const DonutChart = ({ segments, total }) => {
 
     return (
         <div ref={chartRef} style={{ position: 'relative', display: 'inline-block' }}>
-            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)', filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.4))' }}>
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)', filter: 'drop-shadow(0 6px 20px rgba(0,0,0,0.3))' }}>
                 {/* Background circle */}
-                <circle cx={center} cy={center} r={radius} fill="none" stroke="#1e293b" strokeWidth={strokeWidth} />
+                <circle cx={center} cy={center} r={radius} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth={strokeWidth} />
                 {/* Segments */}
                 {segments.map((seg, idx) => {
                     const pct = seg.percent / 100;
                     const dashLength = circumference * pct;
                     const dashOffset = circumference * cumulativePercent;
-                    const rotation = 0;
                     cumulativePercent += pct;
                     
                     return (
@@ -162,7 +178,7 @@ const DonutChart = ({ segments, total }) => {
                             strokeDasharray={`${dashLength} ${circumference - dashLength}`}
                             strokeDashoffset={-dashOffset}
                             style={{
-                                transition: 'stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1), stroke-width 0.2s ease',
+                                transition: 'stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1), stroke-width 0.25s ease',
                                 strokeDashoffset: isVisible ? -dashOffset : circumference,
                                 color: seg.color,
                             }}
@@ -180,33 +196,44 @@ const DonutChart = ({ segments, total }) => {
                 transform: 'translate(-50%, -50%)',
                 textAlign: 'center',
             }}>
-                <div style={{ fontSize: '14px', color: '#64748b', fontWeight: '600', letterSpacing: '1px', textTransform: 'uppercase' }}>Total</div>
-                <div style={{ fontSize: '22px', fontWeight: '800', color: '#e2e8f0' }}>₹{total?.toLocaleString()}</div>
+                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' }}>Total</div>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: '#e2e8f0' }}>₹{total?.toLocaleString()}</div>
             </div>
             {/* Hover tooltip */}
             {hoveredIdx !== null && segments[hoveredIdx] && (
                 <div style={{
                     position: 'absolute',
-                    top: '-12px',
+                    top: '-14px',
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    background: '#1e293b',
-                    border: `1px solid ${segments[hoveredIdx].color}`,
+                    background: 'rgba(15, 23, 42, 0.95)',
+                    backdropFilter: 'blur(8px)',
+                    border: `1px solid ${segments[hoveredIdx].color}55`,
                     color: '#e2e8f0',
                     padding: '6px 14px',
-                    borderRadius: '8px',
+                    borderRadius: '10px',
                     fontSize: '13px',
                     fontWeight: '600',
                     whiteSpace: 'nowrap',
                     zIndex: 10,
-                    boxShadow: `0 4px 20px ${segments[hoveredIdx].color}33`,
+                    boxShadow: `0 4px 20px ${segments[hoveredIdx].color}22`,
                     pointerEvents: 'none',
+                    animation: 'fadeScaleIn 0.2s ease-out',
                 }}>
                     {segments[hoveredIdx].label}: {segments[hoveredIdx].percent}%
                 </div>
             )}
         </div>
     );
+};
+
+/* ─── Section Colors ─── */
+const SECTION_COLORS = {
+    accommodation: '#f97316',
+    transport: '#0ea5e9',
+    spots: '#10b981',
+    itinerary: '#fbbf24',
+    activities: '#f43f5e',
 };
 
 const TripDetailsTab = ({ trip, onUpdate }) => {
@@ -348,384 +375,307 @@ const TripDetailsTab = ({ trip, onUpdate }) => {
     const getPct = (val) => Math.round((val / total) * 100);
 
     const pieSegments = [
-        { label: 'Accommodation', color: '#f87171', percent: getPct(hotelCost) },
-        { label: 'Transport', color: '#60a5fa', percent: getPct(transportCost) },
-        { label: 'Spots', color: '#fbbf24', percent: getPct(spotsCost) },
-        { label: 'Buffer', color: '#4ade80', percent: Math.max(0, 100 - getPct(hotelCost) - getPct(transportCost) - getPct(spotsCost)) },
+        { label: 'Accommodation', color: '#f97316', percent: getPct(hotelCost) },
+        { label: 'Transport', color: '#0ea5e9', percent: getPct(transportCost) },
+        { label: 'Spots', color: '#10b981', percent: getPct(spotsCost) },
+        { label: 'Buffer', color: '#fbbf24', percent: Math.max(0, 100 - getPct(hotelCost) - getPct(transportCost) - getPct(spotsCost)) },
     ];
 
+    /* ─── Section Renderer Helper ─── */
+    const renderAccordion = (key, title, children, dotColor) => (
+        <div className="accordion-card animate-entrance">
+            <div className="accordion-header" onClick={() => toggleSection(key)}>
+                <h3>
+                    <span className="section-dot" style={{ background: dotColor }} />
+                    {title}
+                </h3>
+                <span className={`accordion-chevron ${expandedSections[key] ? 'open' : ''}`}>
+                    <IconChevronDown />
+                </span>
+            </div>
+            {expandedSections[key] && (
+                <div className="accordion-body">
+                    {children}
+                </div>
+            )}
+        </div>
+    );
+
     return (
-        <div className="trip-details-tab" style={{ maxWidth: '800px', margin: '0 auto', color: '#eef7f1' }}>
+        <div className="trip-details-tab" style={{ maxWidth: '800px', margin: '0 auto', color: '#e2e8f0' }}>
             
-            <div className="animate-entrance" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(139, 92, 246, 0.08))', padding: '16px 24px', borderRadius: '14px', border: '1px solid rgba(6, 182, 212, 0.2)', flexWrap: 'wrap', gap: '16px', backdropFilter: 'blur(8px)' }}>
-                <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
-                    Total budget = ₹{trip.total_budget}
+            {/* ─── Budget Bar ─── */}
+            <div className="budget-bar animate-entrance">
+                <div className="budget-amount">
+                    <span style={{ color: '#64748b', fontSize: '14px', fontWeight: 600 }}>Total Budget</span>
+                    <span style={{ margin: '0 6px', color: '#334155' }}>·</span>
+                    <span><span className="currency">₹</span>{trip.total_budget?.toLocaleString()}</span>
                 </div>
                 <button 
                     onClick={handleDownloadHTML}
-                    className="ripple-btn"
-                    style={{ background: 'linear-gradient(135deg, #10b981, #4ade80)', color: '#000', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.3s' }}
-                    onMouseEnter={e => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 6px 20px rgba(16,185,129,0.3)'; }}
-                    onMouseLeave={e => { e.target.style.transform = 'none'; e.target.style.boxShadow = 'none'; }}
+                    className="download-btn-v2 ripple-btn"
                 >
-                    Download offline
+                    <IconDownload /> Download
                 </button>
             </div>
 
-            {/* Group Members Section */}
+            {/* ─── Group Members ─── */}
             {trip.member_ids && trip.member_ids.length > 0 && (
-                <div className="accordion-card animate-entrance" style={{ marginBottom: '24px', padding: '20px', background: 'rgba(255,255,255,0.02)' }}>
-                    <h3 style={{ margin: '0 0 16px 0', color: '#fff', fontSize: '18px' }}>Group Members</h3>
-                    {loadingMembers ? (
-                        <p style={{ color: '#aaa', margin: 0 }}>Loading members...</p>
-                    ) : (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-                            {members.map(member => (
-                                <div key={member.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.05)', padding: '10px 15px', borderRadius: '12px', flex: '1 1 250px' }}>
-                                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '16px', overflow: 'hidden' }}>
-                                        {member.avatar_url ? (
-                                            <img src={member.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        ) : (
-                                            member.full_name?.charAt(0) || member.username?.charAt(0) || 'U'
-                                        )}
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <h4 style={{ margin: 0, color: '#fff', fontSize: '14px' }}>
-                                            {member.full_name || member.username}
-                                            {member.id === trip.user_id && <span style={{ marginLeft: '6px', fontSize: '10px', background: '#3b82f6', padding: '2px 6px', borderRadius: '4px' }}>Owner</span>}
-                                        </h4>
-                                        {member.username && <p style={{ margin: '2px 0 0', color: '#94a3b8', fontSize: '12px' }}>@{member.username}</p>}
-                                    </div>
-                                    <button 
-                                        onClick={() => setViewProfile(member)}
-                                        style={{
-                                            background: 'rgba(6, 182, 212, 0.1)',
-                                            color: '#06b6d4',
-                                            border: '1px solid rgba(6, 182, 212, 0.2)',
-                                            padding: '4px 10px',
-                                            borderRadius: '6px',
-                                            fontSize: '12px',
-                                            fontWeight: 'bold',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s'
-                                        }}
-                                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(6, 182, 212, 0.2)'; }}
-                                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(6, 182, 212, 0.1)'; }}
-                                    >
-                                        View
-                                    </button>
+                <div className="accordion-card animate-entrance" style={{ marginBottom: '20px' }}>
+                    <div className="accordion-header" onClick={() => toggleSection('members')}>
+                        <h3>
+                            <span className="section-dot" style={{ background: '#0ea5e9' }} />
+                            Group Members
+                        </h3>
+                        <span className={`accordion-chevron ${expandedSections.members ? 'open' : ''}`}>
+                            <IconChevronDown />
+                        </span>
+                    </div>
+                    {expandedSections.members && (
+                        <div className="accordion-body">
+                            {loadingMembers ? (
+                                <p style={{ color: '#94a3b8', margin: 0 }}>Loading members...</p>
+                            ) : (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                                    {members.map(member => (
+                                        <div key={member.id} className="member-card">
+                                            <div className="member-avatar">
+                                                {member.avatar_url ? (
+                                                    <img src={member.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                ) : (
+                                                    member.full_name?.charAt(0) || member.username?.charAt(0) || 'U'
+                                                )}
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <h4 style={{ margin: 0, color: '#e2e8f0', fontSize: '14px', fontWeight: 600 }}>
+                                                    {member.full_name || member.username}
+                                                    {member.id === trip.user_id && <span className="owner-badge">Owner</span>}
+                                                </h4>
+                                                {member.username && <p style={{ margin: '2px 0 0', color: '#64748b', fontSize: '12px' }}>@{member.username}</p>}
+                                            </div>
+                                            <button 
+                                                className="member-view-btn"
+                                                onClick={() => setViewProfile(member)}
+                                            >
+                                                View
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
+                            )}
                         </div>
                     )}
                 </div>
             )}
 
-            {/* 1. Accommodation */}
-            <div className="accordion-card animate-entrance">
-                <div className="accordion-header" onClick={() => toggleSection('accommodation')}>
-                    <h3>Accommodation</h3>
-                    <span className="arrow">{expandedSections.accommodation ? '▲' : '▼'}</span>
-                </div>
-                {expandedSections.accommodation && (
-                    <div className="accordion-body">
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px' }}>
-                            <div><span className="label">Days of stay</span><br/> {data.hotel?.days || data.preferences?.days || 1}</div>
-                            <div><span className="label">Name of hotel</span><br/> {data.hotel?.name || 'Not selected'}</div>
-                            <div><span className="label">Single night price</span><br/> ₹{Math.round(hotelCost / (data.hotel?.days || data.preferences?.days || 1))}</div>
-                            <div><span className="label">Total price</span><br/> ₹{hotelCost}</div>
-                            <div style={{ gridColumn: '1 / -1', marginTop: '8px' }}>
-                                <span className="label">Budget Percentage:</span> <strong>{getPct(hotelCost)}%</strong> of total budget
-                            </div>
-                        </div>
+            {/* ─── 1. Accommodation ─── */}
+            {renderAccordion('accommodation', 'Accommodation', (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px' }}>
+                    <div><span className="label">Days of stay</span><br/> {data.hotel?.days || data.preferences?.days || 1}</div>
+                    <div><span className="label">Name of hotel</span><br/> {data.hotel?.name || 'Not selected'}</div>
+                    <div><span className="label">Single night price</span><br/> ₹{Math.round(hotelCost / (data.hotel?.days || data.preferences?.days || 1))}</div>
+                    <div><span className="label">Total price</span><br/> ₹{hotelCost}</div>
+                    <div style={{ gridColumn: '1 / -1', marginTop: '8px', padding: '10px 14px', background: 'rgba(249, 115, 22, 0.06)', borderRadius: '10px', border: '1px solid rgba(249, 115, 22, 0.1)' }}>
+                        <span className="label">Budget Percentage</span> <strong style={{ color: '#f97316' }}>{getPct(hotelCost)}%</strong> of total budget
                     </div>
-                )}
-            </div>
-
-            {/* 2. Transport */}
-            <div className="accordion-card animate-entrance">
-                <div className="accordion-header" onClick={() => toggleSection('transport')}>
-                    <h3>Transport</h3>
-                    <span className="arrow">{expandedSections.transport ? '▲' : '▼'}</span>
                 </div>
-                {expandedSections.transport && (
-                    <div className="accordion-body">
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px' }}>
-                            <div><span className="label">Medium</span><br/> {data.transport?.medium || 'N/A'}</div>
-                            <div><span className="label">Class</span><br/> {data.transport?.class || 'Standard'}</div>
-                            <div><span className="label">From</span><br/> {data.transport?.from || 'Origin'}</div>
-                            <div><span className="label">To</span><br/> {data.transport?.to || trip.destination}</div>
-                            <div><span className="label">Distance & Time</span><br/> {data.transport?.distance ? data.transport.distance + ' km' : 'N/A'}</div>
-                            <div><span className="label">Round Trip Price</span><br/> ₹{transportCost}</div>
-                            <div style={{ gridColumn: '1 / -1', marginTop: '8px' }}>
-                                <span className="label">Budget Percentage:</span> <strong>{getPct(transportCost)}%</strong> of total budget
-                            </div>
-                        </div>
+            ), SECTION_COLORS.accommodation)}
+
+            {/* ─── 2. Transport ─── */}
+            {renderAccordion('transport', 'Transport', (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px' }}>
+                    <div><span className="label">Medium</span><br/> {data.transport?.medium || 'N/A'}</div>
+                    <div><span className="label">Class</span><br/> {data.transport?.class || 'Standard'}</div>
+                    <div><span className="label">From</span><br/> {data.transport?.from || 'Origin'}</div>
+                    <div><span className="label">To</span><br/> {data.transport?.to || trip.destination}</div>
+                    <div><span className="label">Distance & Time</span><br/> {data.transport?.distance ? data.transport.distance + ' km' : 'N/A'}</div>
+                    <div><span className="label">Round Trip Price</span><br/> ₹{transportCost}</div>
+                    <div style={{ gridColumn: '1 / -1', marginTop: '8px', padding: '10px 14px', background: 'rgba(14, 165, 233, 0.06)', borderRadius: '10px', border: '1px solid rgba(14, 165, 233, 0.1)' }}>
+                        <span className="label">Budget Percentage</span> <strong style={{ color: '#0ea5e9' }}>{getPct(transportCost)}%</strong> of total budget
                     </div>
-                )}
-            </div>
-
-            {/* 3. Spots */}
-            <div className="accordion-card animate-entrance">
-                <div className="accordion-header" onClick={() => toggleSection('spots')}>
-                    <h3>Spots</h3>
-                    <span className="arrow">{expandedSections.spots ? '▲' : '▼'}</span>
                 </div>
-                {expandedSections.spots && (
-                    <div className="accordion-body">
-                        {data.spots && data.spots.length > 0 ? (
-                            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                                {data.spots.map((spot, idx) => (
-                                    <SpotItem key={idx} spot={spot} theme={{ primary: '#4ade80' }} groupSize={groupSize} />
+            ), SECTION_COLORS.transport)}
+
+            {/* ─── 3. Spots ─── */}
+            {renderAccordion('spots', 'Spots', (
+                <>
+                    {data.spots && data.spots.length > 0 ? (
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                            {data.spots.map((spot, idx) => (
+                                <SpotItem key={idx} spot={spot} theme={{ primary: '#10b981' }} groupSize={groupSize} />
+                            ))}
+                        </ul>
+                    ) : (
+                        <p style={{ color: '#64748b' }}>No specific spots tracked in budget.</p>
+                    )}
+                    <div style={{ marginTop: '16px', fontWeight: 700, textAlign: 'right', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '14px', fontSize: '15px' }}>
+                        Total Spots Cost: <span style={{ color: '#10b981' }}>₹{spotsCost}</span> <span style={{ color: '#64748b', fontSize: '13px' }}>({getPct(spotsCost)}%)</span>
+                    </div>
+                </>
+            ), SECTION_COLORS.spots)}
+
+            {/* ─── 4. Itinerary ─── */}
+            {renderAccordion('itinerary', 'Itinerary', (
+                <>
+                    {aiData?.itinerary ? (
+                        <div className="itinerary-timeline">
+                            {aiData.itinerary.map((day, idx) => (
+                                <div key={idx} className="timeline-day" style={{ borderLeftColor: `${SECTION_COLORS.itinerary}33` }}>
+                                    <div className="timeline-dot" style={{ background: '#fbbf24', color: 'rgba(251, 191, 36, 0.4)' }} />
+                                    <h4 style={{ color: '#fbbf24', margin: '0 0 14px 0', fontSize: '17px', fontWeight: 700 }}>Day {day.day}: {day.title}</h4>
+                                    
+                                    {/* Morning */}
+                                    <div className="time-of-day-card" style={{ background: 'rgba(249, 115, 22, 0.04)', borderLeft: '3px solid rgba(249, 115, 22, 0.3)' }}>
+                                        <div className="time-label" style={{ color: '#f97316' }}>Morning</div>
+                                        <div style={{ lineHeight: '1.6', color: '#cbd5e1' }}>{day.morning}</div>
+                                    </div>
+                                    
+                                    {/* Afternoon */}
+                                    <div className="time-of-day-card" style={{ background: 'rgba(14, 165, 233, 0.04)', borderLeft: '3px solid rgba(14, 165, 233, 0.3)' }}>
+                                        <div className="time-label" style={{ color: '#0ea5e9' }}>Afternoon</div>
+                                        <div style={{ lineHeight: '1.6', color: '#cbd5e1' }}>{day.afternoon}</div>
+                                    </div>
+                                    
+                                    {/* Evening */}
+                                    <div className="time-of-day-card" style={{ background: 'rgba(99, 102, 241, 0.04)', borderLeft: '3px solid rgba(99, 102, 241, 0.25)' }}>
+                                        <div className="time-label" style={{ color: '#818cf8' }}>Evening</div>
+                                        <div style={{ lineHeight: '1.6', color: '#cbd5e1' }}>{day.evening}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div style={{ textAlign: 'center', padding: '30px' }}>
+                            <p style={{ marginBottom: '20px', color: '#94a3b8', fontSize: '15px' }}>The daily itinerary wasn't generated for this trip.</p>
+                            <button 
+                                onClick={handleGenerateItinerary} 
+                                disabled={isGenerating}
+                                className="ripple-btn"
+                                style={{ 
+                                    background: isGenerating ? 'transparent' : 'rgba(14, 165, 233, 0.08)', 
+                                    border: '2px solid #0ea5e9', 
+                                    color: '#38bdf8', 
+                                    padding: '12px 28px', 
+                                    borderRadius: '12px', 
+                                    cursor: isGenerating ? 'default' : 'pointer', 
+                                    fontWeight: 700,
+                                    transition: 'all 0.3s',
+                                    boxShadow: isGenerating ? 'none' : '0 0 20px rgba(14,165,233,0.1)',
+                                    letterSpacing: '0.3px',
+                                }}
+                                onMouseEnter={e => { if (!isGenerating) { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 6px 24px rgba(14,165,233,0.25)'; }}}
+                                onMouseLeave={e => { e.target.style.transform = 'none'; e.target.style.boxShadow = isGenerating ? 'none' : '0 0 20px rgba(14,165,233,0.1)'; }}
+                            >
+                                {isGenerating ? 'Generating Itinerary...' : <><IconSparkle /> Generate Itinerary Now</>}
+                            </button>
+                        </div>
+                    )}
+                </>
+            ), SECTION_COLORS.itinerary)}
+
+            {/* ─── 5. Activities / Food / Emergency ─── */}
+            {renderAccordion('activities', 'Activities / Food & Emergency', (
+                <>
+                    {/* Buffer Card */}
+                    <div className="category-card" style={{ 
+                        background: bufferCost >= 0 
+                            ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(14, 165, 233, 0.05))' 
+                            : 'rgba(248, 113, 113, 0.06)',
+                        borderColor: bufferCost >= 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(248, 113, 113, 0.15)',
+                    }}>
+                        <strong style={{ color: '#94a3b8' }}>Remaining Buffer </strong>
+                        <span style={{ color: bufferCost >= 0 ? '#34d399' : '#fb7185', fontSize: '20px', fontWeight: 800, marginLeft: '8px' }}>₹{bufferCost}</span>
+                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px' }}>Covers food, activities and in-travel spot-by-spot expenses.</div>
+                    </div>
+
+                    {/* Festivals */}
+                    {aiData?.festivals && aiData.festivals.length > 0 && (
+                        <div className="category-card">
+                            <div className="category-header" style={{ color: '#fbbf24' }}>
+                                <IconParty /> Festivals & Events
+                            </div>
+                            <ul style={{ paddingLeft: '20px', color: '#cbd5e1', lineHeight: '1.6', margin: 0 }}>
+                                {aiData.festivals.map((f, i) => <li key={i} style={{ marginBottom: '4px' }}>{typeof f === 'string' ? f : f.name || JSON.stringify(f)}</li>)}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Activities */}
+                    {aiData?.activities && aiData.activities.length > 0 && (
+                        <div className="category-card">
+                            <div className="category-header" style={{ color: '#38bdf8' }}>
+                                <IconTarget /> Recommended Activities
+                            </div>
+                            <ul style={{ paddingLeft: '20px', color: '#cbd5e1', lineHeight: '1.6', margin: 0 }}>
+                                {aiData.activities.map((a, i) => (
+                                    <li key={i} style={{ marginBottom: '8px' }}>
+                                        <strong>{typeof a === 'string' ? a : a.name}</strong>
+                                        {typeof a === 'object' && a.description && <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>{a.description}</div>}
+                                    </li>
                                 ))}
                             </ul>
-                        ) : (
-                            <p>No specific spots tracked in budget.</p>
-                        )}
-                        <div style={{ marginTop: '16px', fontWeight: 'bold', textAlign: 'right', borderTop: '1px dashed #ffffff33', paddingTop: '12px' }}>
-                            Total Spots Cost: <span style={{ color: '#4ade80' }}>₹{spotsCost}</span> ({getPct(spotsCost)}%)
                         </div>
-                    </div>
-                )}
-            </div>
+                    )}
 
-            {/* 4. Itinerary */}
-            <div className="accordion-card animate-entrance">
-                <div className="accordion-header" onClick={() => toggleSection('itinerary')}>
-                    <h3>Itinerary</h3>
-                    <span className="arrow">{expandedSections.itinerary ? '▲' : '▼'}</span>
-                </div>
-                {expandedSections.itinerary && (
-                    <div className="accordion-body">
-                        {aiData?.itinerary ? (
-                            <div className="itinerary-timeline">
-                                {aiData.itinerary.map((day, idx) => (
-                                    <div key={idx} style={{ marginBottom: '30px', borderLeft: '2px solid #4ade80', paddingLeft: '24px', position: 'relative' }}>
-                                        <div style={{ position: 'absolute', left: '-7px', top: '4px', width: '12px', height: '12px', borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 10px rgba(74, 222, 128, 0.5)' }}></div>
-                                        <h4 style={{ color: '#4ade80', margin: '0 0 12px 0', fontSize: '18px' }}>Day {day.day}: {day.title}</h4>
-                                        <div style={{ marginBottom: '12px' }}>
-                                            <div style={{ color: '#aaa', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Morning</div>
-                                            <div style={{ marginTop: '4px', lineHeight: '1.5' }}>{day.morning}</div>
-                                        </div>
-                                        <div style={{ marginBottom: '12px' }}>
-                                            <div style={{ color: '#aaa', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Afternoon</div>
-                                            <div style={{ marginTop: '4px', lineHeight: '1.5' }}>{day.afternoon}</div>
-                                        </div>
-                                        <div>
-                                            <div style={{ color: '#aaa', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Evening</div>
-                                            <div style={{ marginTop: '4px', lineHeight: '1.5' }}>{day.evening}</div>
-                                        </div>
-                                    </div>
+                    {/* Food */}
+                    {aiData?.foodRecommendations && aiData.foodRecommendations.length > 0 && (
+                        <div className="category-card">
+                            <div className="category-header" style={{ color: '#fb923c' }}>
+                                <IconUtensils /> Food Recommendations
+                            </div>
+                            <ul style={{ paddingLeft: '20px', color: '#cbd5e1', lineHeight: '1.6', margin: 0 }}>
+                                {aiData.foodRecommendations.map((f, i) => (
+                                    <li key={i} style={{ marginBottom: '8px' }}>
+                                        <strong>{f.mustTry && <><IconStar /> </>}{typeof f === 'string' ? f : f.name}</strong>
+                                        {typeof f === 'object' && f.description && <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>{f.description}</div>}
+                                    </li>
                                 ))}
-                            </div>
-                        ) : (
-                            <div style={{ textAlign: 'center', padding: '30px' }}>
-                                <p style={{ marginBottom: '20px', color: '#aaa', fontSize: '15px' }}>The daily itinerary wasn't generated for this trip.</p>
-                                <button 
-                                    onClick={handleGenerateItinerary} 
-                                    disabled={isGenerating}
-                                    className="ripple-btn"
-                                    style={{ 
-                                        background: isGenerating ? 'transparent' : 'linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(74, 222, 128, 0.15))', 
-                                        border: '2px solid #4ade80', 
-                                        color: '#4ade80', 
-                                        padding: '12px 24px', 
-                                        borderRadius: '10px', 
-                                        cursor: isGenerating ? 'default' : 'pointer', 
-                                        fontWeight: 'bold',
-                                        transition: 'all 0.3s',
-                                        boxShadow: isGenerating ? 'none' : '0 0 20px rgba(74,222,128,0.15)',
-                                    }}
-                                    onMouseEnter={e => { if (!isGenerating) { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 6px 24px rgba(74,222,128,0.3)'; }}}
-                                    onMouseLeave={e => { e.target.style.transform = 'none'; e.target.style.boxShadow = isGenerating ? 'none' : '0 0 20px rgba(74,222,128,0.15)'; }}
-                                >
-                                    {isGenerating ? 'Generating Itinerary...' : <><IconSparkle /> Generate Itinerary Now</>}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-
-            {/* 5. Activities / Food / Emergency */}
-            <div className="accordion-card animate-entrance">
-                <div className="accordion-header" onClick={() => toggleSection('activities')}>
-                    <h3>Activities / food recommendation and emergency number</h3>
-                    <span className="arrow">{expandedSections.activities ? '▲' : '▼'}</span>
-                </div>
-                {expandedSections.activities && (
-                    <div className="accordion-body">
-                        <div style={{ background: bufferCost >= 0 ? 'linear-gradient(135deg, rgba(74,222,128,0.08), rgba(6,182,212,0.08))' : '#ff6b6b22', padding: '16px', borderRadius: '12px', marginBottom: '24px', border: `1px solid ${bufferCost >= 0 ? '#4ade80' : '#ff6b6b'}` }}>
-                            <strong>Remaining Buffer: </strong>
-                            <span style={{ color: bufferCost >= 0 ? '#4ade80' : '#ff6b6b', fontSize: '18px', fontWeight: 'bold' }}>₹{bufferCost}</span>
-                            <div style={{ fontSize: '13px', color: '#aaa', marginTop: '6px' }}>This covers the cost of food, activities and in travel spot by spot.</div>
+                            </ul>
                         </div>
+                    )}
 
-                        {aiData?.festivals && aiData.festivals.length > 0 && (
-                            <div style={{ marginBottom: '20px' }}>
-                                <h4 style={{ color: '#fbbf24', marginBottom: '8px' }}><IconParty /> Festivals & Events</h4>
-                                <ul style={{ paddingLeft: '20px', color: '#ddd' }}>
-                                    {aiData.festivals.map((f, i) => <li key={i} style={{ marginBottom: '4px' }}>{typeof f === 'string' ? f : f.name || JSON.stringify(f)}</li>)}
-                                </ul>
+                    {/* Emergency */}
+                    {aiData?.localEmergency && (
+                        <div className="category-card" style={{ background: 'rgba(248, 113, 113, 0.04)', borderColor: 'rgba(248, 113, 113, 0.12)' }}>
+                            <div className="category-header" style={{ color: '#fb7185' }}>
+                                <IconSiren /> Emergency Contacts
                             </div>
-                        )}
+                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
+                                {aiData.localEmergency.map((e, idx) => (
+                                    <li key={idx} style={{ padding: '8px 12px', background: 'rgba(248, 113, 113, 0.04)', borderRadius: '10px' }}>
+                                        <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>{e.label}</div>
+                                        <div style={{ fontWeight: 700, fontSize: '16px', color: '#e2e8f0', marginTop: '2px' }}>{e.number}</div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    
+                    {!aiData?.activities && !aiData?.festivals && !aiData?.localEmergency && !aiData?.foodRecommendations && (
+                        <p style={{ color: '#64748b', fontStyle: 'italic' }}>AI data not generated for this trip.</p>
+                    )}
+                </>
+            ), SECTION_COLORS.activities)}
 
-                        {aiData?.activities && aiData.activities.length > 0 && (
-                            <div style={{ marginBottom: '20px' }}>
-                                <h4 style={{ color: '#60a5fa', marginBottom: '8px' }}><IconTarget /> Recommended Activities</h4>
-                                <ul style={{ paddingLeft: '20px', color: '#ddd', lineHeight: '1.6' }}>
-                                    {aiData.activities.map((a, i) => (
-                                        <li key={i} style={{ marginBottom: '8px' }}>
-                                            <strong>{typeof a === 'string' ? a : a.name}</strong>
-                                            {typeof a === 'object' && a.description && <div style={{ fontSize: '13px', color: '#aaa' }}>{a.description}</div>}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-
-                        {aiData?.foodRecommendations && aiData.foodRecommendations.length > 0 && (
-                            <div style={{ marginBottom: '20px' }}>
-                                <h4 style={{ color: '#fb923c', marginBottom: '8px' }}><IconUtensils /> Food Recommendations</h4>
-                                <ul style={{ paddingLeft: '20px', color: '#ddd', lineHeight: '1.6' }}>
-                                    {aiData.foodRecommendations.map((f, i) => (
-                                        <li key={i} style={{ marginBottom: '8px' }}>
-                                            <strong>{f.mustTry && <><IconStar /> </>}{typeof f === 'string' ? f : f.name}</strong>
-                                            {typeof f === 'object' && f.description && <div style={{ fontSize: '13px', color: '#aaa' }}>{f.description}</div>}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-
-                        {aiData?.localEmergency && (
-                            <div style={{ background: 'linear-gradient(135deg, rgba(248,113,113,0.06), rgba(244,63,94,0.06))', padding: '16px', borderRadius: '12px', border: '1px solid #f8717133' }}>
-                                <h4 style={{ color: '#f87171', margin: '0 0 12px 0' }}><IconSiren /> Emergency Contacts</h4>
-                                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
-                                    {aiData.localEmergency.map((e, idx) => (
-                                        <li key={idx}>
-                                            <div style={{ fontSize: '12px', color: '#aaa' }}>{e.label}</div>
-                                            <div style={{ fontWeight: 'bold', fontSize: '16px' }}>{e.number}</div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                        
-                        {!aiData?.activities && !aiData?.festivals && !aiData?.localEmergency && !aiData?.foodRecommendations && (
-                            <p style={{ color: '#aaa', fontStyle: 'italic' }}>AI data not generated for this trip.</p>
-                        )}
-                    </div>
-                )}
-            </div>
-
-            {/* Animated Donut Pie Chart */}
-            <div className="animate-entrance" style={{ marginTop: '40px', background: 'linear-gradient(145deg, rgba(15,23,42,0.8), rgba(30,41,59,0.6))', borderRadius: '20px', padding: '40px 20px', border: '1px solid rgba(6,182,212,0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center', backdropFilter: 'blur(8px)', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
-                <h3 style={{ marginBottom: '32px', letterSpacing: '1px', background: 'linear-gradient(135deg, #06b6d4, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', fontSize: '1.3rem' }}>Budget Breakdown</h3>
+            {/* ─── Donut Chart Section ─── */}
+            <div className="donut-container animate-entrance">
+                <h3 className="donut-title">Budget Breakdown</h3>
                 
                 <DonutChart segments={pieSegments} total={trip.total_budget} />
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '20px', width: '100%', maxWidth: '500px', marginTop: '40px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '8px', width: '100%', maxWidth: '480px', marginTop: '36px' }}>
                     {pieSegments.map((seg, idx) => (
-                        <div key={idx} className="legend-item" style={{ transition: 'transform 0.2s', cursor: 'default' }} 
-                             onMouseEnter={e => e.currentTarget.style.transform = 'translateX(4px)'}
-                             onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
-                            <span style={{ background: seg.color, boxShadow: `0 0 10px ${seg.color}44` }}></span> 
+                        <div key={idx} className="legend-item">
+                            <span style={{ background: seg.color, boxShadow: `0 0 8px ${seg.color}33` }} /> 
                             <div>{seg.label}<br/><strong style={{ color: seg.color }}>{seg.percent}%</strong></div>
                         </div>
                     ))}
                 </div>
             </div>
 
-            <style>{`
-                .accordion-card {
-                    background: rgba(255,255,255,0.03);
-                    border: 1px solid rgba(6,182,212,0.15);
-                    border-radius: 14px;
-                    margin-bottom: 16px;
-                    overflow: hidden;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                }
-                .accordion-card:hover {
-                    border-color: rgba(6,182,212,0.3);
-                    box-shadow: 0 4px 20px rgba(6,182,212,0.08);
-                }
-                .accordion-header {
-                    padding: 20px 24px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    cursor: pointer;
-                    background: rgba(255,255,255,0.02);
-                    transition: background 0.2s;
-                    position: relative;
-                    overflow: hidden;
-                }
-                .accordion-header:hover {
-                    background: rgba(255,255,255,0.05);
-                }
-                .accordion-header:active::after {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background: rgba(6, 182, 212, 0.1);
-                    animation: headerPress 0.4s ease-out;
-                }
-                @keyframes headerPress {
-                    from { opacity: 1; }
-                    to { opacity: 0; }
-                }
-                .accordion-header h3 {
-                    margin: 0;
-                    font-size: 16px;
-                    font-weight: 600;
-                    letter-spacing: 0.5px;
-                }
-                .arrow {
-                    color: #06b6d4;
-                    font-size: 12px;
-                    transition: transform 0.3s;
-                }
-                .accordion-body {
-                    padding: 24px;
-                    border-top: 1px solid rgba(6,182,212,0.1);
-                    background: rgba(0,0,0,0.3);
-                    animation: accordionSlideIn 0.3s ease-out;
-                }
-                @keyframes accordionSlideIn {
-                    from {
-                        opacity: 0;
-                        transform: translateY(-8px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-                .label {
-                    color: #888;
-                    font-size: 12px;
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                    margin-bottom: 4px;
-                    display: inline-block;
-                }
-                .legend-item {
-                    display: flex;
-                    align-items: flex-start;
-                    gap: 12px;
-                    font-size: 14px;
-                    color: #ccc;
-                }
-                .legend-item span {
-                    width: 16px;
-                    height: 16px;
-                    border-radius: 4px;
-                    display: inline-block;
-                    margin-top: 2px;
-                    transition: box-shadow 0.3s;
-                }
-            `}</style>
+            {viewProfile && (
+                <ViewProfileModal userProfile={viewProfile} onClose={() => setViewProfile(null)} />
+            )}
         </div>
     );
 };

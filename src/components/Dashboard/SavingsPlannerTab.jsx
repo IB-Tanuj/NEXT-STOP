@@ -3,7 +3,7 @@ import LiquidCityAnimation from './LiquidCityAnimation';
 import { useAuth } from '../../context/AuthContext';
 import ViewProfileModal from './ViewProfileModal';
 
-/* ─── Monochrome SVG Icons for Wallets ─── */
+/* ─── SVG Icons ─── */
 const IconTrain = ({ color = 'currentColor' }) => (
     <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="4" y="3" width="16" height="16" rx="2"/><path d="M4 11h16"/><path d="M12 3v8"/>
@@ -28,6 +28,12 @@ const IconCoffee = ({ color = 'currentColor' }) => (
     <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/>
         <line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/>
+    </svg>
+);
+
+const IconChevronDown = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="6 9 12 15 18 9"/>
     </svg>
 );
 
@@ -59,10 +65,10 @@ const useAnimatedCounter = (target, duration = 1200) => {
 
 /* ─── Wallet config ─── */
 const WALLET_CONFIG = {
-    transport: { icon: IconTrain, color: '#06b6d4', label: 'TRANSPORT', cssClass: 'transport', gradient: 'linear-gradient(135deg, #06b6d4, #22d3ee)' },
-    stay:      { icon: IconBuilding, color: '#8b5cf6', label: 'STAY', cssClass: 'stay', gradient: 'linear-gradient(135deg, #8b5cf6, #a78bfa)' },
-    food:      { icon: IconMapPin, color: '#f59e0b', label: 'VISIT SPOTS', cssClass: 'food', gradient: 'linear-gradient(135deg, #f59e0b, #fbbf24)' },
-    buffer:    { icon: IconCoffee, color: '#f43f5e', label: 'FOOD & OTHER EXPENSES', cssClass: 'buffer', gradient: 'linear-gradient(135deg, #f43f5e, #fb7185)' },
+    transport: { icon: IconTrain, color: '#0ea5e9', label: 'TRANSPORT', cssClass: 'transport', gradient: 'linear-gradient(135deg, #0ea5e9, #38bdf8)', bgTint: 'rgba(14, 165, 233, 0.06)' },
+    stay:      { icon: IconBuilding, color: '#6366f1', label: 'STAY', cssClass: 'stay', gradient: 'linear-gradient(135deg, #6366f1, #818cf8)', bgTint: 'rgba(99, 102, 241, 0.06)' },
+    food:      { icon: IconMapPin, color: '#f59e0b', label: 'VISIT SPOTS', cssClass: 'food', gradient: 'linear-gradient(135deg, #f59e0b, #fbbf24)', bgTint: 'rgba(245, 158, 11, 0.06)' },
+    buffer:    { icon: IconCoffee, color: '#f43f5e', label: 'FOOD & OTHER EXPENSES', cssClass: 'buffer', gradient: 'linear-gradient(135deg, #f43f5e, #fb7185)', bgTint: 'rgba(244, 63, 94, 0.06)' },
 };
 
 /* ─── Ripple effect helper ─── */
@@ -104,7 +110,8 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
     const [selectedWallet, setSelectedWallet] = useState(sortedWallets[0]?.id || '');
     const [contributorName, setContributorName] = useState(allContributors[0]);
     const [isSaving, setIsSaving] = useState(false);
-    const [justFunded, setJustFunded] = useState(null); // wallet id that just got funded
+    const [justFunded, setJustFunded] = useState(null);
+    const [membersOpen, setMembersOpen] = useState(true);
 
     // Animated counters
     const animTarget = useAnimatedCounter(totalTarget);
@@ -197,83 +204,97 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
 
     return (
         <div className="savings-planner-tab">
-            <div className="planner-header">
+            {/* ─── Header ─── */}
+            <div className="planner-header animate-entrance">
                 <h3>Financial Goal Tracker</h3>
-                <div className="goal-overview">
+            </div>
+
+            {/* ─── Stat Cards ─── */}
+            <div className="goal-overview animate-entrance" style={{ animationDelay: '0.06s' }}>
+                <div className="stat-card stat-card--target">
                     <div className="stat">
                         <span className="label">Target</span>
                         <span className="value">₹{animTarget.toLocaleString()}</span>
                     </div>
+                </div>
+                <div className="stat-card stat-card--saved">
                     <div className="stat">
                         <span className="label">Saved</span>
                         <span className="value highlight">₹{animSaved.toLocaleString()}</span>
                     </div>
+                </div>
+                <div className="stat-card stat-card--remaining">
                     <div className="stat">
                         <span className="label">Remaining</span>
-                        <span className="value">₹{animRemaining.toLocaleString()}</span>
+                        <span className="value remaining-val">₹{animRemaining.toLocaleString()}</span>
                     </div>
                 </div>
             </div>
 
-            {/* Group Members Section */}
+            {/* ─── Group Members ─── */}
             {trip.member_ids && trip.member_ids.length > 0 && (
-                <div className="accordion-card animate-entrance" style={{ marginBottom: '24px', padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <h3 style={{ margin: '0 0 16px 0', color: '#fff', fontSize: '18px' }}>Group Members</h3>
-                    {loadingMembers ? (
-                        <p style={{ color: '#aaa', margin: 0 }}>Loading members...</p>
-                    ) : (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-                            {members.map(member => (
-                                <div key={member.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.05)', padding: '10px 15px', borderRadius: '12px', flex: '1 1 250px' }}>
-                                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '16px', overflow: 'hidden' }}>
-                                        {member.avatar_url ? (
-                                            <img src={member.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        ) : (
-                                            member.full_name?.charAt(0) || member.username?.charAt(0) || 'U'
-                                        )}
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <h4 style={{ margin: 0, color: '#fff', fontSize: '14px' }}>
-                                            {member.full_name || member.username}
-                                            {member.id === trip.user_id && <span style={{ marginLeft: '6px', fontSize: '10px', background: '#3b82f6', padding: '2px 6px', borderRadius: '4px' }}>Owner</span>}
-                                        </h4>
-                                        {member.username && <p style={{ margin: '2px 0 0', color: '#94a3b8', fontSize: '12px' }}>@{member.username}</p>}
-                                    </div>
-                                    <button 
-                                        onClick={() => setViewProfile(member)}
-                                        style={{
-                                            background: 'rgba(6, 182, 212, 0.1)',
-                                            color: '#06b6d4',
-                                            border: '1px solid rgba(6, 182, 212, 0.2)',
-                                            padding: '4px 10px',
-                                            borderRadius: '6px',
-                                            fontSize: '12px',
-                                            fontWeight: 'bold',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s'
-                                        }}
-                                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(6, 182, 212, 0.2)'; }}
-                                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(6, 182, 212, 0.1)'; }}
-                                    >
-                                        View
-                                    </button>
+                <div className="accordion-card animate-entrance" style={{ margin: '28px 0', animationDelay: '0.12s' }}>
+                    <div className="accordion-header" onClick={() => setMembersOpen(!membersOpen)}>
+                        <h3>
+                            <span className="section-dot" style={{ background: '#0ea5e9' }} />
+                            Group Members
+                        </h3>
+                        <span className={`accordion-chevron ${membersOpen ? 'open' : ''}`}>
+                            <IconChevronDown />
+                        </span>
+                    </div>
+                    {membersOpen && (
+                        <div className="accordion-body">
+                            {loadingMembers ? (
+                                <p style={{ color: '#94a3b8', margin: 0, padding: '8px 0' }}>Loading members...</p>
+                            ) : (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                                    {members.map(member => (
+                                        <div key={member.id} className="member-card">
+                                            <div className="member-avatar">
+                                                {member.avatar_url ? (
+                                                    <img src={member.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                ) : (
+                                                    member.full_name?.charAt(0) || member.username?.charAt(0) || 'U'
+                                                )}
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <h4 style={{ margin: 0, color: '#e2e8f0', fontSize: '14px', fontWeight: 600 }}>
+                                                    {member.full_name || member.username}
+                                                    {member.id === trip.user_id && <span className="owner-badge">Owner</span>}
+                                                </h4>
+                                                {member.username && <p style={{ margin: '2px 0 0', color: '#64748b', fontSize: '12px' }}>@{member.username}</p>}
+                                            </div>
+                                            <button 
+                                                className="member-view-btn"
+                                                onClick={() => setViewProfile(member)}
+                                            >
+                                                View
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
+                            )}
                         </div>
                     )}
                 </div>
             )}
 
-            <div className="planner-grid" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div className="contributor-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', margin: '20px 0' }}>
-                    <label style={{ fontWeight: 'bold', color: '#94a3b8' }}>contributor =</label>
+            <div className="planner-grid" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                
+                {/* ─── Contributor Selector ─── */}
+                <div className="animate-entrance" style={{ 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', 
+                    padding: '16px 20px', background: 'rgba(255,255,255,0.03)', borderRadius: '14px',
+                    border: '1px solid rgba(255,255,255,0.05)', animationDelay: '0.18s'
+                }}>
+                    <label style={{ fontWeight: 700, color: '#64748b', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px' }}>Contributor</label>
                     {hasMembers ? (
                         <select 
+                            className="glass-select"
                             value={contributorName}
                             onChange={(e) => setContributorName(e.target.value)}
-                            style={{ padding: '8px 12px', borderRadius: '10px', border: '1px solid rgba(6,182,212,0.3)', background: '#0f172a', color: '#fff', width: '250px', outline: 'none', transition: 'border-color 0.3s, box-shadow 0.3s' }}
-                            onFocus={e => { e.target.style.borderColor = '#06b6d4'; e.target.style.boxShadow = '0 0 0 3px rgba(6,182,212,0.15)'; }}
-                            onBlur={e => { e.target.style.borderColor = 'rgba(6,182,212,0.3)'; e.target.style.boxShadow = 'none'; }}
+                            style={{ width: '250px' }}
                         >
                             {allContributors.map((member, idx) => (
                                 <option key={idx} value={member}>{member}</option>
@@ -282,17 +303,17 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                     ) : (
                         <input 
                             type="text" 
+                            className="glass-input"
                             placeholder="Your name or friend's name" 
                             value={contributorName}
                             onChange={(e) => setContributorName(e.target.value)}
-                            style={{ padding: '8px 12px', borderRadius: '10px', border: '1px solid rgba(6,182,212,0.3)', background: '#0f172a', color: '#fff', width: '250px', outline: 'none', transition: 'border-color 0.3s, box-shadow 0.3s' }}
-                            onFocus={e => { e.target.style.borderColor = '#06b6d4'; e.target.style.boxShadow = '0 0 0 3px rgba(6,182,212,0.15)'; }}
-                            onBlur={e => { e.target.style.borderColor = 'rgba(6,182,212,0.3)'; e.target.style.boxShadow = 'none'; }}
+                            style={{ width: '250px' }}
                         />
                     )}
                 </div>
 
-                <div className="wallets-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                {/* ─── Wallet Cards Grid ─── */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
                     {sortedWallets.map((wallet, idx) => {
                         const wTarget = Number(wallet.target_amount);
                         const wSaved = Number(wallet.saved_amount);
@@ -306,15 +327,7 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                             <div 
                                 key={wallet.id} 
                                 className={`wallet-card wallet-card--${config.cssClass} animate-entrance`} 
-                                style={{ 
-                                    background: '#0f172a', 
-                                    padding: '20px', 
-                                    borderRadius: '14px', 
-                                    border: `1px solid ${config.color}22`,
-                                    position: 'relative',
-                                    overflow: 'hidden',
-                                    animationDelay: `${idx * 0.1}s`,
-                                }}
+                                style={{ animationDelay: `${0.2 + idx * 0.08}s` }}
                             >
                                 {/* Confetti burst when wallet is fully funded */}
                                 {isJustFunded && Array.from({ length: 12 }).map((_, i) => (
@@ -324,78 +337,74 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                                         style={{
                                             left: `${Math.random() * 100}%`,
                                             top: `${Math.random() * 40}%`,
-                                            background: [config.color, '#fbbf24', '#4ade80', '#60a5fa', '#f87171'][i % 5],
+                                            background: [config.color, '#fbbf24', '#34d399', '#38bdf8', '#fb7185'][i % 5],
                                             animationDelay: `${Math.random() * 0.5}s`,
                                             animationDuration: `${1 + Math.random() * 1}s`,
                                         }}
                                     />
                                 ))}
 
-                                {/* Subtle gradient glow on top */}
-                                <div style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    right: 0,
-                                    height: '3px',
-                                    background: config.gradient,
-                                    opacity: 0.8,
-                                    borderRadius: '14px 14px 0 0',
-                                }} />
+                                {/* Top accent bar */}
+                                <div className="wallet-accent-bar" style={{ background: config.gradient }} />
 
-                                <div className="wallet-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <span className="wallet-icon" style={{ color: config.color }}>
+                                {/* Header */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <div className="wallet-icon-badge" style={{ background: config.bgTint }}>
                                             <WalletIcon color={config.color} />
-                                        </span>
-                                        <span className="wallet-name" style={{ fontWeight: 'bold', fontSize: '1.05rem', color: '#e2e8f0' }}>
-                                            {config.label}
-                                        </span>
+                                        </div>
+                                        <div>
+                                            <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#e2e8f0', display: 'block' }}>
+                                                {config.label}
+                                            </span>
+                                            <span style={{ fontSize: '12px', color: '#64748b' }}>{wPercent}% funded</span>
+                                        </div>
                                     </div>
-                                    {isComplete && (
-                                        <span style={{ 
-                                            background: 'linear-gradient(135deg, #10b981, #4ade80)', 
-                                            color: '#000', 
-                                            padding: '2px 10px', 
-                                            borderRadius: '20px', 
-                                            fontSize: '11px', 
-                                            fontWeight: '700',
-                                            letterSpacing: '0.5px',
-                                        }}>
-                                            FUNDED
-                                        </span>
-                                    )}
+                                    {isComplete && <span className="funded-badge">FUNDED ✓</span>}
                                 </div>
-                                <div className="progress-bar-bg" style={{ background: '#1e293b', height: '12px', borderRadius: '6px', overflow: 'hidden', marginBottom: '10px' }}>
+
+                                {/* Progress */}
+                                <div className="progress-bar-bg" style={{ marginBottom: '12px' }}>
                                     <div 
                                         className={`progress-bar-fill ${isComplete ? 'progress-bar-fill--complete' : `progress-bar-fill--${config.cssClass}`}`}
-                                        style={{ width: `${wPercent}%`, height: '100%' }}
+                                        style={{ width: `${wPercent}%` }}
                                     />
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#94a3b8' }}>
-                                    <span>₹{wSaved.toLocaleString()} saved</span>
-                                    <span>Target: ₹{wTarget.toLocaleString()}</span>
+
+                                {/* Stats row */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#94a3b8' }}>
+                                    <span>₹{wSaved.toLocaleString()} <span style={{ color: '#475569' }}>saved</span></span>
+                                    <span>₹{wTarget.toLocaleString()} <span style={{ color: '#475569' }}>target</span></span>
                                 </div>
                             </div>
                         );
                     })}
                 </div>
 
-                <div className="add-funds-container animate-entrance" style={{ background: '#0f172a', padding: '24px', borderRadius: '14px', border: '1px solid rgba(6,182,212,0.15)', marginTop: '10px' }}>
-                    <form className="add-funds-form" onSubmit={handleAddFunds} style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'flex-end', background: 'transparent', padding: 0, borderRadius: 0, marginTop: 0 }}>
+                {/* ─── Add Funds Form ─── */}
+                <div className="animate-entrance" style={{ 
+                    background: 'rgba(255,255,255,0.03)', 
+                    padding: '24px', 
+                    borderRadius: '18px', 
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    animationDelay: '0.4s'
+                }}>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>
+                        Add Funds
+                    </div>
+                    <form className="add-funds-form" onSubmit={handleAddFunds} style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'flex-end', background: 'transparent', padding: 0, borderRadius: 0, marginTop: 0 }}>
                         <div style={{ flex: '1', minWidth: '150px' }}>
-                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.9rem', color: '#94a3b8' }}>Select Wallet</label>
+                            <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Select Wallet</label>
                             <select 
+                                className="glass-select"
                                 value={selectedWallet} 
                                 onChange={(e) => setSelectedWallet(e.target.value)}
-                                style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid rgba(6,182,212,0.2)', background: '#1e293b', color: '#fff', outline: 'none', transition: 'border-color 0.3s' }}
-                                onFocus={e => e.target.style.borderColor = '#06b6d4'}
-                                onBlur={e => e.target.style.borderColor = 'rgba(6,182,212,0.2)'}
+                                style={{ width: '100%' }}
                             >
                                 {sortedWallets.map(w => {
                                     const cfg = WALLET_CONFIG[w.wallet_type] || WALLET_CONFIG.transport;
                                     return (
-                                        <option key={w.id} value={w.id} style={{ background: '#0f172a', color: '#fff' }}>
+                                        <option key={w.id} value={w.id}>
                                             {cfg.label}
                                         </option>
                                     );
@@ -403,16 +412,15 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                             </select>
                         </div>
                         <div style={{ flex: '1', minWidth: '150px' }}>
-                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.9rem', color: '#94a3b8' }}>Amount (₹)</label>
+                            <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Amount (₹)</label>
                             <input 
                                 type="number" 
-                                placeholder="Amount (₹)" 
+                                className="glass-input"
+                                placeholder="Enter amount" 
                                 value={fundingAmount}
                                 onChange={(e) => setFundingAmount(e.target.value)}
                                 min="1"
-                                style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid rgba(6,182,212,0.2)', background: '#1e293b', color: '#fff', outline: 'none', transition: 'border-color 0.3s' }}
-                                onFocus={e => e.target.style.borderColor = '#06b6d4'}
-                                onBlur={e => e.target.style.borderColor = 'rgba(6,182,212,0.2)'}
+                                style={{ width: '100%' }}
                             />
                         </div>
                         <button 
@@ -421,14 +429,22 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                             className="fund-wallet-btn ripple-btn"
                             onClick={createRipple}
                         >
-                            {isSaving ? 'Adding...' : 'Fund Wallet'}
+                            {isSaving ? 'Adding...' : '+ Fund Wallet'}
                         </button>
                     </form>
-                    {(!contributorName) && <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '10px' }}>Please enter a contributor name above first.</p>}
+                    {(!contributorName) && <p style={{ color: '#f87171', fontSize: '0.8rem', marginTop: '12px' }}>Please enter a contributor name above first.</p>}
                 </div>
 
-                <div className="animation-section animate-entrance" style={{ marginTop: '40px' }}>
-                    <h4 style={{ textAlign: 'center', marginBottom: '20px', background: 'linear-gradient(135deg, #06b6d4, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', fontSize: '1.2rem', letterSpacing: '1px' }}>Trip Journey Progress</h4>
+                {/* ─── Liquid City Animation ─── */}
+                <div className="animate-entrance" style={{ marginTop: '20px', animationDelay: '0.5s' }}>
+                    <h4 style={{ 
+                        textAlign: 'center', marginBottom: '20px', 
+                        background: 'linear-gradient(135deg, #0ea5e9, #10b981)', 
+                        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', 
+                        backgroundClip: 'text', fontSize: '1.1rem', letterSpacing: '0.5px', fontWeight: 800 
+                    }}>
+                        Trip Journey Progress
+                    </h4>
                     <LiquidCityAnimation percentage={percentage} city={trip.destination} />
                 </div>
             </div>
