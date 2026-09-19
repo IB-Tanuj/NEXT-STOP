@@ -285,8 +285,8 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                 {/* ─── Contributor Selector ─── */}
                 <div className="animate-entrance" style={{ 
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', 
-                    padding: '16px 20px', background: 'rgba(255,255,255,0.03)', borderRadius: '14px',
-                    border: '1px solid rgba(255,255,255,0.05)', animationDelay: '0.18s'
+                    padding: '16px 24px', background: 'rgba(255,255,255,0.055)', borderRadius: '14px',
+                    border: '1px solid rgba(255,255,255,0.08)', animationDelay: '0.18s'
                 }}>
                     <label style={{ fontWeight: 700, color: '#64748b', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px' }}>Contributor</label>
                     {hasMembers ? (
@@ -313,7 +313,7 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                 </div>
 
                 {/* ─── Wallet Cards Grid ─── */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '18px' }}>
                     {sortedWallets.map((wallet, idx) => {
                         const wTarget = Number(wallet.target_amount);
                         const wSaved = Number(wallet.saved_amount);
@@ -348,16 +348,16 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                                 <div className="wallet-accent-bar" style={{ background: config.gradient }} />
 
                                 {/* Header */}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '18px', flexWrap: 'wrap', gap: '8px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
                                         <div className="wallet-icon-badge" style={{ background: config.bgTint }}>
                                             <WalletIcon color={config.color} />
                                         </div>
-                                        <div>
-                                            <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#e2e8f0', display: 'block' }}>
+                                        <div style={{ minWidth: 0 }}>
+                                            <span className="wallet-name">
                                                 {config.label}
                                             </span>
-                                            <span style={{ fontSize: '12px', color: '#64748b' }}>{wPercent}% funded</span>
+                                            <div className="wallet-subtitle">{wPercent}% funded</div>
                                         </div>
                                     </div>
                                     {isComplete && <span className="funded-badge">FUNDED ✓</span>}
@@ -372,9 +372,9 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                                 </div>
 
                                 {/* Stats row */}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#94a3b8' }}>
-                                    <span>₹{wSaved.toLocaleString()} <span style={{ color: '#475569' }}>saved</span></span>
-                                    <span>₹{wTarget.toLocaleString()} <span style={{ color: '#475569' }}>target</span></span>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', color: '#cbd5e1', flexWrap: 'wrap', gap: '4px' }}>
+                                    <span>₹{wSaved.toLocaleString()} <span style={{ color: '#64748b' }}>saved</span></span>
+                                    <span>₹{wTarget.toLocaleString()} <span style={{ color: '#64748b' }}>target</span></span>
                                 </div>
                             </div>
                         );
@@ -383,10 +383,10 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
 
                 {/* ─── Add Funds Form ─── */}
                 <div className="animate-entrance" style={{ 
-                    background: 'rgba(255,255,255,0.03)', 
-                    padding: '24px', 
+                    background: 'rgba(255,255,255,0.055)', 
+                    padding: '26px', 
                     borderRadius: '18px', 
-                    border: '1px solid rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.09)',
                     animationDelay: '0.4s'
                 }}>
                     <div style={{ fontSize: '13px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>
@@ -441,7 +441,7 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                         textAlign: 'center', marginBottom: '20px', 
                         background: 'linear-gradient(135deg, #0ea5e9, #10b981)', 
                         WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', 
-                        backgroundClip: 'text', fontSize: '1.1rem', letterSpacing: '0.5px', fontWeight: 800 
+                        backgroundClip: 'text', fontSize: '1.1rem', letterSpacing: '0.5px', fontWeight: 800, paddingBottom: '0.1em', lineHeight: '1.2' 
                     }}>
                         Trip Journey Progress
                     </h4>

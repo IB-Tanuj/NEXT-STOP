@@ -181,7 +181,7 @@ const PersonalDashboard = () => {
                                     >
                                         ← Back
                                     </button>
-                                    <h2 style={{ margin: 0, background: 'linear-gradient(135deg, #e2e8f0, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                                    <h2 style={{ margin: 0, paddingBottom: '0.1em', lineHeight: '1.2', background: 'linear-gradient(135deg, #e2e8f0, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                                         {section === 'savings' ? 'Savings Track' : section === 'requests' ? 'Friend Requests' : 'Saved Trips'}
                                     </h2>
                                 </div>
