@@ -6,7 +6,8 @@ import {
     removeFriend, 
     getPendingRequests, 
     getAcceptedFriends,
-    getSharedTripsCount
+    getSharedTripsCount,
+    checkFriendStatus
 } from '../controllers/friendController.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
 
@@ -21,5 +22,6 @@ router.delete('/remove', removeFriend);
 router.get('/requests', getPendingRequests);
 router.get('/', getAcceptedFriends);
 router.get('/:id/shared-trips-count', getSharedTripsCount);
+router.get('/status/:id', checkFriendStatus);
 
 export default router;

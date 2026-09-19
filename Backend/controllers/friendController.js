@@ -267,3 +267,49 @@ export const getSharedTripsCount = async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 };
+
+// Check friend status
+export const checkFriendStatus = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { id: friendId } = req.params;
+
+        if (!friendId) {
+            return res.status(400).json({ error: 'Friend ID is required' });
+        }
+        
+        if (userId === friendId) {
+            return res.json({ status: 'self' });
+        }
+
+        const { data, error } = await supabase
+            .from('friendships')
+            .select('status, requester_id')
+            .or(`and(requester_id.eq.${userId},addressee_id.eq.${friendId}),and(requester_id.eq.${friendId},addressee_id.eq.${userId})`)
+            .single();
+
+        if (error && error.code !== 'PGRST116') {
+            throw error;
+        }
+
+        if (!data) {
+            return res.json({ status: 'none' });
+        }
+
+        if (data.status === 'accepted') {
+            return res.json({ status: 'accepted' });
+        } else if (data.status === 'pending') {
+            if (data.requester_id === userId) {
+                return res.json({ status: 'pending_outgoing' });
+            } else {
+                return res.json({ status: 'pending_incoming' });
+            }
+        }
+        
+        return res.json({ status: 'none' });
+
+    } catch (error) {
+        console.error('checkFriendStatus error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
