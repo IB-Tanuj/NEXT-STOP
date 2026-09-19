@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import './ProfileTab.css';
 
 const IconChevronLeft = () => (
@@ -24,8 +25,36 @@ const IconCamera = () => (
 );
 
 const ViewProfileModal = ({ userProfile, onClose }) => {
+    const { session, user } = useAuth();
     const [activeTab, setActiveTab] = useState('posts');
     const [stats, setStats] = useState({ posts: 0, friends: 0, mutuals: 0 });
+    
+    const [requestStatus, setRequestStatus] = useState('none'); // 'none', 'sending', 'sent'
+
+    const handleSendRequest = async () => {
+        if (!session?.access_token) return;
+        setRequestStatus('sending');
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/friends/request`, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ addresseeId: userProfile.id })
+            });
+            if (res.ok) {
+                setRequestStatus('sent');
+            } else {
+                setRequestStatus('none');
+                alert('Failed to send request, or request already exists.');
+            }
+        } catch (err) {
+            console.error(err);
+            setRequestStatus('none');
+            alert('Error sending request.');
+        }
+    };
 
     useEffect(() => {
         // This is where you would fetch the user's actual stats and mutuals from the backend
@@ -90,6 +119,27 @@ const ViewProfileModal = ({ userProfile, onClose }) => {
                                     {userProfile.tags.map(tag => (
                                         <span key={tag} className="badge">{tag}</span>
                                     ))}
+                                </div>
+                            )}
+
+                            {user?.id !== userProfile.id && (
+                                <div style={{ marginTop: '20px' }}>
+                                    <button 
+                                        onClick={handleSendRequest}
+                                        disabled={requestStatus !== 'none'}
+                                        style={{
+                                            background: requestStatus === 'sent' ? 'rgba(74, 222, 128, 0.1)' : '#06b6d4',
+                                            color: requestStatus === 'sent' ? '#4ade80' : '#fff',
+                                            border: requestStatus === 'sent' ? '1px solid rgba(74, 222, 128, 0.3)' : 'none',
+                                            padding: '8px 20px',
+                                            borderRadius: '8px',
+                                            fontWeight: 'bold',
+                                            cursor: requestStatus !== 'none' ? 'default' : 'pointer',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        {requestStatus === 'none' ? 'Send Friend Request' : requestStatus === 'sending' ? 'Sending...' : 'Request Sent'}
+                                    </button>
                                 </div>
                             )}
                         </div>
