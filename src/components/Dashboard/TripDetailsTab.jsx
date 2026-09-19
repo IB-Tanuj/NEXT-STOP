@@ -367,6 +367,8 @@ const TripDetailsTab = ({ trip, onUpdate }) => {
                     style={{ background: 'linear-gradient(135deg, #10b981, #4ade80)', color: '#000', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.3s' }}
                     onMouseEnter={e => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 6px 20px rgba(16,185,129,0.3)'; }}
                     onMouseLeave={e => { e.target.style.transform = 'none'; e.target.style.boxShadow = 'none'; }}
+                >
+                    Download offline
                 </button>
             </div>
 
