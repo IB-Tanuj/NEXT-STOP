@@ -297,6 +297,80 @@ export const deleteTrip = async (req, res) => {
     }
 };
 
+const removeMemberAndRecalculate = async (trip, memberIdToRemove) => {
+    // 1. Remove from member_ids
+    const newMembers = trip.member_ids.filter(mId => mId !== memberIdToRemove);
+
+    // 2. Remove from groupMembers & update groupSize
+    let newTripData = trip.trip_data ? JSON.parse(JSON.stringify(trip.trip_data)) : {};
+    let oldGroupSize = 1;
+    let newGroupSize = 1;
+    
+    if (newTripData.preferences) {
+        // Calculate old size exactly how it was calculated in saveTrip
+        oldGroupSize = Number(newTripData.preferences.groupMembers?.length || newTripData.preferences.groupSize || 1);
+        
+        // Remove the member from groupMembers
+        if (newTripData.preferences.groupMembers) {
+            newTripData.preferences.groupMembers = newTripData.preferences.groupMembers.filter(m => {
+                const mId = typeof m === 'object' ? (m.uid || m.id) : null;
+                return mId !== memberIdToRemove;
+            });
+        }
+        
+        // Calculate new size
+        newGroupSize = Number(newTripData.preferences.groupMembers?.length || Math.max(1, (newTripData.preferences.groupSize || 2) - 1));
+        
+        // Update groupSize in preferences
+        newTripData.preferences.groupSize = newGroupSize;
+    }
+
+    // 3. Recalculate target_amounts for wallets if size reduced
+    let newTotalBudget = trip.total_budget;
+
+    if (oldGroupSize > 0 && newGroupSize > 0 && newGroupSize !== oldGroupSize) {
+        const ratio = newGroupSize / oldGroupSize;
+        
+        // Fetch wallets
+        const { data: wallets, error: wError } = await supabase
+            .from('trip_wallets')
+            .select('*')
+            .eq('trip_id', trip.id);
+            
+        if (!wError && wallets) {
+            newTotalBudget = 0;
+            for (const wallet of wallets) {
+                const newTarget = Math.round(Number(wallet.target_amount) * ratio);
+                newTotalBudget += newTarget;
+                
+                await supabase
+                    .from('trip_wallets')
+                    .update({ target_amount: newTarget })
+                    .eq('id', wallet.id);
+            }
+        }
+    }
+
+    // 4. Update the trip
+    const { data: updatedTrip, error: updateError } = await supabase
+        .from('saved_trips')
+        .update({ 
+            member_ids: newMembers, 
+            trip_data: newTripData,
+            total_budget: newTotalBudget
+        })
+        .eq('id', trip.id)
+        .select(`
+            *,
+            trip_wallets (*, wallet_transactions (*))
+        `)
+        .single();
+
+    if (updateError) throw updateError;
+    
+    return updatedTrip;
+};
+
 export const leaveTrip = async (req, res) => {
     try {
         const { id } = req.params;
@@ -324,16 +398,9 @@ export const leaveTrip = async (req, res) => {
             return res.status(400).json({ error: 'You are not a member of this trip' });
         }
 
-        const newMembers = trip.member_ids.filter(mId => mId !== userId);
+        const updatedTrip = await removeMemberAndRecalculate(trip, userId);
 
-        const { error: updateError } = await supabase
-            .from('saved_trips')
-            .update({ member_ids: newMembers })
-            .eq('id', id);
-
-        if (updateError) throw updateError;
-
-        res.json({ message: 'You have left the trip successfully' });
+        res.json({ message: 'You have left the trip successfully', trip: updatedTrip });
     } catch (error) {
         console.error("Leave trip error:", error);
         res.status(500).json({ error: "Failed to leave trip" });
@@ -368,24 +435,9 @@ export const kickMember = async (req, res) => {
             return res.status(400).json({ error: 'User is not a member of this trip' });
         }
 
-        const newMembers = trip.member_ids.filter(mId => mId !== memberId);
-        
-        let newTripData = trip.trip_data;
-        if (newTripData && newTripData.preferences && newTripData.preferences.groupMembers) {
-            newTripData.preferences.groupMembers = newTripData.preferences.groupMembers.filter(m => {
-                const mId = typeof m === 'object' ? m.id : null;
-                return mId !== memberId;
-            });
-        }
+        const updatedTrip = await removeMemberAndRecalculate(trip, memberId);
 
-        const { error: updateError } = await supabase
-            .from('saved_trips')
-            .update({ member_ids: newMembers, trip_data: newTripData })
-            .eq('id', id);
-
-        if (updateError) throw updateError;
-
-        res.json({ message: 'Member kicked successfully' });
+        res.json({ message: 'Member kicked successfully', trip: updatedTrip });
     } catch (error) {
         console.error("Kick member error:", error);
         res.status(500).json({ error: "Failed to kick member" });
