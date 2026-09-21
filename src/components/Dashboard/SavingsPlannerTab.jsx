@@ -119,13 +119,17 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
     const [loadingMembers, setLoadingMembers] = useState(false);
     const [viewProfile, setViewProfile] = useState(null);
 
-    let defaultName = session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || 'admin';
     const ownerMember = members.find(m => m.id === trip.user_id);
-    if (ownerMember && (ownerMember.full_name || ownerMember.username)) {
-        defaultName = ownerMember.full_name || ownerMember.username;
-    }
+    const ownerName = ownerMember 
+        ? (ownerMember.full_name || ownerMember.username || 'Owner')
+        : 'Owner';
+
+    const currentMember = members.find(m => m.id === session?.user?.id);
+    const currentUserName = currentMember
+        ? (currentMember.full_name || currentMember.username)
+        : (session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || 'Guest');
     
-    const allContributors = [defaultName, ...validMembers.filter(v => v !== defaultName)];
+    const allContributors = [ownerName, ...validMembers.filter(v => v !== ownerName)];
     const hasMembers = validMembers.length > 0;
 
     const [fundingAmount, setFundingAmount] = useState('');
@@ -140,11 +144,11 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
     // Ensure non-owners can only contribute as themselves
     useEffect(() => {
         if (!isOwner) {
-            setContributorName(defaultName);
+            setContributorName(currentUserName);
         } else if (!contributorName || !allContributors.includes(contributorName)) {
             setContributorName(allContributors[0]);
         }
-    }, [isOwner, defaultName, allContributors, contributorName]);
+    }, [isOwner, currentUserName, allContributors, contributorName]);
 
     // Calculate Member Contributions
     const personalTarget = allContributors.length > 0 ? Math.round(totalTarget / allContributors.length) : totalTarget;
@@ -274,69 +278,34 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
         }
     };
 
-    const handleRemoveFunds = async () => {
-        if (!fundingAmount || isNaN(fundingAmount) || Number(fundingAmount) <= 0) {
-            alert('Please enter a valid amount to remove.');
-            return;
-        }
-
-        const wallet = wallets.find(w => w.id === selectedWallet);
-        if (!wallet) return;
-        
-        const amountToRemove = Number(fundingAmount);
-        
-        // Calculate how much this contributor has contributed to this specific wallet
-        let currentContribution = 0;
-        if (wallet.wallet_transactions) {
-            wallet.wallet_transactions.forEach(tx => {
-                if (tx.contributor_name === contributorName) {
-                    currentContribution += Number(tx.amount);
-                }
-            });
-        }
-        
-        if (amountToRemove > currentContribution) {
-            alert(`Cannot remove ₹${amountToRemove}. ${contributorName} has only contributed ₹${currentContribution} to this wallet.`);
-            return;
-        }
+    const handleRejectOwnerFunds = async (memberToReject) => {
+        if (!window.confirm(`Are you sure you want to reject the owner's funds for ${memberToReject}?`)) return;
 
         setIsSaving(true);
         try {
             const token = session?.access_token || '';
 
-            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/saved-trips/savings/remove`, {
+            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/saved-trips/${trip.id}/remove-owner-funds`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json', 
                     'Authorization': `Bearer ${token}` 
                 },
                 body: JSON.stringify({ 
-                    trip_id: trip.id, 
-                    wallet_type: wallet.wallet_type, 
-                    amount: amountToRemove,
-                    contributor_name: contributorName 
+                    contributor_name: memberToReject 
                 })
             });
 
-            if (!res.ok) throw new Error('Failed to remove savings from backend');
+            if (!res.ok) throw new Error('Failed to remove owner funds from backend');
             
-            const newWallets = wallets.map(w => {
-                if (w.id === wallet.id) {
-                    const newTx = { contributor_name: contributorName, amount: -amountToRemove };
-                    return { 
-                        ...w, 
-                        saved_amount: Math.max(0, Number(w.saved_amount) - amountToRemove),
-                        wallet_transactions: w.wallet_transactions ? [...w.wallet_transactions, newTx] : [newTx]
-                    };
-                }
-                return w;
-            });
-
-            onUpdate({ ...trip, trip_wallets: newWallets });
-            setFundingAmount('');
+            const { trip: updatedTrip } = await res.json();
+            
+            // updatedTrip has the fresh trip_wallets from the backend
+            onUpdate(updatedTrip);
+            alert(`Successfully rejected owner funds for ${memberToReject}`);
         } catch (err) {
-            console.error('Failed to remove funds', err);
-            alert('Failed to remove funds');
+            console.error('Failed to reject funds', err);
+            alert('Failed to reject funds');
         } finally {
             setIsSaving(false);
         }
@@ -681,33 +650,6 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                                 }}
                             >
                                 {isSaving ? 'Processing...' : '+ Fund Wallet'}
-                            </button>
-                            <button 
-                                type="button" 
-                                disabled={isSaving || !fundingAmount || !contributorName}
-                                className="remove-funds-btn ripple-btn"
-                                onClick={(e) => {
-                                    createRipple(e);
-                                    handleRemoveFunds();
-                                }}
-                                style={{
-                                    background: 'rgba(239, 68, 68, 0.15)',
-                                    color: '#f87171',
-                                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                                    padding: '12px 20px',
-                                    borderRadius: '8px',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '6px',
-                                    transition: 'all 0.3s ease',
-                                    opacity: (isSaving || !fundingAmount || !contributorName) ? 0.5 : 1,
-                                    pointerEvents: (isSaving || !fundingAmount || !contributorName) ? 'none' : 'auto'
-                                }}
-                            >
-                                - Remove Funds
                             </button>
                         </div>
                     </form>
