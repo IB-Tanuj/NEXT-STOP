@@ -160,8 +160,6 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
     const animSaved = useAnimatedCounter(totalSaved);
     const animRemaining = useAnimatedCounter(Math.max(0, totalTarget - totalSaved));
 
-    const animRemaining = useAnimatedCounter(Math.max(0, totalTarget - totalSaved));
-
     useEffect(() => {
         const fetchMembers = async () => {
             if (!trip.member_ids || trip.member_ids.length === 0) return;
