@@ -105,8 +105,9 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
     // Filter out members who have a uid but are no longer in the trip (left or kicked previously)
     const activeGroupMembers = groupMembers.filter(m => {
         if (typeof m === 'object' && (m.uid || m.id)) {
-            const uid = m.uid || m.id;
-            return trip.member_ids?.includes(uid) || trip.user_id === uid;
+            const hasId = m.id && (trip.member_ids?.includes(m.id) || trip.user_id === m.id);
+            const hasUid = m.uid && (trip.member_ids?.includes(m.uid) || trip.user_id === m.uid);
+            return hasId || hasUid;
         }
         return true;
     });
