@@ -4,8 +4,12 @@ CREATE TABLE IF NOT EXISTS public.wallet_transactions (
     wallet_id UUID REFERENCES public.trip_wallets(id) ON DELETE CASCADE,
     contributor_name TEXT NOT NULL,
     amount NUMERIC NOT NULL CHECK (amount > 0),
+    added_by UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Note: In Supabase, run the following to update existing schema:
+-- ALTER TABLE public.wallet_transactions ADD COLUMN added_by UUID;
 
 -- Enable RLS for wallet_transactions
 ALTER TABLE public.wallet_transactions ENABLE ROW LEVEL SECURITY;
