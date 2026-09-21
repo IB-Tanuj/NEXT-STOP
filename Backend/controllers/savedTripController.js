@@ -212,6 +212,68 @@ export const addSavings = async (req, res) => {
     }
 };
 
+export const removeSavings = async (req, res) => {
+    try {
+        const { trip_id, wallet_type, amount, contributor_name } = req.body;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const { data: trip, error: tripError } = await supabase
+            .from('saved_trips')
+            .select('id')
+            .eq('id', trip_id)
+            .or(`user_id.eq.${userId},member_ids.cs.{${userId}}`)
+            .single();
+
+        if (tripError || !trip) {
+            return res.status(403).json({ error: 'Forbidden — you do not have access to this trip' });
+        }
+
+        const { data: wallet, error: fetchError } = await supabase
+            .from('trip_wallets')
+            .select('id, saved_amount')
+            .eq('trip_id', trip_id)
+            .eq('wallet_type', wallet_type)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        let newSavedAmount = parseFloat(wallet.saved_amount) - parseFloat(amount);
+        if (newSavedAmount < 0) newSavedAmount = 0;
+        const actualRemovedAmount = parseFloat(wallet.saved_amount) - newSavedAmount;
+
+        const { data, error: updateError } = await supabase
+            .from('trip_wallets')
+            .update({ saved_amount: newSavedAmount })
+            .eq('id', wallet.id)
+            .select()
+            .single();
+
+        if (updateError) throw updateError;
+
+        if (contributor_name && actualRemovedAmount > 0) {
+            const { error: txError } = await supabase
+                .from('wallet_transactions')
+                .insert({
+                    wallet_id: data.id,
+                    contributor_name: contributor_name,
+                    amount: -actualRemovedAmount
+                });
+            if (txError) {
+                console.warn('Failed to record negative wallet transaction:', txError);
+            }
+        }
+
+        res.status(200).json({ message: 'Savings removed', wallet: data });
+    } catch (error) {
+        console.error('Error removing savings:', error);
+        res.status(500).json({ error: 'Failed to remove savings' });
+    }
+};
+
 export const deleteTrip = async (req, res) => {
     try {
         const { id } = req.params;
@@ -275,6 +337,58 @@ export const leaveTrip = async (req, res) => {
     } catch (error) {
         console.error("Leave trip error:", error);
         res.status(500).json({ error: "Failed to leave trip" });
+    }
+};
+
+export const kickMember = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { memberId } = req.body;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const { data: trip, error: fetchError } = await supabase
+            .from('saved_trips')
+            .select('id, user_id, member_ids, trip_data')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !trip) {
+            return res.status(404).json({ error: 'Trip not found' });
+        }
+
+        if (trip.user_id !== userId) {
+            return res.status(403).json({ error: 'Only the trip owner can kick members' });
+        }
+
+        if (!trip.member_ids || !trip.member_ids.includes(memberId)) {
+            return res.status(400).json({ error: 'User is not a member of this trip' });
+        }
+
+        const newMembers = trip.member_ids.filter(mId => mId !== memberId);
+        
+        let newTripData = trip.trip_data;
+        if (newTripData && newTripData.preferences && newTripData.preferences.groupMembers) {
+            newTripData.preferences.groupMembers = newTripData.preferences.groupMembers.filter(m => {
+                const mId = typeof m === 'object' ? m.id : null;
+                return mId !== memberId;
+            });
+        }
+
+        const { error: updateError } = await supabase
+            .from('saved_trips')
+            .update({ member_ids: newMembers, trip_data: newTripData })
+            .eq('id', id);
+
+        if (updateError) throw updateError;
+
+        res.json({ message: 'Member kicked successfully' });
+    } catch (error) {
+        console.error("Kick member error:", error);
+        res.status(500).json({ error: "Failed to kick member" });
     }
 };
 
