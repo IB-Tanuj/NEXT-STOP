@@ -257,6 +257,121 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
         }
     };
 
+    const handleRemoveFunds = async () => {
+        if (!fundingAmount || isNaN(fundingAmount) || Number(fundingAmount) <= 0) {
+            alert('Please enter a valid amount to remove.');
+            return;
+        }
+
+        const wallet = wallets.find(w => w.id === selectedWallet);
+        if (!wallet) return;
+        
+        const amountToRemove = Number(fundingAmount);
+        
+        // Calculate how much this contributor has contributed to this specific wallet
+        let currentContribution = 0;
+        if (wallet.wallet_transactions) {
+            wallet.wallet_transactions.forEach(tx => {
+                if (tx.contributor_name === contributorName) {
+                    currentContribution += Number(tx.amount);
+                }
+            });
+        }
+        
+        if (amountToRemove > currentContribution) {
+            alert(`Cannot remove ₹${amountToRemove}. ${contributorName} has only contributed ₹${currentContribution} to this wallet.`);
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const token = session?.access_token || '';
+
+            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/saved-trips/savings/remove`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify({ 
+                    trip_id: trip.id, 
+                    wallet_type: wallet.wallet_type, 
+                    amount: amountToRemove,
+                    contributor_name: contributorName 
+                })
+            });
+
+            if (!res.ok) throw new Error('Failed to remove savings from backend');
+            
+            const newWallets = wallets.map(w => {
+                if (w.id === wallet.id) {
+                    const newTx = { contributor_name: contributorName, amount: -amountToRemove };
+                    return { 
+                        ...w, 
+                        saved_amount: Math.max(0, Number(w.saved_amount) - amountToRemove),
+                        wallet_transactions: w.wallet_transactions ? [...w.wallet_transactions, newTx] : [newTx]
+                    };
+                }
+                return w;
+            });
+
+            onUpdate({ ...trip, trip_wallets: newWallets });
+            setFundingAmount('');
+        } catch (err) {
+            console.error('Failed to remove funds', err);
+            alert('Failed to remove funds');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleKickMember = async (memberId) => {
+        if (!window.confirm('Are you sure you want to kick this member? They will lose access to the trip immediately.')) return;
+        
+        try {
+            const token = session?.access_token || '';
+            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/saved-trips/${trip.id}/kick`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify({ memberId })
+            });
+
+            if (!res.ok) throw new Error('Failed to kick member');
+            
+            // Clean up member_ids
+            const newMemberIds = trip.member_ids?.filter(id => id !== memberId) || [];
+            
+            // Clean up trip_data groupMembers
+            let newTripData = trip.trip_data ? JSON.parse(JSON.stringify(trip.trip_data)) : {};
+            if (newTripData.preferences && newTripData.preferences.groupMembers) {
+                newTripData.preferences.groupMembers = newTripData.preferences.groupMembers.filter(m => {
+                    const mId = typeof m === 'object' ? m.id : null;
+                    return mId !== memberId;
+                });
+            }
+            
+            // Clean up local members state if we have it
+            if (typeof setMembers === 'function') {
+                setMembers(prev => prev.filter(m => m.id !== memberId));
+            }
+            
+            onUpdate({ 
+                ...trip, 
+                member_ids: newMemberIds,
+                trip_data: newTripData 
+            });
+            
+            alert('Member kicked successfully.');
+        } catch (err) {
+            console.error('Failed to kick member', err);
+            alert('Failed to kick member');
+        }
+    };
+
+
     return (
         <div className="savings-planner-tab">
             {/* ─── Header ─── */}
@@ -320,12 +435,35 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                                                 </h4>
                                                 {member.username && <p style={{ margin: '2px 0 0', color: '#64748b', fontSize: '12px' }}>@{member.username}</p>}
                                             </div>
-                                            <button 
-                                                className="member-view-btn"
-                                                onClick={() => setViewProfile(member)}
-                                            >
-                                                View
-                                            </button>
+                                            <div style={{ display: 'flex', gap: '6px' }}>
+                                                <button 
+                                                    className="member-view-btn"
+                                                    onClick={() => setViewProfile(member)}
+                                                >
+                                                    View
+                                                </button>
+                                                {member.id !== trip.user_id && isOwner && (
+                                                    <button 
+                                                        className="member-kick-btn"
+                                                        onClick={() => handleKickMember(member.id)}
+                                                        style={{ 
+                                                            background: 'rgba(239, 68, 68, 0.1)', 
+                                                            color: '#ef4444', 
+                                                            border: '1px solid rgba(239, 68, 68, 0.2)', 
+                                                            padding: '6px 12px', 
+                                                            borderRadius: '6px', 
+                                                            fontSize: '12px', 
+                                                            fontWeight: 600, 
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.2s' 
+                                                        }}
+                                                        onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'; }}
+                                                        onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; }}
+                                                    >
+                                                        Kick
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -513,14 +651,59 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                                 style={{ width: '100%' }}
                             />
                         </div>
-                        <button 
-                            type="submit" 
-                            disabled={isSaving || !fundingAmount || !contributorName}
-                            className="fund-wallet-btn ripple-btn"
-                            onClick={createRipple}
-                        >
-                            {isSaving ? 'Adding...' : '+ Fund Wallet'}
-                        </button>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button 
+                                type="submit" 
+                                disabled={isSaving || !fundingAmount || !contributorName}
+                                className="fund-wallet-btn ripple-btn"
+                                onClick={createRipple}
+                                style={{
+                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                    color: '#fff',
+                                    border: 'none',
+                                    padding: '12px 20px',
+                                    borderRadius: '8px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    transition: 'all 0.3s ease',
+                                    opacity: (isSaving || !fundingAmount || !contributorName) ? 0.5 : 1,
+                                    pointerEvents: (isSaving || !fundingAmount || !contributorName) ? 'none' : 'auto'
+                                }}
+                            >
+                                {isSaving ? 'Processing...' : '+ Fund Wallet'}
+                            </button>
+                            <button 
+                                type="button" 
+                                disabled={isSaving || !fundingAmount || !contributorName}
+                                className="remove-funds-btn ripple-btn"
+                                onClick={(e) => {
+                                    createRipple(e);
+                                    handleRemoveFunds();
+                                }}
+                                style={{
+                                    background: 'rgba(239, 68, 68, 0.15)',
+                                    color: '#f87171',
+                                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                                    padding: '12px 20px',
+                                    borderRadius: '8px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    transition: 'all 0.3s ease',
+                                    opacity: (isSaving || !fundingAmount || !contributorName) ? 0.5 : 1,
+                                    pointerEvents: (isSaving || !fundingAmount || !contributorName) ? 'none' : 'auto'
+                                }}
+                            >
+                                - Remove Funds
+                            </button>
+                        </div>
                     </form>
                     {(!contributorName) && <p style={{ color: '#f87171', fontSize: '0.8rem', marginTop: '12px' }}>Please enter a contributor name above first.</p>}
                 </div>
