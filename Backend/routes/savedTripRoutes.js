@@ -10,7 +10,7 @@ router.post('/', saveTrip);
 router.get('/', getTrips);
 router.put('/:id', updateTripData);
 router.post('/savings', addSavings);
-router.post('/savings/remove', removeSavings);
+router.post('/:id/remove-owner-funds', requireAuth, removeOwnerFunds);
 router.delete('/:id', deleteTrip);
 router.post('/:id/leave', leaveTrip);
 router.post('/:id/kick', kickMember);
