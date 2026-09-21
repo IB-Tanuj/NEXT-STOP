@@ -102,8 +102,19 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
 
     const groupMembers = trip.trip_data?.preferences?.groupMembers || [];
     const validMembers = groupMembers.map(m => typeof m === 'object' ? m?.name : m).filter(m => m && String(m).trim() !== '');
-    const defaultName = session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || 'admin';
-    const allContributors = [defaultName, ...validMembers];
+    
+    // Group members fetch state
+    const [members, setMembers] = useState([]);
+    const [loadingMembers, setLoadingMembers] = useState(false);
+    const [viewProfile, setViewProfile] = useState(null);
+
+    let defaultName = session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || 'admin';
+    const ownerMember = members.find(m => m.id === trip.user_id);
+    if (ownerMember && (ownerMember.full_name || ownerMember.username)) {
+        defaultName = ownerMember.full_name || ownerMember.username;
+    }
+    
+    const allContributors = [defaultName, ...validMembers.filter(v => v !== defaultName)];
     const hasMembers = validMembers.length > 0;
 
     const [fundingAmount, setFundingAmount] = useState('');
@@ -149,10 +160,7 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
     const animSaved = useAnimatedCounter(totalSaved);
     const animRemaining = useAnimatedCounter(Math.max(0, totalTarget - totalSaved));
 
-    // Group members fetch state
-    const [members, setMembers] = useState([]);
-    const [loadingMembers, setLoadingMembers] = useState(false);
-    const [viewProfile, setViewProfile] = useState(null);
+    const animRemaining = useAnimatedCounter(Math.max(0, totalTarget - totalSaved));
 
     useEffect(() => {
         const fetchMembers = async () => {
@@ -341,28 +349,17 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
 
             if (!res.ok) throw new Error('Failed to kick member');
             
-            // Clean up member_ids
-            const newMemberIds = trip.member_ids?.filter(id => id !== memberId) || [];
+            const data = await res.json();
             
-            // Clean up trip_data groupMembers
-            let newTripData = trip.trip_data ? JSON.parse(JSON.stringify(trip.trip_data)) : {};
-            if (newTripData.preferences && newTripData.preferences.groupMembers) {
-                newTripData.preferences.groupMembers = newTripData.preferences.groupMembers.filter(m => {
-                    const mId = typeof m === 'object' ? m.id : null;
-                    return mId !== memberId;
-                });
-            }
-            
-            // Clean up local members state if we have it
+            // Clean up local members state
             if (typeof setMembers === 'function') {
                 setMembers(prev => prev.filter(m => m.id !== memberId));
             }
             
-            onUpdate({ 
-                ...trip, 
-                member_ids: newMemberIds,
-                trip_data: newTripData 
-            });
+            // The backend now returns the fully updated trip including trip_wallets
+            if (data.trip) {
+                onUpdate(data.trip);
+            }
             
             alert('Member kicked successfully.');
         } catch (err) {
