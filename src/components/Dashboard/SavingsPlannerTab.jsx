@@ -101,7 +101,17 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
     const percentage = totalTarget > 0 ? Math.min(100, Math.round((totalSaved / totalTarget) * 100)) : 0;
 
     const groupMembers = trip.trip_data?.preferences?.groupMembers || [];
-    const validMembers = groupMembers.map(m => typeof m === 'object' ? m?.name : m).filter(m => m && String(m).trim() !== '');
+    
+    // Filter out members who have a uid but are no longer in the trip (left or kicked previously)
+    const activeGroupMembers = groupMembers.filter(m => {
+        if (typeof m === 'object' && (m.uid || m.id)) {
+            const uid = m.uid || m.id;
+            return trip.member_ids?.includes(uid) || trip.user_id === uid;
+        }
+        return true;
+    });
+    
+    const validMembers = activeGroupMembers.map(m => typeof m === 'object' ? m?.name : m).filter(m => m && String(m).trim() !== '');
     
     // Group members fetch state
     const [members, setMembers] = useState([]);
