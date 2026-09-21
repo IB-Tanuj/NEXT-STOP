@@ -198,7 +198,8 @@ export const addSavings = async (req, res) => {
                 .insert({
                     wallet_id: data.id,
                     contributor_name: contributor_name,
-                    amount: actualAddedAmount
+                    amount: actualAddedAmount,
+                    added_by: userId
                 });
             if (txError) {
                 console.warn('Failed to record wallet transaction:', txError);
@@ -260,7 +261,8 @@ export const removeSavings = async (req, res) => {
                 .insert({
                     wallet_id: data.id,
                     contributor_name: contributor_name,
-                    amount: -actualRemovedAmount
+                    amount: -actualRemovedAmount,
+                    added_by: userId
                 });
             if (txError) {
                 console.warn('Failed to record negative wallet transaction:', txError);
@@ -271,6 +273,104 @@ export const removeSavings = async (req, res) => {
     } catch (error) {
         console.error('Error removing savings:', error);
         res.status(500).json({ error: 'Failed to remove savings' });
+    }
+};
+
+export const removeOwnerFunds = async (req, res) => {
+    try {
+        const { id: trip_id } = req.params;
+        const { contributor_name } = req.body;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        // Verify this user owns or is a member of the trip
+        const { data: trip, error: tripError } = await supabase
+            .from('saved_trips')
+            .select('id, user_id')
+            .eq('id', trip_id)
+            .or(`user_id.eq.${userId},member_ids.cs.{${userId}}`)
+            .single();
+
+        if (tripError || !trip) {
+            return res.status(403).json({ error: 'Forbidden — you do not have access to this trip' });
+        }
+
+        // Fetch all wallets for this trip to get their IDs
+        const { data: wallets, error: wError } = await supabase
+            .from('trip_wallets')
+            .select('id, saved_amount, wallet_type')
+            .eq('trip_id', trip_id);
+            
+        if (wError) throw wError;
+        
+        const walletIds = wallets.map(w => w.id);
+
+        // Fetch all positive transactions for this contributor in these wallets
+        const { data: transactions, error: txError } = await supabase
+            .from('wallet_transactions')
+            .select('*')
+            .in('wallet_id', walletIds)
+            .eq('contributor_name', contributor_name)
+            .gt('amount', 0);
+            
+        if (txError) throw txError;
+        
+        // Sum the owner-funded amount per wallet
+        const amountToRemovePerWallet = {};
+        for (const tx of transactions) {
+            // If added_by is the trip owner, OR if added_by is null (legacy fallback assumption)
+            if (tx.added_by === trip.user_id || !tx.added_by) {
+                if (!amountToRemovePerWallet[tx.wallet_id]) amountToRemovePerWallet[tx.wallet_id] = 0;
+                amountToRemovePerWallet[tx.wallet_id] += Number(tx.amount);
+            }
+        }
+        
+        // Now, deduct these sums from the wallets and add negative transactions
+        for (const w of wallets) {
+            const amountToRemove = amountToRemovePerWallet[w.id];
+            if (amountToRemove > 0) {
+                let newSavedAmount = parseFloat(w.saved_amount) - amountToRemove;
+                if (newSavedAmount < 0) newSavedAmount = 0;
+                
+                const actualRemovedAmount = parseFloat(w.saved_amount) - newSavedAmount;
+                
+                await supabase
+                    .from('trip_wallets')
+                    .update({ saved_amount: newSavedAmount })
+                    .eq('id', w.id);
+                    
+                if (actualRemovedAmount > 0) {
+                    await supabase
+                        .from('wallet_transactions')
+                        .insert({
+                            wallet_id: w.id,
+                            contributor_name: contributor_name,
+                            amount: -actualRemovedAmount,
+                            added_by: userId
+                        });
+                }
+            }
+        }
+        
+        // Fetch and return the fully updated trip
+        const { data: updatedTrip, error: fetchError } = await supabase
+            .from('saved_trips')
+            .select(`
+                *,
+                trip_wallets (*, wallet_transactions (*))
+            `)
+            .eq('id', trip_id)
+            .single();
+            
+        if (fetchError) throw fetchError;
+
+        res.status(200).json({ message: 'Owner funds removed successfully', trip: updatedTrip });
+    } catch (error) {
+        console.error('Error removing owner funds:', error);
+        res.status(500).json({ error: 'Failed to remove owner funds' });
     }
 };
 
