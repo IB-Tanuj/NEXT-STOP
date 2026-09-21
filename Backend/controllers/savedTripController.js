@@ -308,23 +308,37 @@ export const removeOwnerFunds = async (req, res) => {
         
         const walletIds = wallets.map(w => w.id);
 
-        // Fetch all positive transactions for this contributor in these wallets
+        // Fetch all transactions for this contributor in these wallets
         const { data: transactions, error: txError } = await supabase
             .from('wallet_transactions')
             .select('*')
             .in('wallet_id', walletIds)
-            .eq('contributor_name', contributor_name)
-            .gt('amount', 0);
+            .eq('contributor_name', contributor_name);
             
         if (txError) throw txError;
         
-        // Sum the owner-funded amount per wallet
+        // Calculate amount to remove per wallet
         const amountToRemovePerWallet = {};
-        for (const tx of transactions) {
-            // If added_by is the trip owner, OR if added_by is null (legacy fallback assumption)
-            if (tx.added_by === trip.user_id || !tx.added_by) {
-                if (!amountToRemovePerWallet[tx.wallet_id]) amountToRemovePerWallet[tx.wallet_id] = 0;
-                amountToRemovePerWallet[tx.wallet_id] += Number(tx.amount);
+        
+        for (const w of wallets) {
+            const wTx = transactions.filter(t => t.wallet_id === w.id);
+            let currentBalance = 0;
+            let memberNet = 0;
+            
+            wTx.forEach(tx => {
+                const amt = Number(tx.amount);
+                currentBalance += amt;
+                // If the member added/removed it themselves, track their net contribution
+                if (tx.added_by && tx.added_by !== trip.user_id) {
+                    memberNet += amt;
+                }
+            });
+            
+            // The active owner funds is anything in the current balance that the member didn't net add themselves
+            const activeOwnerFunds = Math.max(0, currentBalance - memberNet);
+            
+            if (activeOwnerFunds > 0) {
+                amountToRemovePerWallet[w.id] = activeOwnerFunds;
             }
         }
         
