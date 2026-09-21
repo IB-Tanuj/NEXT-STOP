@@ -170,6 +170,28 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
         }
     });
 
+    const getActiveOwnerFunds = (contributorName) => {
+        let activeOwnerFunds = 0;
+        wallets.forEach(w => {
+            if (w.wallet_transactions) {
+                let currentBalance = 0;
+                let memberNet = 0;
+                w.wallet_transactions.forEach(tx => {
+                    if (tx.contributor_name === contributorName) {
+                        const amt = Number(tx.amount);
+                        currentBalance += amt;
+                        // If added by someone other than the owner (i.e. the member themselves)
+                        if (tx.added_by && tx.added_by !== trip.user_id) {
+                            memberNet += amt;
+                        }
+                    }
+                });
+                activeOwnerFunds += Math.max(0, currentBalance - memberNet);
+            }
+        });
+        return activeOwnerFunds;
+    };
+
     // Animated counters
     const animTarget = useAnimatedCounter(totalTarget);
     const animSaved = useAnimatedCounter(totalSaved);
@@ -249,9 +271,11 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
             });
 
             if (!res.ok) throw new Error('Failed to save to backend');
+            const { wallet: dbWallet } = await res.json();
+            
             const newWallets = wallets.map(w => {
                 if (w.id === wallet.id) {
-                    const newTx = { contributor_name: contributorName, amount: amountToAdd };
+                    const newTx = { contributor_name: contributorName, amount: amountToAdd, added_by: session?.user?.id };
                     return { 
                         ...w, 
                         saved_amount: Number(w.saved_amount) + amountToAdd,
@@ -318,61 +342,44 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
             const token = session?.access_token || '';
             const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/saved-trips/${trip.id}/kick`, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'Authorization': `Bearer ${token}` 
-                },
-                body: JSON.stringify({ memberId })
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ member_id: memberId })
             });
 
-            if (!res.ok) throw new Error('Failed to kick member');
-            
-            const data = await res.json();
-            
-            // Clean up local members state
-            if (typeof setMembers === 'function') {
+            if (res.ok) {
+                const { trip: updatedTrip } = await res.json();
+                onUpdate(updatedTrip);
                 setMembers(prev => prev.filter(m => m.id !== memberId));
+            } else {
+                throw new Error('Failed to kick member');
             }
-            
-            // The backend now returns the fully updated trip including trip_wallets
-            if (data.trip) {
-                onUpdate(data.trip);
-            }
-            
-            alert('Member kicked successfully.');
         } catch (err) {
-            console.error('Failed to kick member', err);
+            console.error('Error kicking member:', err);
             alert('Failed to kick member');
         }
     };
 
 
     return (
-        <div className="savings-planner-tab">
+        <div style={{ padding: '0px', color: '#f8fafc', animation: 'fadeIn 0.5s ease-out' }}>
             {/* ─── Header ─── */}
             <div className="planner-header animate-entrance">
                 <h3>Financial Goal Tracker</h3>
             </div>
 
             {/* ─── Stat Cards ─── */}
-            <div className="goal-overview animate-entrance" style={{ animationDelay: '0.06s' }}>
-                <div className="stat-card stat-card--target">
-                    <div className="stat">
-                        <span className="label">Target</span>
-                        <span className="value">₹{animTarget.toLocaleString()}</span>
-                    </div>
+            <div style={{ display: 'flex', gap: '24px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                <div className="stat-card" style={{ flex: '1', minWidth: '150px' }}>
+                    <div className="stat-label">TARGET</div>
+                    <div className="stat-value">₹{animTarget.toLocaleString()}</div>
                 </div>
-                <div className="stat-card stat-card--saved">
-                    <div className="stat">
-                        <span className="label">Saved</span>
-                        <span className="value highlight">₹{animSaved.toLocaleString()}</span>
-                    </div>
+                <div className="stat-card stat-card--saved" style={{ flex: '1', minWidth: '150px' }}>
+                    <div className="stat-label">SAVED</div>
+                    <div className="stat-value" style={{ color: '#10b981' }}>₹{animSaved.toLocaleString()}</div>
                 </div>
-                <div className="stat-card stat-card--remaining">
-                    <div className="stat">
-                        <span className="label">Remaining</span>
-                        <span className="value remaining-val">₹{animRemaining.toLocaleString()}</span>
-                    </div>
+                <div className="stat-card stat-card--remaining" style={{ flex: '1', minWidth: '150px' }}>
+                    <div className="stat-label">REMAINING</div>
+                    <div className="stat-value" style={{ color: '#f59e0b' }}>₹{animRemaining.toLocaleString()}</div>
                 </div>
             </div>
 
@@ -457,15 +464,48 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                     {allContributors.map((name, idx) => {
                         const contributed = memberContributions[name] || 0;
                         const percent = personalTarget > 0 ? Math.min(100, Math.round((contributed / personalTarget) * 100)) : 0;
+                        
+                        // Check if the current user is viewing their own profile, or if it's the owner checking another member
+                        const isSelf = currentUserName === name;
+                        const ownerFundsAmount = getActiveOwnerFunds(name);
+                        
+                        // Only show reject button if there are active owner funds, AND the member is viewing their own profile
+                        // The user said: "so if the owner miss funds then the member can remove it"
+                        const canRejectFunds = ownerFundsAmount > 0 && isSelf && !isOwner;
+                        
                         return (
-                            <div key={idx} className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div key={idx} className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ fontWeight: 600, color: '#f1f5f9', fontSize: '15px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }} title={name}>
                                         {name}
                                     </span>
-                                    <span style={{ color: '#0ea5e9', fontWeight: 700, fontSize: '14px', flexShrink: 0 }}>
-                                        ₹{contributed.toLocaleString()} <span style={{ color: '#64748b', fontSize: '12px', fontWeight: 500 }}>/ ₹{personalTarget.toLocaleString()}</span>
-                                    </span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        {canRejectFunds && (
+                                            <button 
+                                                className="member-kick-btn"
+                                                onClick={() => handleRejectOwnerFunds(name)}
+                                                disabled={isSaving}
+                                                style={{ 
+                                                    background: 'rgba(245, 158, 11, 0.15)', 
+                                                    color: '#f59e0b', 
+                                                    border: '1px solid rgba(245, 158, 11, 0.3)', 
+                                                    padding: '4px 10px', 
+                                                    borderRadius: '6px', 
+                                                    fontSize: '11px', 
+                                                    fontWeight: 600, 
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s' 
+                                                }}
+                                                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(245, 158, 11, 0.25)'; }}
+                                                onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)'; }}
+                                            >
+                                                Reject Owner Funds (₹{ownerFundsAmount})
+                                            </button>
+                                        )}
+                                        <span style={{ color: '#0ea5e9', fontWeight: 700, fontSize: '14px', flexShrink: 0 }}>
+                                            ₹{contributed.toLocaleString()} <span style={{ color: '#64748b', fontSize: '12px', fontWeight: 500 }}>/ ₹{personalTarget.toLocaleString()}</span>
+                                        </span>
+                                    </div>
                                 </div>
                                 <div className="progress-bar-bg" style={{ height: '6px', background: 'rgba(255,255,255,0.06)' }}>
                                     <div 
