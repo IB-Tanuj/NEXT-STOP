@@ -546,7 +546,7 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                             <input 
                                 type="text" 
                                 className="glass-input"
-                                value={defaultName}
+                                value={currentUserName}
                                 disabled
                                 style={{ width: '250px', cursor: 'not-allowed', color: '#94a3b8', background: 'rgba(255,255,255,0.03)' }}
                             />
