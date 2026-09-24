@@ -187,7 +187,112 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
   const [focused, setFocused] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [stateResults, setStateResults] = useState(null)
+  const [showAutocomplete, setShowAutocomplete] = useState(false)
+  const [autocompleteItems, setAutocompleteItems] = useState([])
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef(null)
+  const autocompleteRef = useRef(null)
+  const formRef = useRef(null)
+
+  // Build deduplicated autocomplete entries: cities + states
+  const allSearchEntries = useMemo(() => {
+    const cities = allIndiaLocations.map(loc => ({
+      label: loc.name,
+      type: "city",
+      state: loc.state,
+      emoji: loc.emoji,
+      locationKey: loc.locationKey,
+    }))
+    const stateSet = new Set()
+    const states = []
+    allIndiaLocations.forEach(loc => {
+      if (!stateSet.has(loc.state)) {
+        stateSet.add(loc.state)
+        states.push({
+          label: loc.state,
+          type: "state",
+          state: loc.state,
+          emoji: "📍",
+          locationKey: null,
+        })
+      }
+    })
+    return [...states, ...cities]
+  }, [])
+
+  // Close autocomplete when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (formRef.current && !formRef.current.contains(e.target)) {
+        setShowAutocomplete(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  // Filter autocomplete items when search text changes
+  const filterAutocomplete = (text) => {
+    const clean = text.trim().toLowerCase()
+    if (clean.length < 1) {
+      setAutocompleteItems([])
+      setShowAutocomplete(false)
+      return
+    }
+    const filtered = allSearchEntries.filter(entry =>
+      entry.label.toLowerCase().includes(clean)
+    ).slice(0, 8) // limit to 8 suggestions
+    setAutocompleteItems(filtered)
+    setSelectedIndex(-1)
+    setShowAutocomplete(filtered.length > 0)
+  }
+
+  // Select an autocomplete item
+  const selectAutocompleteItem = (item) => {
+    setSearch(item.label)
+    setLocationTheme(item.locationKey || item.label)
+    setShowAutocomplete(false)
+    setSelectedIndex(-1)
+    setSearchError(false)
+
+    if (item.type === "state") {
+      const cities = allIndiaLocations.filter(l => l.state === item.state)
+      setStateResults({ stateName: item.state, cities })
+    } else {
+      setStateResults(null)
+      // Auto-explore for cities
+      if (onExplore) onExplore(item.label)
+    }
+  }
+
+  // Handle keyboard navigation in autocomplete
+  const handleKeyDown = (e) => {
+    if (!showAutocomplete || autocompleteItems.length === 0) return
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault()
+      setSelectedIndex(prev => (prev < autocompleteItems.length - 1 ? prev + 1 : 0))
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault()
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : autocompleteItems.length - 1))
+    } else if (e.key === "Enter" && selectedIndex >= 0) {
+      e.preventDefault()
+      selectAutocompleteItem(autocompleteItems[selectedIndex])
+    } else if (e.key === "Escape") {
+      setShowAutocomplete(false)
+      setSelectedIndex(-1)
+    }
+  }
+
+  // Scroll selected item into view
+  useEffect(() => {
+    if (selectedIndex >= 0 && autocompleteRef.current) {
+      const items = autocompleteRef.current.children
+      if (items[selectedIndex]) {
+        items[selectedIndex].scrollIntoView({ block: "nearest" })
+      }
+    }
+  }, [selectedIndex])
 
   const subtitle = "Smart trip planning with budget distribution, routes, local phrases and more — all in one place."
   const { displayed: typedSubtitle, done: typingDone } = useTypewriter(subtitle, 25)
@@ -363,6 +468,7 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
 
         {/* Search Bar */}
         <form
+          ref={formRef}
           onSubmit={handleSearch}
           style={{
             display: "flex",
@@ -390,6 +496,7 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
               setSearch(text);
               setLocationTheme(text);
               setSearchError(false);
+              filterAutocomplete(text);
 
               const clean = text.trim().toLowerCase();
               if (clean.length >= 3) {
@@ -416,8 +523,9 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
                 setStateResults(null);
               }
             }}
-            onFocus={() => setFocused(true)}
+            onFocus={() => { setFocused(true); if (search.trim()) filterAutocomplete(search); }}
             onBlur={() => setFocused(false)}
+            onKeyDown={handleKeyDown}
             placeholder="Search a destination e.g. Manali, Goa..."
             style={{
               flex: 1,
@@ -452,6 +560,89 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
             EXPLORE →
           </button>
         </form>
+
+        {/* ── Autocomplete Dropdown ── */}
+        {showAutocomplete && autocompleteItems.length > 0 && (
+          <div
+            ref={autocompleteRef}
+            style={{
+              position: "relative",
+              width: "100%",
+              maxWidth: "560px",
+              marginTop: "-20px",
+              marginBottom: "8px",
+              maxHeight: "320px",
+              overflowY: "auto",
+              borderRadius: "16px",
+              backgroundColor: `${theme.card}ee`,
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: `1px solid ${theme.primary}30`,
+              boxShadow: `0 12px 40px rgba(0,0,0,0.25), 0 0 0 1px ${theme.primary}15`,
+              zIndex: 100,
+              animation: "fadeInUp 0.25s ease both",
+              scrollbarWidth: "thin",
+              scrollbarColor: `${theme.primary}40 transparent`,
+            }}
+          >
+            {autocompleteItems.map((item, i) => (
+              <div
+                key={`${item.type}-${item.label}-${i}`}
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  selectAutocompleteItem(item)
+                }}
+                onMouseEnter={() => setSelectedIndex(i)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "12px 20px",
+                  cursor: "pointer",
+                  backgroundColor: selectedIndex === i ? `${theme.primary}18` : "transparent",
+                  borderBottom: i < autocompleteItems.length - 1 ? `1px solid ${theme.primary}12` : "none",
+                  transition: "background-color 0.15s ease",
+                }}
+              >
+                <span style={{ fontSize: "20px", flexShrink: 0 }}>{item.emoji}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    color: theme.text,
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    lineHeight: "1.3",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}>
+                    {item.label}
+                  </div>
+                  <div style={{
+                    color: theme.subtext,
+                    fontSize: "12px",
+                    opacity: 0.7,
+                    marginTop: "1px",
+                  }}>
+                    {item.type === "state" ? "State / Region" : item.state}
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: "10px",
+                  fontWeight: "700",
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                  padding: "3px 8px",
+                  borderRadius: "6px",
+                  backgroundColor: item.type === "state" ? `${theme.accent}20` : `${theme.primary}15`,
+                  color: item.type === "state" ? theme.accent : theme.primary,
+                  flexShrink: 0,
+                }}>
+                  {item.type === "state" ? "State" : "City"}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Error Message */}
         {searchError && (
