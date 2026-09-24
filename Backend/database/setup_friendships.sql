@@ -40,3 +40,8 @@ CREATE TRIGGER update_friendships_modtime
 BEFORE UPDATE ON public.friendships
 FOR EACH ROW
 EXECUTE FUNCTION update_friendship_updated_at_column();
+
+-- Performance Indexes
+CREATE INDEX IF NOT EXISTS idx_friendships_addressee_id ON public.friendships(addressee_id);
+CREATE INDEX IF NOT EXISTS idx_friendships_addressee_status ON public.friendships(addressee_id, status);
+CREATE INDEX IF NOT EXISTS idx_friendships_requester_status ON public.friendships(requester_id, status);
