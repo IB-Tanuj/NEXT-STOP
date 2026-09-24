@@ -37,3 +37,7 @@ CREATE POLICY "Users can insert their own wallet transactions"
             AND saved_trips.user_id = auth.uid()
         )
     );
+
+-- Performance Indexes
+CREATE INDEX IF NOT EXISTS idx_wallet_transactions_wallet_id ON public.wallet_transactions(wallet_id);
+CREATE INDEX IF NOT EXISTS idx_wallet_transactions_contributor ON public.wallet_transactions(contributor_name);

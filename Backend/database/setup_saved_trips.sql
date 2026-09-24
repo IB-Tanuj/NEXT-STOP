@@ -87,3 +87,6 @@ CREATE POLICY "Users can update their own wallets"
             AND saved_trips.user_id = auth.uid()
         )
     );
+
+-- Performance Indexes
+CREATE INDEX IF NOT EXISTS idx_saved_trips_user_id ON public.saved_trips(user_id);
