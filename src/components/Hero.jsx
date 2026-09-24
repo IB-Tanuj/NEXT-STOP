@@ -526,6 +526,7 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
             onFocus={() => { setFocused(true); if (search.trim()) filterAutocomplete(search); }}
             onBlur={() => setFocused(false)}
             onKeyDown={handleKeyDown}
+            autoComplete="off"
             placeholder="Search a destination e.g. Manali, Goa..."
             style={{
               flex: 1,
