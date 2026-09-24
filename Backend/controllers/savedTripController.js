@@ -342,7 +342,7 @@ export const removeOwnerFunds = async (req, res) => {
             }
         }
         
-        // Now, deduct these sums from the wallets and add negative transactions
+        // Now, deduct these sums from the wallets and update/delete past transactions
         for (const w of wallets) {
             const amountToRemove = amountToRemovePerWallet[w.id];
             if (amountToRemove > 0) {
@@ -356,15 +356,28 @@ export const removeOwnerFunds = async (req, res) => {
                     .update({ saved_amount: newSavedAmount })
                     .eq('id', w.id);
                     
-                if (actualRemovedAmount > 0) {
-                    await supabase
-                        .from('wallet_transactions')
-                        .insert({
-                            wallet_id: w.id,
-                            contributor_name: contributor_name,
-                            amount: -actualRemovedAmount,
-                            added_by: userId
-                        });
+                if (amountToRemove > 0) {
+                    let remainingToRemove = amountToRemove;
+                    // Sort transactions newest first
+                    const wTx = transactions
+                        .filter(t => t.wallet_id === w.id && (!t.added_by || t.added_by === trip.user_id))
+                        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                        
+                    for (const tx of wTx) {
+                        if (remainingToRemove <= 0) break;
+                        const txAmount = Number(tx.amount);
+                        if (txAmount > 0) {
+                            if (txAmount <= remainingToRemove) {
+                                // The transaction is fully consumed by the removal, so delete it
+                                await supabase.from('wallet_transactions').delete().eq('id', tx.id);
+                                remainingToRemove -= txAmount;
+                            } else {
+                                // The transaction is partially consumed, update its amount
+                                await supabase.from('wallet_transactions').update({ amount: txAmount - remainingToRemove }).eq('id', tx.id);
+                                remainingToRemove = 0;
+                            }
+                        }
+                    }
                 }
             }
         }
