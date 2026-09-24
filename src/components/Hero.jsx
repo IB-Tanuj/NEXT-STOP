@@ -260,8 +260,6 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
       setStateResults({ stateName: item.state, cities })
     } else {
       setStateResults(null)
-      // Auto-explore for cities
-      if (onExplore) onExplore(item.label)
     }
   }
 
