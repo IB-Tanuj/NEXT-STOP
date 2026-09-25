@@ -54,18 +54,21 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
       {/* Desktop Nav Links */}
       {!isMobile && (
         <div style={{ display: "flex", gap: "30px", alignItems: "center" }}>
-          {["Explore", "Plan Trip", "Bus Lovers", "Budget", "About"]
-            .filter(item => (item !== "Bus Lovers" && item !== "Budget") || user?.email === "t.adhikari.feb.2006@gmail.com")
-            .map((item) => (
+          {["Explore", "Plan Trip", "Bus Lovers", "Budget", "About"].map((item) => (
             <span key={item}
             onClick={() => {
-  if (item === "About") onAbout()
-  if (item === "Explore") onExplore()
-    if (item === "Budget") onBudget()
-      if (item === "Plan Trip") onPlanTrip()
-      if (item === "Bus Lovers") onBusLovers()
-
-}}
+              if (item === "About") onAbout()
+              if (item === "Explore") onExplore()
+              if (item === "Plan Trip") onPlanTrip()
+              if (item === "Budget") {
+                if (user?.email === "t.adhikari.feb.2006@gmail.com") onBudget()
+                else alert("This feature will be available in beta, still in progress.")
+              }
+              if (item === "Bus Lovers") {
+                if (user?.email === "t.adhikari.feb.2006@gmail.com") onBusLovers()
+                else alert("This feature will be available in beta, still in progress.")
+              }
+            }}
              style={{
               color: theme.subtext,
               cursor: "pointer",
@@ -264,18 +267,22 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
           animation: "fadeIn 0.2s ease",
           zIndex: 100,
         }}>
-          {["Explore", "Plan Trip", "Bus Lovers", "Budget", "About"]
-            .filter(item => (item !== "Bus Lovers" && item !== "Budget") || user?.email === "t.adhikari.feb.2006@gmail.com")
-            .map((item) => (
+          {["Explore", "Plan Trip", "Bus Lovers", "Budget", "About"].map((item) => (
             <span
               key={item}
               onClick={() => {
-  if (item === "About") onAbout()
-  if (item === "Explore") onExplore()
-    if (item === "Budget") onBudget()
-    if (item === "Plan Trip") onPlanTrip()
-    if (item === "Bus Lovers") { onBusLovers(); setMenuOpen(false); }
-}}
+                if (item === "About") onAbout()
+                if (item === "Explore") onExplore()
+                if (item === "Plan Trip") onPlanTrip()
+                if (item === "Budget") {
+                  if (user?.email === "t.adhikari.feb.2006@gmail.com") onBudget()
+                  else alert("This feature will be available in beta, still in progress.")
+                }
+                if (item === "Bus Lovers") {
+                  if (user?.email === "t.adhikari.feb.2006@gmail.com") { onBusLovers(); setMenuOpen(false); }
+                  else alert("This feature will be available in beta, still in progress.")
+                }
+              }}
               style={{
                 color: theme.subtext,
                 cursor: "pointer",
