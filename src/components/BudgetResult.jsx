@@ -163,6 +163,32 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     }
   }, [locationKey, preferences.transport])
 
+  // Tie internal overlay state to browser history
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (showTripPlan) {
+        setShowTripPlan(false);
+      } else {
+        onBack();
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [showTripPlan, onBack]);
+
+  const handleOpenTripPlan = () => {
+    setShowTripPlan(true);
+    window.history.pushState({ page: 'tripplan' }, '', window.location.href);
+  };
+
+  const handleCloseTripPlan = () => {
+    setShowTripPlan(false);
+    if (window.history.state?.page === 'tripplan') {
+       window.history.back();
+    }
+  };
+
+
   // ── Live vehicle data from API ───────────────────────
   const [vehicleType, setVehicleType] = useState("hatchback")
   const [fuelType, setFuelType] = useState("petrol")
@@ -931,7 +957,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
                 hasMissingEntryCosts,
                 totalBudget
               }}
-              onBack={() => setShowTripPlan(false)}
+              onBack={handleCloseTripPlan}
               onPlanGenerated={(data) => setLocalAiData(data)}
             />
           </div>

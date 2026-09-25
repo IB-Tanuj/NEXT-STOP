@@ -95,7 +95,7 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
       selectedStation,
       selectedAirport
     })
-    setShowBudget(true)
+    handleOpenBudget()
   }
 
   useEffect(() => {
@@ -499,7 +499,7 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
             theme={theme}
             planData={planData}
             preferences={prefData}
-            onBack={() => setShowBudget(false)}
+            onBack={handleCloseBudget}
           />
         </div>
       )}
