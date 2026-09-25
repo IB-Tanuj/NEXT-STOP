@@ -35,11 +35,15 @@ Location: ${location}
 RULES:
 1. Return ONLY raw JSON. No markdown formatting (\`\`\`). No text before or after.
 2. STRICT ITEM LIMITS: Exactly 4 activities, 2 festivals, 6 foods, 2 emergency numbers. DO NOT EXCEED THIS.
-3. STRICT LENGTH LIMITS: All "description" fields MUST be under 5 words. Be extremely brief.
+3. STRICT LENGTH LIMITS: All "description" fields MUST be under 8 words. Be extremely brief.
+4. ACTIVITIES MUST be real adventure/outdoor/experience-based activities that tourists can actually DO at this location — for example: river rafting, paragliding, bungee jumping, zip-lining, trekking, camping, scuba diving, snorkeling, rock climbing, kayaking, mountain biking, skiing, hot air ballooning, ATV rides, canyoning, etc.
+5. DO NOT list tourist spots, landmarks, temples, viewpoints, or villages as activities. Those are sightseeing spots, NOT activities.
+6. Each activity name should be the specific activity (e.g. "White Water Rafting", "Paragliding", "Bungee Jumping") — NOT a place name.
+7. If the location genuinely does not have 4 adventure activities, include cultural experiences like cooking classes, pottery workshops, yoga sessions, local craft workshops, etc.
 
 JSON SCHEMA:
 {
-  "activities": [{"id": "1", "name": "", "description": "", "bestTime": ""}],
+  "activities": [{"id": "1", "name": "e.g. River Rafting", "description": "e.g. Grade 3-4 rapids adventure", "bestTime": "e.g. Morning"}],
   "festivals": [{"id": "1", "name": "", "date": "", "description": ""}],
   "foodRecommendations": [{"name": "", "type": "", "mustTry": true, "description": ""}],
   "localEmergency": [{"label": "", "number": ""}]
