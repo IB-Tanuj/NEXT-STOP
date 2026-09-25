@@ -62,11 +62,11 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
               if (item === "Plan Trip") onPlanTrip()
               if (item === "Budget") {
                 if (user?.email === "t.adhikari.feb.2006@gmail.com") onBudget()
-                else alert("This feature will be available in beta, still in progress.")
+                else alert("In production , i will live it soon")
               }
               if (item === "Bus Lovers") {
                 if (user?.email === "t.adhikari.feb.2006@gmail.com") onBusLovers()
-                else alert("This feature will be available in beta, still in progress.")
+                else alert("In production , i will live it soon")
               }
             }}
              style={{
@@ -276,11 +276,11 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
                 if (item === "Plan Trip") onPlanTrip()
                 if (item === "Budget") {
                   if (user?.email === "t.adhikari.feb.2006@gmail.com") onBudget()
-                  else alert("This feature will be available in beta, still in progress.")
+                  else alert("In production , i will live it soon")
                 }
                 if (item === "Bus Lovers") {
                   if (user?.email === "t.adhikari.feb.2006@gmail.com") { onBusLovers(); setMenuOpen(false); }
-                  else alert("This feature will be available in beta, still in progress.")
+                  else alert("In production , i will live it soon")
                 }
               }}
               style={{
