@@ -90,7 +90,8 @@ export const ItineraryView = React.memo(({ theme, locationName, days, budget, st
             padding: "20px",
             textAlign: "center",
           }}>
-            <div style={{ color: "#ff6b6b", fontSize: "14px", fontWeight: "600" }}>⚠️ {error}</div>
+            <div style={{ color: "#ff6b6b", fontSize: "15px", fontWeight: "800", marginBottom: "8px" }}>⚠️ {error}</div>
+            <div style={{ color: theme.text, fontSize: "13px", fontWeight: "500", opacity: 0.9 }}>Don't worry! You can generate this itinerary from the "Saved Trips" section later.</div>
           </div>
         ) : itineraryData?.itinerary?.length > 0 ? (
           itineraryData.itinerary.map((dayPlan, i) => (
@@ -158,7 +159,8 @@ export const ItineraryView = React.memo(({ theme, locationName, days, budget, st
           ))
         ) : (
           <div style={{ color: theme.subtext, textAlign: "center", padding: "40px" }}>
-            No itinerary data available.
+            <div style={{ fontSize: "15px", fontWeight: "600", marginBottom: "8px" }}>No itinerary data available right now.</div>
+            <div style={{ fontSize: "13px", opacity: 0.8 }}>You can generate the itinerary from the "Saved Trips" section later.</div>
           </div>
         )}
       </div>
