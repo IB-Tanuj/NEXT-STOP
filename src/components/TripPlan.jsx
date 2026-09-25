@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { generateTripPlan } from "../utils/tripPlanUtils"
 import { ItineraryView } from "./TripPlan/ItineraryView"
 import { TripOverviewTab } from "./TripPlan/TripOverviewTab"
@@ -6,7 +6,7 @@ import { TripActivitiesTab } from "./TripPlan/TripActivitiesTab"
 import { TripBookingTab } from "./TripPlan/TripBookingTab"
 import { TripEmergencyTab } from "./TripPlan/TripEmergencyTab"
 
-const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }) => {
+const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack, onPlanGenerated }) => {
   const [activeTab, setActiveTab] = useState("overview")
   const [aiData, setAiData] = useState(null)
   const [aiLoading, setAiLoading] = useState(false)
@@ -45,6 +45,13 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack }
     fetchAiPlan()
     return () => { cancelled = true }
   }, [locationName, preferences, foodBuffer, stayType, transport])
+
+  // Forward aiData (including itinerary) back to parent whenever it changes
+  useEffect(() => {
+    if (aiData && onPlanGenerated) {
+      onPlanGenerated(aiData)
+    }
+  }, [aiData])
 
   const tabs = [
     { id: "overview", label: "📋 Overview" },
