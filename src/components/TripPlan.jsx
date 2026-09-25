@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useRef } from "react"
 import { generateTripPlan } from "../utils/tripPlanUtils"
 import { ItineraryView } from "./TripPlan/ItineraryView"
 import { TripOverviewTab } from "./TripPlan/TripOverviewTab"
@@ -18,6 +18,15 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack, 
   const stayType = preferences?.stayType
   const transport = preferences?.transport
   const locationName = location?.name || ""
+  const days = preferences?.days
+
+  // Use ref for callback to avoid re-render loops
+  const onPlanGeneratedRef = useRef(onPlanGenerated)
+  onPlanGeneratedRef.current = onPlanGenerated
+
+  // Stable ref for activities to avoid re-fetching
+  const activitiesRef = useRef(preferences?.activities)
+  activitiesRef.current = preferences?.activities
 
   useEffect(() => {
     let cancelled = false
@@ -25,10 +34,10 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack, 
       setAiLoading(true)
       setAiError("")
       try {
-        const spots = preferences?.activities || []
+        const spots = activitiesRef.current || []
         const data = await generateTripPlan(
           locationName,
-          preferences?.days,
+          days,
           foodBuffer,
           stayType,
           transport,
@@ -44,14 +53,15 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack, 
     }
     fetchAiPlan()
     return () => { cancelled = true }
-  }, [locationName, preferences, foodBuffer, stayType, transport])
+  }, [locationName, days, foodBuffer, stayType, transport])
 
   // Forward aiData (including itinerary) back to parent whenever it changes
   useEffect(() => {
-    if (aiData && onPlanGenerated) {
-      onPlanGenerated(aiData)
+    if (aiData && onPlanGeneratedRef.current) {
+      onPlanGeneratedRef.current(aiData)
     }
   }, [aiData])
+
 
   const tabs = [
     { id: "overview", label: "📋 Overview" },
