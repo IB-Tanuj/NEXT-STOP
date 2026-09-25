@@ -54,7 +54,9 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
       {/* Desktop Nav Links */}
       {!isMobile && (
         <div style={{ display: "flex", gap: "30px", alignItems: "center" }}>
-          {["Explore", "Plan Trip", "Bus Lovers", "Budget", "About"].map((item) => (
+          {["Explore", "Plan Trip", "Bus Lovers", "Budget", "About"]
+            .filter(item => (item !== "Bus Lovers" && item !== "Budget") || user?.email === "t.adhikari.feb.2006@gmail.com")
+            .map((item) => (
             <span key={item}
             onClick={() => {
   if (item === "About") onAbout()
@@ -262,7 +264,9 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
           animation: "fadeIn 0.2s ease",
           zIndex: 100,
         }}>
-          {["Explore", "Plan Trip", "Bus Lovers", "Budget", "About"].map((item) => (
+          {["Explore", "Plan Trip", "Bus Lovers", "Budget", "About"]
+            .filter(item => (item !== "Bus Lovers" && item !== "Budget") || user?.email === "t.adhikari.feb.2006@gmail.com")
+            .map((item) => (
             <span
               key={item}
               onClick={() => {
