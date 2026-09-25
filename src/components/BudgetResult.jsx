@@ -864,7 +864,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
         {/* Action Buttons */}
         <div style={{ display: "flex", gap: "12px", marginTop: "8px", flexDirection: "column" }}>
           <button
-            onClick={() => setShowTripPlan(true)}
+            onClick={handleOpenTripPlan}
             style={{
               background: theme.primary, border: "none", padding: "18px",
               borderRadius: "50px", color: "#fff", fontWeight: "800",
