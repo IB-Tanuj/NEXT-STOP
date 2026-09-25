@@ -169,9 +169,9 @@ const AboutPage = ({ theme, onClose }) => {
               desc: "Our AI agent generates personalized itineraries, activity suggestions, festival alerts and local food recommendations — specific to your destination and budget."
             },
             {
-              emoji: "🗣️",
-              title: "Local Phrases Offline",
-              desc: "50 essential phrases in the local language of your destination — categorized for greetings, shopping, directions, emergencies and food. Screenshot them for offline use."
+              emoji: "💾",
+              title: "Save, Share & Connect",
+              desc: "Save your AI-generated trips to a personal dashboard. Make your trips public to share them with friends, and discover new trips by browsing your friends' profiles."
             },
             {
               emoji: "👥",
@@ -253,8 +253,8 @@ const AboutPage = ({ theme, onClose }) => {
           marginBottom: "32px",
         }}>
           {[
-            { number: "4", label: "Destinations (Growing)", emoji: "📍" },
-            { number: "500+", label: "Planned Locations", emoji: "🗺️" },
+            { number: "200+", label: "Destinations (Growing)", emoji: "📍" },
+            { number: "10,000+", label: "Tourist Spots", emoji: "🗺️" },
             { number: "₹0", label: "Cost to Use", emoji: "💰" },
             { number: "∞", label: "Trips You Can Plan", emoji: "✈️" },
           ].map((stat, i) => (
