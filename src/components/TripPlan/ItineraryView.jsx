@@ -31,6 +31,16 @@ export const ItineraryView = React.memo(({ theme, locationName, days, budget, st
           }
           return
         }
+        
+        // Block regeneration if they made budget changes (cache miss) but already generated once
+        const hasGenerated = sessionStorage.getItem(`has_generated_itinerary_${locationName}`)
+        if (hasGenerated) {
+          if (!cancelled) {
+            setError("You changed your preferences! Please save this trip to your dashboard to generate the updated itinerary.")
+            setLoading(false)
+          }
+          return
+        }
       } catch (e) {
         console.warn("[Itinerary Cache] sessionStorage read failed:", e)
       }
@@ -49,6 +59,7 @@ export const ItineraryView = React.memo(({ theme, locationName, days, budget, st
           // ── Store in sessionStorage for future same-session hits ──
           try {
             sessionStorage.setItem(cacheKey, JSON.stringify(data))
+            sessionStorage.setItem(`has_generated_itinerary_${locationName}`, "true")
           } catch (e) {
             console.warn("[Itinerary Cache] sessionStorage write failed:", e)
           }
