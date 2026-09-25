@@ -142,6 +142,37 @@ const TripPage = ({ location, theme, onBack }) => {
   const [bestTimeData, setBestTimeData] = useState(null)
   const fetchingRef = useRef(false) // prevent overlapping API calls (rate limit)
 
+  // Tie internal overlay state to browser history
+  useEffect(() => {
+    const handlePopState = (event) => {
+      // If we are currently showing planning page, going back should hide it
+      if (planningVisible) {
+        setPlanningVisible(false);
+      } else {
+        // We're at the base trip page, go back to homepage
+        onBack();
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [planningVisible, onBack]);
+
+  // Wrapper for opening planning page that pushes a history state
+  const handleOpenPlanning = (choiceType) => {
+    setSelectedChoice(choiceType);
+    setPlanningVisible(true);
+    window.history.pushState({ page: 'planning' }, '', window.location.href);
+  };
+
+  const handleClosePlanning = () => {
+    setPlanningVisible(false);
+    // Pop the pushed state if we closed it manually
+    if (window.history.state?.page === 'planning') {
+       window.history.back();
+    }
+  };
+
   useEffect(() => {
     if (!location) return;
     const locKey = location.toLowerCase();
@@ -853,9 +884,7 @@ const TripPage = ({ location, theme, onBack }) => {
               {/* Continue Button */}
               <button
                 onClick={() => {
-                  // TEMPORARY FIX: Bypass questions page for beta launch
-                  setSelectedChoice("explore")
-                  setPlanningVisible(true)
+                  handleOpenPlanning("explore")
                 }}
                 style={{
                   width: "100%",
@@ -916,7 +945,7 @@ const TripPage = ({ location, theme, onBack }) => {
 
           {/* Question 1 */}
           <div
-            onClick={() => setSelectedChoice("explore")}
+            onClick={() => handleOpenPlanning("explore")}
             style={{
               background: selectedChoice === "explore" ? `${theme.primary}22` : theme.card,
               border: `2px solid ${selectedChoice === "explore" ? theme.primary : theme.primary + "33"}`,
@@ -938,7 +967,7 @@ const TripPage = ({ location, theme, onBack }) => {
 
           {/* Question 2 */}
           <div
-            onClick={() => setSelectedChoice("specific")}
+            onClick={() => handleOpenPlanning("specific")}
             style={{
               background: selectedChoice === "specific" ? `${theme.primary}22` : theme.card,
               border: `2px solid ${selectedChoice === "specific" ? theme.primary : theme.primary + "33"}`,
@@ -1008,7 +1037,7 @@ const TripPage = ({ location, theme, onBack }) => {
           {/* Next Button */}
           {selectedChoice && (
             <button
-              onClick={() => setPlanningVisible(true)}
+              onClick={() => handleOpenPlanning(selectedChoice)}
               style={{
                 marginTop: "32px",
                 background: theme.primary,
@@ -1040,7 +1069,7 @@ const TripPage = ({ location, theme, onBack }) => {
             location={loc}
             theme={theme}
             choice={selectedChoice}
-            onBack={() => setPlanningVisible(false)}
+            onBack={handleClosePlanning}
           />
         </div>
       )}
