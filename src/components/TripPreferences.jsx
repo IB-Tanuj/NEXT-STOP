@@ -98,6 +98,31 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
     setShowBudget(true)
   }
 
+  useEffect(() => {
+    // Popstate listener to handle browser back button
+    const handlePopState = (event) => {
+      if (showBudget) {
+        setShowBudget(false);
+      } else {
+        onBack();
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [showBudget, onBack]);
+
+  const handleOpenBudget = () => {
+    setShowBudget(true);
+    window.history.pushState({ page: 'budget' }, '', window.location.href);
+  };
+
+  const handleCloseBudget = () => {
+    setShowBudget(false);
+    if (window.history.state?.page === 'budget') {
+       window.history.back();
+    }
+  };
+
   return (
     <div style={{
       minHeight: "100vh",
