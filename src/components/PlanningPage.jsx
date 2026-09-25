@@ -107,8 +107,50 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
   }
 
   const filteredSpots = location?.spots?.filter(spot =>
+  const filteredSuggestions = location?.suggestions?.filter(spot =>
     spot.name.toLowerCase().includes(placeSearch.toLowerCase())
   ) || []
+
+  // Tie internal overlay state to browser history
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (showBudget) {
+        setShowBudget(false);
+      } else if (showPreferences) {
+        setShowPreferences(false);
+      } else {
+        onBack();
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [showPreferences, showBudget, onBack]);
+
+  const handleOpenPreferences = () => {
+    setShowPreferences(true);
+    window.history.pushState({ page: 'preferences' }, '', window.location.href);
+  };
+
+  const handleClosePreferences = () => {
+    setShowPreferences(false);
+    if (window.history.state?.page === 'preferences') {
+       window.history.back();
+    }
+  };
+
+  const handleOpenBudget = (prefs) => {
+    setPlanData(prefs);
+    setShowBudget(true);
+    window.history.pushState({ page: 'budget' }, '', window.location.href);
+  };
+
+  const handleCloseBudget = () => {
+    setShowBudget(false);
+    if (window.history.state?.page === 'budget') {
+       window.history.back();
+    }
+  };
 
   return (
     <div style={{
@@ -677,7 +719,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
         {/* Next Button */}
         {isValid() && (
           <button
-            onClick={() => setShowPreferences(true)}
+            onClick={handleOpenPreferences}
             style={{
               background: theme.primary,
               border: "none",
@@ -711,11 +753,8 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
             location={location}
             theme={theme}
             planData={{ leavingFrom, originCoords: leavingCoords, originCity: selectedCity, budget, budgetType, groupSize, groupMembers }}
-            onBack={() => setShowPreferences(false)}
-            onNext={(prefs) => {
-              setPlanData(prefs)
-              setShowBudget(true)
-            }}
+            onBack={handleClosePreferences}
+            onNext={handleOpenBudget}
           />
         </div>
       )}
