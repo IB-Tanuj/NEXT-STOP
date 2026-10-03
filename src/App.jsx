@@ -22,6 +22,7 @@ const LandingPage = lazy(() => import("./components/LandingPage"))
 const NewLandingPage = lazy(() => import("./components/NewLandingPage"))
 import { useAuth } from "./context/AuthContext"
 import PersonalDashboard from "./components/Dashboard/PersonalDashboard"
+import { NotificationProvider } from "./context/NotificationContext"
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -230,12 +231,13 @@ function App() {
 
 
   return (
-    <div style={{
-      backgroundColor: theme?.bg || "#060a10",
-      minHeight: "100vh",
-      fontFamily: "var(--sans)",
-      transition: "all 0.8s ease",
-    }}>
+    <NotificationProvider theme={theme}>
+      <div style={{
+        backgroundColor: theme?.bg || "#060a10",
+        minHeight: "100vh",
+        fontFamily: "var(--sans)",
+        transition: "all 0.8s ease",
+      }}>
       <Suspense fallback={<FallbackSpinner theme={theme} />}>
         <Routes>
           <Route path="/dev" element={<DevAdminPage theme={theme} setLocationTheme={setLocationTheme} />} />
@@ -339,7 +341,8 @@ function App() {
           <BusLoversPage theme={theme} onClose={() => setShowBusLovers(false)} />
         </Suspense>
       )}
-    </div>
+      </div>
+    </NotificationProvider>
   )
 }
 
