@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { createHash } from 'node:crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -14,6 +15,9 @@ if (!fs.existsSync(DATA_DIR)) {
 const DEAD_KEYS_FILE = path.join(DATA_DIR, 'dead_keys.json');
 const DEAD_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
+// Never persist or log API keys, even partially.
+const keyFingerprint = (key) => createHash('sha256').update(key).digest('hex');
+
 /**
  * Load dead keys from the JSON file
  */
@@ -21,7 +25,15 @@ const loadDeadKeys = () => {
     try {
         if (fs.existsSync(DEAD_KEYS_FILE)) {
             const data = fs.readFileSync(DEAD_KEYS_FILE, 'utf8');
-            return JSON.parse(data);
+            let migrated = false;
+            const state = Object.fromEntries(Object.entries(JSON.parse(data)).map(([id, value]) => {
+                if (/^[a-f0-9]{64}$/.test(id)) return [id, value];
+                migrated = true;
+                return [keyFingerprint(id), value];
+            }));
+            // Scrub legacy plaintext entries while retaining their cooldowns.
+            if (migrated) saveDeadKeys(state);
+            return state;
         }
     } catch (err) {
         console.error('[RapidAPI Manager] Failed to load dead keys file:', err.message);
@@ -68,17 +80,18 @@ export const getAvailableKey = (host) => {
     const now = Date.now();
 
     for (const key of allKeys) {
-        if (!deadKeys[key]) deadKeys[key] = {};
+        const keyId = keyFingerprint(key);
+        if (!deadKeys[keyId]) deadKeys[keyId] = {};
         
-        const deadInfo = deadKeys[key][host];
+        const deadInfo = deadKeys[keyId][host];
         if (!deadInfo) {
             return key; // Key is alive for this host
         }
 
         // Check if the dead duration has expired for this host
         if (now - deadInfo.diedAt > DEAD_DURATION_MS) {
-            console.log(`[RapidAPI Manager] Resurrecting key ${key.substring(0, 5)}... for host ${host} (30 days passed)`);
-            delete deadKeys[key][host];
+            console.log(`[RapidAPI Manager] Resurrecting key fingerprint ${keyId.slice(0, 12)} for host ${host} (30 days passed)`);
+            delete deadKeys[keyId][host];
             saveDeadKeys(deadKeys);
             return key;
         }
@@ -96,13 +109,14 @@ export const markKeyAsDead = (key, host) => {
     if (!key || !host) return;
     const deadKeys = loadDeadKeys();
     
-    if (!deadKeys[key]) deadKeys[key] = {};
+    const keyId = keyFingerprint(key);
+    if (!deadKeys[keyId]) deadKeys[keyId] = {};
     
     // Only mark it if it's not already marked recently
-    if (!deadKeys[key][host]) {
-        deadKeys[key][host] = { diedAt: Date.now() };
+    if (!deadKeys[keyId][host]) {
+        deadKeys[keyId][host] = { diedAt: Date.now() };
         saveDeadKeys(deadKeys);
-        console.warn(`[RapidAPI Manager] Marked key ${key.substring(0, 5)}... as DEAD for host ${host}.`);
+        console.warn(`[RapidAPI Manager] Marked key fingerprint ${keyId.slice(0, 12)} as DEAD for host ${host}.`);
     }
 };
 
@@ -132,7 +146,7 @@ export const runWithKeyRotation = async (host, taskFn) => {
             
             // Note: 403 can also be an authentication/quota issue from RapidAPI.
             if (status === 429 || status === 503 || status === 403) {
-                console.warn(`[RapidAPI Manager] Key ${apiKey.substring(0, 5)}... hit rate limit/forbidden (Status ${status}) on host ${host}. Marking as dead and retrying.`);
+                console.warn(`[RapidAPI Manager] Key fingerprint ${keyFingerprint(apiKey).slice(0, 12)} hit rate limit/forbidden (Status ${status}) on host ${host}. Marking as dead and retrying.`);
                 markKeyAsDead(apiKey, host);
                 attempts++;
             } else {

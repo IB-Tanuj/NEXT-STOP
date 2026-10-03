@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "items": [
+    {
+      "title": "Map the planning flow and persistence boundaries",
+      "status": "in-progress"
+    },
+    {
+      "title": "Design daily planning-session quota and API protection",
+      "status": "pending"
+    },
+    {
+      "title": "Implement backend session/quota enforcement",
+      "status": "pending"
+    },
+    {
+      "title": "Integrate frontend session creation and resume behavior",
+      "status": "pending"
+    },
+    {
+      "title": "Add tests and run build/checks",
+      "status": "pending"
+    }
+  ],
+  "updated_at": "2026-10-01T18:20:10.599Z",
+  "session_id": "01a0f3e2-4410-7498-9f6a-5070e4544c8c"
+}

@@ -7,6 +7,10 @@ GET /cities/:id	             City detail with activities and points of interest 
 GET /cities/:id/reachable	 All destinations reachable from a city with prices — the highest-value endpoint for "where can I go?" features
 GET /timetable	             City departure timetable — all departures from a city on a given date
 
+SECURITY: These are reference snippets only. <RAPIDAPI_KEY> is a placeholder.
+Real provider keys belong in Backend/.env or server deployment variables, never
+in frontend code or VITE_* variables. The browser should call our /api routes.
+
 NOTICE : for all snippet code of all endpoints the Target and Client are same 
   Target:JavaScript        Client:XMLHttpRequest
 
@@ -25,7 +29,7 @@ xhr.addEventListener('readystatechange', function () {
 });
 
 xhr.open('GET', 'https://flixbus-api2.p.rapidapi.com/search?currency=EUR&date=2026-08-01&locale=en&children=0&adult=1&bikes=0&toCityId=40de8964-8646-11e6-9066-549f350fcb0c&returnDate=2026-08-10&fromCityId=40d8f682-8646-11e6-9066-549f350fcb0c');
-xhr.setRequestHeader('x-rapidapi-key', 'f817651148msh728be16da7b7b61p1063e4jsn6d6496b45ea6');
+xhr.setRequestHeader('x-rapidapi-key', '<RAPIDAPI_KEY>');
 xhr.setRequestHeader('x-rapidapi-host', 'flixbus-api2.p.rapidapi.com');
 xhr.setRequestHeader('Content-Type', 'application/json');
 
@@ -44,7 +48,7 @@ xhr.addEventListener('readystatechange', function () {
 });
 
 xhr.open('GET', 'https://flixbus-api2.p.rapidapi.com/autocomplete?country=DE&stations=true&query=Berlin&lang=en&flixbusOnly=false');
-xhr.setRequestHeader('x-rapidapi-key', 'f817651148msh728be16da7b7b61p1063e4jsn6d6496b45ea6');
+xhr.setRequestHeader('x-rapidapi-key', '<RAPIDAPI_KEY>');
 xhr.setRequestHeader('x-rapidapi-host', 'flixbus-api2.p.rapidapi.com');
 xhr.setRequestHeader('Content-Type', 'application/json');
 
@@ -63,7 +67,7 @@ xhr.addEventListener('readystatechange', function () {
 });
 
 xhr.open('GET', 'https://flixbus-api2.p.rapidapi.com/cities?language=en-gl&offset=0&limit=20');
-xhr.setRequestHeader('x-rapidapi-key', 'f817651148msh728be16da7b7b61p1063e4jsn6d6496b45ea6');
+xhr.setRequestHeader('x-rapidapi-key', '<RAPIDAPI_KEY>');
 xhr.setRequestHeader('x-rapidapi-host', 'flixbus-api2.p.rapidapi.com');
 xhr.setRequestHeader('Content-Type', 'application/json');
 
@@ -82,7 +86,7 @@ xhr.addEventListener('readystatechange', function () {
 });
 
 xhr.open('GET', 'https://flixbus-api2.p.rapidapi.com/cities/40de8964-8646-11e6-9066-549f350fcb0c?language=en-gl');
-xhr.setRequestHeader('x-rapidapi-key', 'f817651148msh728be16da7b7b61p1063e4jsn6d6496b45ea6');
+xhr.setRequestHeader('x-rapidapi-key', '<RAPIDAPI_KEY>');
 xhr.setRequestHeader('x-rapidapi-host', 'flixbus-api2.p.rapidapi.com');
 xhr.setRequestHeader('Content-Type', 'application/json');
 
@@ -101,7 +105,7 @@ xhr.addEventListener('readystatechange', function () {
 });
 
 xhr.open('GET', 'https://flixbus-api2.p.rapidapi.com/cities/40d8f682-8646-11e6-9066-549f350fcb0c/reachable?language=en-gl&limit=20');
-xhr.setRequestHeader('x-rapidapi-key', 'f817651148msh728be16da7b7b61p1063e4jsn6d6496b45ea6');
+xhr.setRequestHeader('x-rapidapi-key', '<RAPIDAPI_KEY>');
 xhr.setRequestHeader('x-rapidapi-host', 'flixbus-api2.p.rapidapi.com');
 xhr.setRequestHeader('Content-Type', 'application/json');
 
@@ -119,7 +123,7 @@ xhr.addEventListener('readystatechange', function () {
 	}
 });
 xhr.open('GET', 'https://flixbus-api2.p.rapidapi.com/timetable?cityId=40d8f682-8646-11e6-9066-549f350fcb0c&date=2026-08-01');
-xhr.setRequestHeader('x-rapidapi-key', 'f817651148msh728be16da7b7b61p1063e4jsn6d6496b45ea6');
+xhr.setRequestHeader('x-rapidapi-key', '<RAPIDAPI_KEY>');
 xhr.setRequestHeader('x-rapidapi-host', 'flixbus-api2.p.rapidapi.com');
 xhr.setRequestHeader('Content-Type', 'application/json');
 

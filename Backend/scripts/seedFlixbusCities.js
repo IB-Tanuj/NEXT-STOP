@@ -2,7 +2,8 @@ import dotenv from "dotenv";
 dotenv.config();
 import supabase from "../config/supabase.js";
 
-const API_KEY = process.env.RAPIDAPI_FLIXBUS_KEY_1 || 'f817651148msh728be16da7b7b61p1063e4jsn6d6496b45ea6';
+const API_KEY = process.env.RAPIDAPI_FLIXBUS_KEY_1 || process.env.RAPIDAPI_KEY;
+if (!API_KEY) throw new Error('RAPIDAPI_KEY is missing from the environment.');
 const API_HOST = 'flixbus-api2.p.rapidapi.com';
 
 async function seedCities() {
