@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "../context/AuthContext"
 import { useNavigate } from "react-router-dom"
+import { useNotification } from "../context/NotificationContext"
 
 const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onBusLovers }) => {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -8,6 +9,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
   const [pendingCount, setPendingCount] = useState(0)
   const { user, session, profile, logout } = useAuth()
   const navigate = useNavigate()
+  const { showAlert } = useNotification()
 
   useEffect(() => {
     if (user && session?.access_token) {
@@ -62,11 +64,11 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
               if (item === "Plan Trip") onPlanTrip()
               if (item === "Budget") {
                 if (user?.email === "t.adhikari.feb.2006@gmail.com") onBudget()
-                else alert("In production , i will live it soon")
+                else showAlert("In production , i will live it soon", "info")
               }
               if (item === "Bus Lovers") {
                 if (user?.email === "t.adhikari.feb.2006@gmail.com") onBusLovers()
-                else alert("In production , i will live it soon")
+                else showAlert("In production , i will live it soon", "info")
               }
             }}
              style={{
@@ -276,11 +278,11 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
                 if (item === "Plan Trip") onPlanTrip()
                 if (item === "Budget") {
                   if (user?.email === "t.adhikari.feb.2006@gmail.com") onBudget()
-                  else alert("In production , i will live it soon")
+                  else showAlert("In production , i will live it soon", "info")
                 }
                 if (item === "Bus Lovers") {
                   if (user?.email === "t.adhikari.feb.2006@gmail.com") { onBusLovers(); setMenuOpen(false); }
-                  else alert("In production , i will live it soon")
+                  else showAlert("In production , i will live it soon", "info")
                 }
               }}
               style={{

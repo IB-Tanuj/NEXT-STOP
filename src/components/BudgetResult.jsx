@@ -627,7 +627,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   // ── Save Trip to Dashboard ──────────────────────────────
   const handleSaveTrip = async () => {
     if (!user) {
-      alert("Please login to save trips!")
+      showAlert("Please login to save trips!", "error")
       return
     }
     
