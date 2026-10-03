@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import './ProfileTab.css';
 
 const IconChevronLeft = () => (
@@ -26,6 +27,7 @@ const IconCamera = () => (
 
 const ViewProfileModal = ({ userProfile, onClose }) => {
     const { session, user } = useAuth();
+    const { showAlert } = useNotification();
     const [activeTab, setActiveTab] = useState('posts');
     const [stats, setStats] = useState({ posts: 0, friends: 0, mutuals: 0 });
     
@@ -47,12 +49,12 @@ const ViewProfileModal = ({ userProfile, onClose }) => {
                 setRequestStatus('pending_outgoing');
             } else {
                 setRequestStatus('none');
-                alert('Failed to send request, or request already exists.');
+                showAlert('Failed to send request, or request already exists.', 'error');
             }
         } catch (err) {
             console.error(err);
             setRequestStatus('none');
-            alert('Error sending request.');
+            showAlert('Error sending request.', 'error');
         }
     };
 

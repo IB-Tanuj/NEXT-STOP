@@ -2,9 +2,11 @@ import { useState, useEffect } from "react"
 import TripPreferences from "./TripPreferences"
 import { searchCities } from "../data/stations"
 import { useAuth } from "../context/AuthContext"
+import { useNotification } from "../context/NotificationContext"
 
 const PlanningPage = ({ location, theme, choice, onBack }) => {
   const { session } = useAuth();
+  const { showAlert, showPrompt } = useNotification();
   const [leavingFrom, setLeavingFrom] = useState("")
   const [leavingCoords, setLeavingCoords] = useState(null)
   const [selectedCity, setSelectedCity] = useState(null)
@@ -524,7 +526,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                           setGroupMembers(newMembers);
                           return;
                         }
-                        const usernameInput = prompt("Enter the friend's Username (e.g. tanuj):");
+                        const usernameInput = await showPrompt("Enter the friend's Username (e.g. tanuj):");
                         if (!usernameInput || !usernameInput.trim()) return;
                         try {
                           const reqRes = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/friends/request`, {
@@ -537,7 +539,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                           });
                           const data = await reqRes.json();
                           if (reqRes.ok) {
-                            alert(data.message || "Friend request sent! They can be added to the trip once they accept.");
+                            showAlert(data.message || "Friend request sent! They can be added to the trip once they accept.", "info");
                           } else {
                             // If they are already friends, we can fetch their info and add them directly
                             if (data.error === 'You are already friends') {
@@ -548,14 +550,14 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                                 newMembers[i] = { name: userData.full_name || userData.username || userData.unique_id, uid: userData.username, id: userData.id };
                                 setGroupMembers(newMembers);
                               } else {
-                                alert("User not found");
+                                showAlert("User not found", "error");
                               }
                             } else {
-                              alert(data.error || "Failed to send friend request");
+                              showAlert(data.error || "Failed to send friend request", "error");
                             }
                           }
                         } catch (err) {
-                          alert("Failed to process request");
+                          showAlert("Failed to process request", "error");
                         }
                       }}
 
