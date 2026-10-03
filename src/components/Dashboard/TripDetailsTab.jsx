@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import { generateTripPlan, fetchItineraryData, buildItineraryCacheKey } from '../../utils/tripPlanUtils';
 import { ItineraryView } from '../TripPlan/ItineraryView';
 import ViewProfileModal from './ViewProfileModal';
@@ -238,6 +239,7 @@ const SECTION_COLORS = {
 
 const TripDetailsTab = ({ trip, onUpdate }) => {
     const { session } = useAuth();
+    const { showAlert } = useNotification();
     const data = trip.trip_data;
     const aiData = data.aiData || {};
     
@@ -287,7 +289,7 @@ const TripDetailsTab = ({ trip, onUpdate }) => {
 
     const handleGenerateItinerary = async () => {
         if (!data.preferences) {
-            alert("No preferences saved for this trip. Cannot generate itinerary.");
+            showAlert("No preferences saved for this trip. Cannot generate itinerary.", "error");
             return;
         }
         setIsGenerating(true);
@@ -346,7 +348,7 @@ const TripDetailsTab = ({ trip, onUpdate }) => {
             }
         } catch (error) {
             console.error("Failed to generate itinerary:", error);
-            alert("Failed to generate itinerary. Please try again.");
+            showAlert("Failed to generate itinerary. Please try again.", "error");
         } finally {
             setIsGenerating(false);
         }

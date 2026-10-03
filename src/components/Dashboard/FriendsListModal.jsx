@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import ViewProfileModal from './ViewProfileModal';
 import UnfriendConfirmModal from './UnfriendConfirmModal';
 import './ProfileTab.css';
 
 const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
     const { session } = useAuth();
+    const { showAlert } = useNotification();
     const [friends, setFriends] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -81,10 +83,10 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
                 setUnfriendModalOpen(false);
                 if (onFriendRemoved) onFriendRemoved();
             } else {
-                alert('Failed to unfriend');
+                showAlert('Failed to unfriend', 'error');
             }
         } catch (err) {
-            alert('Error unfriending user');
+            showAlert('Error unfriending user', 'error');
         } finally {
             setIsUnfriending(false);
         }
