@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import EditProfileModal from './EditProfileModal';
 import SearchFriendsModal from './SearchFriendsModal';
 import FriendsListModal from './FriendsListModal';
@@ -98,6 +99,7 @@ const SettingsMenuModal = ({ onClose, onEditProfile, onOpenNotifications, onOpen
 const ProfileTab = () => {
     const navigate = useNavigate();
     const { user, profile, session, logout } = useAuth();
+    const { showAlert } = useNotification();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
@@ -143,7 +145,7 @@ const ProfileTab = () => {
             navigate('/');
         } catch (error) {
             console.error('Error logging out:', error);
-            alert('Failed to logout');
+            showAlert('Failed to logout', 'error');
         }
     };
 

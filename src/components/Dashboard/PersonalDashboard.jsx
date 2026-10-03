@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import TripDetailsTab from './TripDetailsTab';
 import SavingsPlannerTab from './SavingsPlannerTab';
 import ProfileTab from './ProfileTab';
@@ -34,6 +35,7 @@ const PersonalDashboard = () => {
     const [error, setError] = useState(null);
     const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
     const [isLeaving, setIsLeaving] = useState(false);
+    const { showAlert, showConfirm } = useNotification();
     const [tripType, setTripType] = useState('solo'); // 'solo' or 'group'
 
     useEffect(() => {
@@ -87,7 +89,7 @@ const PersonalDashboard = () => {
 
     const handleDeleteTrip = async () => {
         if (!selectedTrip) return;
-        const confirmDelete = window.confirm(`Are you sure you want to delete the trip to ${selectedTrip.destination}?`);
+        const confirmDelete = await showConfirm(`Are you sure you want to delete the trip to ${selectedTrip.destination}?`);
         if (!confirmDelete) return;
 
         try {
@@ -109,7 +111,7 @@ const PersonalDashboard = () => {
             }
         } catch (err) {
             console.error("Error deleting trip:", err);
-            alert("Failed to delete trip");
+            showAlert("Failed to delete trip", "error");
         }
     };
 
@@ -137,7 +139,7 @@ const PersonalDashboard = () => {
             setIsLeaveModalOpen(false);
         } catch (err) {
             console.error("Error leaving trip:", err);
-            alert("Failed to leave trip");
+            showAlert("Failed to leave trip", "error");
         } finally {
             setIsLeaving(false);
         }

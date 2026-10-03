@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import ViewProfileModal from './ViewProfileModal';
 import './Dashboard.css';
 
@@ -18,6 +19,7 @@ const IconX = () => (
 
 const FriendRequestsTab = () => {
     const { session } = useAuth();
+    const { showAlert } = useNotification();
     const [incomingRequests, setIncomingRequests] = useState([]);
     const [outgoingRequests, setOutgoingRequests] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -60,10 +62,11 @@ const FriendRequestsTab = () => {
                 fetchRequests();
             } else {
                 const data = await res.json();
-                alert(data.error || "Action failed");
+                showAlert(data.error || "Action failed", "error");
             }
         } catch (error) {
             console.error("Action error", error);
+            showAlert("Action error", "error");
         }
     };
 

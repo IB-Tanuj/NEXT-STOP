@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import LiquidCityAnimation from './LiquidCityAnimation';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import ViewProfileModal from './ViewProfileModal';
 
 /* ─── SVG Icons ─── */
@@ -90,6 +91,7 @@ const createRipple = (e) => {
 
 const SavingsPlannerTab = ({ trip, onUpdate }) => {
     const { session } = useAuth();
+    const { showAlert, showConfirm } = useNotification();
     const wallets = trip.trip_wallets || [];
     
     // Sort wallets to have a consistent order (transport, stay, food, buffer)
@@ -230,12 +232,12 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
         const remainingPersonalBudget = personalTarget - contributedSoFar;
 
         if (maxWalletAllowed <= 0) {
-            alert("This wallet is already fully funded!");
+            showAlert("This wallet is already fully funded!", "info");
             return;
         }
 
         if (remainingPersonalBudget <= 0) {
-            alert(`${contributorName} has already reached their funding target of ₹${personalTarget}!`);
+            showAlert(`${contributorName} has already reached their funding target of ₹${personalTarget}!`, "info");
             return;
         }
 
@@ -243,9 +245,9 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
         
         if (Number(fundingAmount) > actualMaxAllowed) {
             if (remainingPersonalBudget < maxWalletAllowed) {
-                alert(`Cannot fund ₹${fundingAmount}. ${contributorName} only has ₹${remainingPersonalBudget} left in their personal budget.`);
+                showAlert(`Cannot fund ₹${fundingAmount}. ${contributorName} only has ₹${remainingPersonalBudget} left in their personal budget.`, "error");
             } else {
-                alert(`Cannot fund ₹${fundingAmount}. This wallet only needs ₹${maxWalletAllowed} to be fully funded.`);
+                showAlert(`Cannot fund ₹${fundingAmount}. This wallet only needs ₹${maxWalletAllowed} to be fully funded.`, "info");
             }
             return;
         }
@@ -296,14 +298,15 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
             setFundingAmount('');
         } catch (err) {
             console.error('Failed to add funds', err);
-            alert('Failed to save funds');
+            showAlert('Failed to save funds', 'error');
         } finally {
             setIsSaving(false);
         }
     };
 
     const handleRejectOwnerFunds = async (memberToReject) => {
-        if (!window.confirm(`Are you sure you want to reject the owner's funds for ${memberToReject}?`)) return;
+        const confirmed = await showConfirm(`Are you sure you want to reject the owner's funds for ${memberToReject}?`);
+        if (!confirmed) return;
 
         setIsSaving(true);
         try {
@@ -326,17 +329,18 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
             
             // updatedTrip has the fresh trip_wallets from the backend
             onUpdate(updatedTrip);
-            alert(`Successfully rejected owner funds for ${memberToReject}`);
+            showAlert(`Successfully rejected owner funds for ${memberToReject}`, 'success');
         } catch (err) {
             console.error('Failed to reject funds', err);
-            alert('Failed to reject funds');
+            showAlert('Failed to reject funds', 'error');
         } finally {
             setIsSaving(false);
         }
     };
 
     const handleKickMember = async (memberId) => {
-        if (!window.confirm('Are you sure you want to kick this member? They will lose access to the trip immediately.')) return;
+        const confirmed = await showConfirm('Are you sure you want to kick this member? They will lose access to the trip immediately.');
+        if (!confirmed) return;
         
         try {
             const token = session?.access_token || '';
@@ -355,7 +359,7 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
             }
         } catch (err) {
             console.error('Error kicking member:', err);
-            alert('Failed to kick member');
+            showAlert('Failed to kick member', 'error');
         }
     };
 
