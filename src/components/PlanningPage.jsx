@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import TripPreferences from "./TripPreferences"
 import { searchCities } from "../data/stations"
 import { useAuth } from "../context/AuthContext"
@@ -107,7 +107,6 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
   }
 
   const filteredSpots = location?.spots?.filter(spot =>
-  const filteredSuggestions = location?.suggestions?.filter(spot =>
     spot.name.toLowerCase().includes(placeSearch.toLowerCase())
   ) || []
 
@@ -135,7 +134,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
   const handleClosePreferences = () => {
     setShowPreferences(false);
     if (window.history.state?.page === 'preferences') {
-       window.history.back();
+      window.history.back();
     }
   };
 
@@ -148,7 +147,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
   const handleCloseBudget = () => {
     setShowBudget(false);
     if (window.history.state?.page === 'budget') {
-       window.history.back();
+      window.history.back();
     }
   };
 

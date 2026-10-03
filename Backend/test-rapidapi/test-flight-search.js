@@ -1,4 +1,10 @@
 import axios from 'axios';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const API_KEY = process.env.RAPIDAPI_KEY;
+if (!API_KEY) throw new Error('RAPIDAPI_KEY is missing from the environment.');
 
 async function testFlightSearch() {
   const options = {
@@ -12,7 +18,7 @@ async function testFlightSearch() {
         travel_class: 'ECONOMY'
     },
     headers: {
-      'x-rapidapi-key': 'REDACTED_RAPIDAPI_KEY_1',
+      'x-rapidapi-key': API_KEY,
       'x-rapidapi-host': 'google-flights2.p.rapidapi.com',
       'Content-Type': 'application/json'
     }

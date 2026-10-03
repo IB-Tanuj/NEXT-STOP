@@ -1,4 +1,9 @@
-const API_KEY = 'REDACTED_RAPIDAPI_KEY_1';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const API_KEY = process.env.RAPIDAPI_KEY;
+if (!API_KEY) throw new Error('RAPIDAPI_KEY is missing from the environment.');
 const API_HOST = 'flixbus-api2.p.rapidapi.com';
 
 const getOptions = () => ({

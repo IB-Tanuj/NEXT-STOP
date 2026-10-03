@@ -1,2 +1,7 @@
 node_modules
 .env
+.env.*
+!.env.example
+
+# Generated key-quota state (fingerprints only; never commit runtime state)
+/data/dead_keys.json

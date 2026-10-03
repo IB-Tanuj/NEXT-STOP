@@ -1,4 +1,10 @@
 import axios from 'axios';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const API_KEY = process.env.RAPIDAPI_KEY;
+if (!API_KEY) throw new Error('RAPIDAPI_KEY is missing from the environment.');
 
 async function testBookingDetails() {
   const searchOptions = {
@@ -12,7 +18,7 @@ async function testBookingDetails() {
         travel_class: 'ECONOMY'
     },
     headers: {
-      'x-rapidapi-key': 'REDACTED_RAPIDAPI_KEY_1',
+      'x-rapidapi-key': API_KEY,
       'x-rapidapi-host': 'google-flights2.p.rapidapi.com'
     }
   };
@@ -44,7 +50,7 @@ async function testBookingDetails() {
             language_code: 'en-US'
         },
         headers: {
-          'x-rapidapi-key': 'REDACTED_RAPIDAPI_KEY_1',
+          'x-rapidapi-key': API_KEY,
           'x-rapidapi-host': 'google-flights2.p.rapidapi.com'
         }
     };
