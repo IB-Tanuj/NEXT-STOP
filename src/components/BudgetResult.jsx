@@ -12,11 +12,13 @@ import { EntryTicketsCard } from "./BudgetResult/EntryTicketsCard"
 import { CostSummary } from "./BudgetResult/CostSummary"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
+import { useNotification } from "../context/NotificationContext"
 import { generateTripPlan } from "../utils/tripPlanUtils"
 
 const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const navigate = useNavigate()
   const { user, session } = useAuth()
+  const { showAlert } = useNotification()
   const [isSavingTrip, setIsSavingTrip] = useState(false)
   const [isSavedLocally, setIsSavedLocally] = useState(false)
   const [localAiData, setLocalAiData] = useState(null)
@@ -719,7 +721,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
       }
     } catch (error) {
       console.error(error)
-      alert("Could not save trip.")
+      showAlert("Could not save trip.", "error")
     } finally {
       setIsSavingTrip(false)
     }
