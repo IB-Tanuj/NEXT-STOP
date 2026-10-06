@@ -2,21 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 
-const LandingAuthDrawer = ({ isOpen, onClose, initialMode = 'login' }) => {
+const LandingAuthDrawer = ({
+  isOpen,
+  onClose,
+  initialMode = 'login',
+  initialEmail = '',
+  initialSuccessMessage = ''
+}) => {
   const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const { signUp, signIn } = useAuth();
   const navigate = useNavigate();
 
   // Form fields
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(initialEmail || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   // UI state
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState(initialSuccessMessage || '');
 
   // Consent checkboxes (must NOT be pre-checked)
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -27,10 +33,10 @@ const LandingAuthDrawer = ({ isOpen, onClose, initialMode = 'login' }) => {
     if (isOpen) {
       setIsLogin(initialMode === 'login');
       setName('');
-      setEmail('');
+      setEmail(initialEmail || '');
       setPassword('');
       setError('');
-      setSuccessMessage('');
+      setSuccessMessage(initialSuccessMessage || '');
       setShowPassword(false);
       setAcceptedTerms(false);
       setAcceptedPrivacy(false);
@@ -39,7 +45,7 @@ const LandingAuthDrawer = ({ isOpen, onClose, initialMode = 'login' }) => {
       document.body.style.overflow = 'unset';
     }
     return () => { document.body.style.overflow = 'unset'; };
-  }, [isOpen, initialMode]);
+  }, [isOpen, initialMode, initialEmail, initialSuccessMessage]);
 
   // Clear error when switching modes
   const toggleMode = () => {
@@ -105,8 +111,12 @@ const LandingAuthDrawer = ({ isOpen, onClose, initialMode = 'login' }) => {
         }
       }
     } catch (err) {
+      console.error('Auth error full details:', err);
       // Map Supabase error messages to user-friendly text
-      const msg = err.message || 'Something went wrong';
+      const msg = typeof err?.message === 'string' && err.message !== '{}'
+        ? err.message
+        : err?.error_description || err?.msg || 'Error signing up. Please check your SMTP settings or try again.';
+      
       if (msg.includes('Invalid login credentials')) {
         setError('Wrong email or password');
       } else if (msg.includes('User already registered')) {
@@ -115,6 +125,8 @@ const LandingAuthDrawer = ({ isOpen, onClose, initialMode = 'login' }) => {
         setError('Too many attempts. Please wait a minute and try again.');
       } else if (msg.includes('Password should be at least')) {
         setError('Password must be at least 6 characters');
+      } else if (msg.includes('Error sending confirmation mail') || msg.includes('SMTP')) {
+        setError('Could not send verification email. Please verify your Brevo SMTP settings in Supabase.');
       } else {
         setError(msg);
       }

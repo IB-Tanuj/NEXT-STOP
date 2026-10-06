@@ -22,16 +22,33 @@ const NewLandingPage = () => {
   // Drawer state
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [authMode, setAuthMode] = useState('login')
+  const [prefillEmail, setPrefillEmail] = useState('')
+  const [authSuccessMessage, setAuthSuccessMessage] = useState('')
 
-  // Check URL parameters to auto-open drawer
+  // Check URL parameters & hash to auto-open drawer
   useEffect(() => {
     const params = new URLSearchParams(location.search)
-    if (params.get('auth') === 'login') {
+    const hash = window.location.hash || ''
+    const isSignupVerify = hash.includes('type=signup') || params.get('verified') === 'true'
+    const emailParam = params.get('email') || localStorage.getItem('nextstop_signup_email') || ''
+
+    if (isSignupVerify) {
       setAuthMode('login')
+      setPrefillEmail(emailParam)
+      setAuthSuccessMessage('✓ Email confirmed successfully! Enter your password to log in.')
+      setIsAuthOpen(true)
+      try { localStorage.removeItem('nextstop_signup_email') } catch (_) {}
+      window.history.replaceState({}, '', '/')
+    } else if (params.get('auth') === 'login') {
+      setAuthMode('login')
+      setPrefillEmail(emailParam)
+      setAuthSuccessMessage('')
       setIsAuthOpen(true)
       window.history.replaceState({}, '', '/')
     } else if (params.get('auth') === 'signup') {
       setAuthMode('signup')
+      setPrefillEmail('')
+      setAuthSuccessMessage('')
       setIsAuthOpen(true)
       window.history.replaceState({}, '', '/')
     }
@@ -39,6 +56,8 @@ const NewLandingPage = () => {
 
   const openAuth = (mode) => {
     setAuthMode(mode)
+    setPrefillEmail('')
+    setAuthSuccessMessage('')
     setIsAuthOpen(true)
   }
 
@@ -157,8 +176,14 @@ const NewLandingPage = () => {
 
       <LandingAuthDrawer 
         isOpen={isAuthOpen} 
-        onClose={() => setIsAuthOpen(false)} 
+        onClose={() => {
+          setIsAuthOpen(false);
+          setPrefillEmail('');
+          setAuthSuccessMessage('');
+        }} 
         initialMode={authMode} 
+        initialEmail={prefillEmail}
+        initialSuccessMessage={authSuccessMessage}
       />
 
       {/* Switch to Classic View Toggle */}
