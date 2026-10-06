@@ -57,10 +57,18 @@ export const AuthProvider = ({ children }) => {
 
   // ── Sign up with email + password ──
   const signUp = async (email, password, displayName) => {
+    const cleanEmail = email.trim();
+    try {
+      localStorage.setItem('nextstop_signup_email', cleanEmail);
+    } catch (_) {}
+
+    const redirectUrl = `${window.location.origin}/?auth=login&verified=true&email=${encodeURIComponent(cleanEmail)}`;
+
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: cleanEmail,
       password,
       options: {
+        emailRedirectTo: redirectUrl,
         data: {
           full_name: displayName || '',
         },

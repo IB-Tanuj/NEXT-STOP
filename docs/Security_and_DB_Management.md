@@ -106,10 +106,7 @@ RLS is enabled on **all** public tables with **zero public policies**. This mean
 
 ### 🔴 Critical (Before Launch)
 
-- [ ] **Set up custom SMTP provider** — Supabase's built-in email sender has a strict rate limit (~3-4/hour). Add a free SMTP provider to remove this limit:
-  - **Resend** — 100 emails/day free → [resend.com](https://resend.com)
-  - **Brevo** — 300 emails/day free → [brevo.com](https://brevo.com)
-  - **Where:** Supabase Dashboard → Project Settings → Authentication → SMTP Settings
+- [x] **Set up custom SMTP provider** — ✅ Completed with Brevo on domain `next-stop.co.in` (300 emails/day free). Outgoing verification and transactional emails are fully active.
 
 - [ ] **Run the auto-RLS event trigger** — Paste and run the PostgreSQL event trigger in SQL Editor so all future tables get RLS automatically
 
