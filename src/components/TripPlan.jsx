@@ -46,7 +46,11 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack, 
         if (!cancelled) setAiData(data)
       } catch (err) {
         console.error("AI generation failed:", err)
-        if (!cancelled) setAiError("Could not generate AI plan — showing placeholders instead")
+        if (!cancelled) {
+          setAiError(err.code === "TRIP_QUOTA_EXCEEDED"
+            ? err.message
+            : "Could not generate AI plan — showing placeholders instead")
+        }
       } finally {
         if (!cancelled) setAiLoading(false)
       }

@@ -123,6 +123,8 @@ RLS is enabled on **all** public tables with **zero public policies**. This mean
 - [ ] **Wire up backend auth middleware** — `Backend/middleware/authMiddleware.js` is scaffolded. Apply to user-specific routes when saved trips / user profiles are built
 - [ ] **Add rate limiting to Express backend** — Use `express-rate-limit` to throttle API abuse
 
+- [x] **Limit AI trip planning** — Authenticated users receive five rolling trip-plan slots per 24 hours. Slots are claimed atomically by `claim_trip_generation_slot()` in `Backend/database/setup_trip_generation_quota.sql` before cache/provider work begins.
+
 ---
 
 ## 📝 Change Log
