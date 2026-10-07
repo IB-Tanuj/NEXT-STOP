@@ -1,9 +1,38 @@
+import supabase from "../config/supabase"
+
+const getAccessToken = async () => {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.access_token) {
+    throw new Error("You must be signed in to generate a trip plan.")
+  }
+  return session.access_token
+}
+
+const throwApiError = async (response, fallbackMessage) => {
+  let payload
+  try {
+    payload = await response.json()
+  } catch {
+    // Keep the HTTP status as the fallback when the server did not return JSON.
+    payload = { error: fallbackMessage }
+  }
+
+  const error = new Error(payload.message || payload.error || `${fallbackMessage} (HTTP ${response.status})`)
+  error.status = response.status
+  error.code = payload.error
+  error.remaining = payload.remaining
+  error.resetAt = payload.resetAt
+  throw error
+}
+
 // API Calls
 export const generateTripPlan = async (location, days, budget, stayType, transport, spots) => {
+  const accessToken = await getAccessToken()
   const response = await fetch("/api/trip/generate", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${accessToken}`,
     },
     body: JSON.stringify({
       location,
@@ -16,19 +45,19 @@ export const generateTripPlan = async (location, days, budget, stayType, transpo
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error("Backend Error Response:", errorText);
-    throw new Error(`HTTP ${response.status}`);
+    await throwApiError(response, "Trip plan generation failed")
   }
 
   return await response.json();
 }
 
 export const fetchItineraryData = async (location, days, budget, stayType, transport, selectedActivities, selectedFestivals) => {
+  const accessToken = await getAccessToken()
   const response = await fetch("/api/trip/generate-itinerary", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${accessToken}`,
     },
     body: JSON.stringify({
       location,
@@ -42,7 +71,7 @@ export const fetchItineraryData = async (location, days, budget, stayType, trans
   });
 
   if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
+    await throwApiError(response, "Itinerary generation failed")
   }
 
   const cacheStatus = response.headers.get("X-Cache") || "UNKNOWN"

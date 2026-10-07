@@ -304,7 +304,9 @@ function App() {
           } />
 
           <Route path="/trip/:locationId" element={
-            <TripPageWrapper theme={theme} onBack={handleBack} setLocationTheme={setLocationTheme} />
+            <ProtectedRoute>
+              <TripPageWrapper theme={theme} onBack={handleBack} setLocationTheme={setLocationTheme} />
+            </ProtectedRoute>
           } />
         </Routes>
       </Suspense>
@@ -347,4 +349,3 @@ function App() {
 }
 
 export default App
-
