@@ -1,174 +1,35 @@
-import { GoogleGenAI } from '@google/genai';
-import { buildCacheKey, bucketize, get as cacheGet, set as cacheSet, getStats } from '../utils/itineraryCache.js';
-import { saveGeminiResult, getGeminiResult } from '../utils/geminiLogger.js';
+import supabase from '../config/supabase.js';
+import { generateSummaryData, generateItineraryData } from '../services/tripAiService.js';
+import { runPlanGeneration } from '../services/todayPlanService.js';
 
-const GEMINI_MODEL = "gemini-3.6-flash";
-
-function getGeminiClient() {
-    const apiKey = process.env.GEMINI_EXTRA;
-    if (!apiKey) {
-        throw new Error("GEMINI_EXTRA is not defined in environment variables.");
-    }
-    return new GoogleGenAI({ apiKey });
-}
-
-export const generateTripPlan = async (req, res) => {
+const handleGeneration = (kind, generate) => async (req, res) => {
     try {
-        const { location, days, budget, stayType, transport, spots } = req.body;
-
-        if (!location) {
-            return res.status(400).json({ error: "Location is required" });
-        }
-
-        const cacheKey = `trip_plan:${location.toLowerCase()}`;
-        
-        // Check permanent cache in Supabase
-        const cachedGemini = await getGeminiResult(cacheKey);
-        if (cachedGemini && cachedGemini.output_result) {
-            console.log(`[Gemini Permanent Cache] HIT for trip plan: ${cacheKey}`);
-            return res.json(cachedGemini.output_result);
-        }
-
-        const prompt = `Generate a JSON trip plan for:
-Location: ${location}
-
-RULES:
-1. Return ONLY raw JSON. No markdown formatting (\`\`\`). No text before or after.
-2. STRICT ITEM LIMITS: Exactly 4 activities, 2 festivals, 6 foods, 2 emergency numbers. DO NOT EXCEED THIS.
-3. STRICT LENGTH LIMITS: All "description" fields MUST be under 8 words. Be extremely brief.
-4. ACTIVITIES MUST be real adventure/outdoor/experience-based activities that tourists can actually DO at this location — for example: river rafting, paragliding, bungee jumping, zip-lining, trekking, camping, scuba diving, snorkeling, rock climbing, kayaking, mountain biking, skiing, hot air ballooning, ATV rides, canyoning, etc.
-5. DO NOT list tourist spots, landmarks, temples, viewpoints, or villages as activities. Those are sightseeing spots, NOT activities.
-6. Each activity name should be the specific activity (e.g. "White Water Rafting", "Paragliding", "Bungee Jumping") — NOT a place name.
-7. If the location genuinely does not have 4 adventure activities, include cultural experiences like cooking classes, pottery workshops, yoga sessions, local craft workshops, etc.
-
-JSON SCHEMA:
-{
-  "activities": [{"id": "1", "name": "e.g. River Rafting", "description": "e.g. Grade 3-4 rapids adventure", "bestTime": "e.g. Morning"}],
-  "festivals": [{"id": "1", "name": "", "date": "", "description": ""}],
-  "foodRecommendations": [{"name": "", "type": "", "mustTry": true, "description": ""}],
-  "localEmergency": [{"label": "", "number": ""}]
-}`;
-
-        const ai = getGeminiClient();
-
-        const response = await ai.models.generateContent({
-            model: GEMINI_MODEL,
-            contents: prompt,
-            config: {
-                temperature: 0.7,
-                maxOutputTokens: 2000,
-                systemInstruction: "Return ONLY valid JSON. Do not include markdown or explanations.",
-            },
+        const result = await runPlanGeneration({
+            client: supabase,
+            userId: req.user.id,
+            reference: req.body,
+            kind,
+            generate,
         });
-
-        const text = response.text || "";
-        const clean = text.replace(/```json|```/g, "").trim();
-
-        if (!clean) {
-            throw new Error("Gemini returned an empty response.");
-        }
-
-        const parsedData = JSON.parse(clean);
-
-        // Permanently save to gemini_results
-        saveGeminiResult('trip_plan', prompt, parsedData, null, {
-            location, days: days || 3, budget: budget || 0, stayType: stayType || 'budget', transport: transport || 'train',
-        }, cacheKey);
-
-        res.json(parsedData);
+        res.setHeader('X-Trip-Quota-Limit', '5');
+        res.setHeader('X-Trip-Quota-Remaining', String(result.quota.remaining));
+        res.setHeader('X-Trip-Quota-Reset', String(Math.ceil(new Date(result.quota.resetAt).getTime() / 1000)));
+        res.setHeader('X-Cache', result.cacheStatus || 'UNKNOWN');
+        if (result.status === 202) res.setHeader('Retry-After', '2');
+        return res.status(result.status).json(result);
     } catch (error) {
-        console.error("Error generating trip plan:", error.message);
-        const status = error.code === 'ECONNABORTED' ? 504 : 500;
-        res.status(status).json({
-            error: "Failed to generate AI trip plan.",
-            details: error.message
+        console.error(`${kind} generation failed:`, error.message);
+        const status = error.status || 503;
+        return res.status(status).json({
+            error: error.code || 'TRIP_QUOTA_UNAVAILABLE',
+            message: error.status ? error.message : 'Trip planning is temporarily unavailable. Your plan can be retried shortly.',
+            remaining: error.remaining,
+            resetAt: error.resetAt,
+            plan: error.plan,
+            quota: error.quota,
         });
     }
 };
 
-export const generateItinerary = async (req, res) => {
-    try {
-        const { location, days, budget, stayType, transport, selectedActivities, selectedFestivals } = req.body;
-
-        if (!location) {
-            return res.status(400).json({ error: "Location is required" });
-        }
-
-        // ── Build cache key (budget is bucketed to ₹500 increments) ──
-        const cacheKey = buildCacheKey({ location, days, budget, stayType, transport, selectedActivities, selectedFestivals });
-        const bucketedBudget = bucketize(Number(budget) || 0);
-
-        console.log(`[Itinerary Cache] Key: ${cacheKey}`);
-
-        // ── Check backend in-memory cache ──
-        const cached = await cacheGet(cacheKey);
-        if (cached) {
-            console.log(`[Itinerary Cache] HIT — returning in-memory cached result (0 tokens)`);
-            res.setHeader('X-Cache', 'HIT');
-            return res.json(cached);
-        }
-
-        // Removed check to permanent cache as per user request to stop using global DB for itinerary.
-
-        console.log(`[Itinerary Cache] MISS — calling Gemini API`);
-
-        const activitiesText = selectedActivities?.length > 0 ? selectedActivities.map(a => a.name).join(", ") : "none specified";
-        const currentMonth = req.body.month || new Date().toLocaleString('default', { month: 'long' });
-
-        const prompt = `You are a travel planning expert for India. Generate ONLY a detailed day-by-day itinerary for:
-
-Location: ${location}
-Duration: ${days || 3} days
-Budget: ₹${bucketedBudget}
-Stay type: ${stayType || 'budget'}
-Transport: ${transport || 'train'}
-Travel Month: ${currentMonth} (CRITICAL: Only suggest activities and places that are open and appropriate for this month/season. Ignore off-season events or festivals that do not occur in this month.)
-User has already selected these activities: ${activitiesText}
-
-Return ONLY a valid JSON object with NO markdown, no backticks, no explanation. Just raw JSON like this:
-{
-  "itinerary": [
-    {"day": 1, "title": "Day title", "morning": "Morning plan", "afternoon": "Afternoon plan", "evening": "Evening plan", "estimatedCost": 500}
-  ]
-}`;
-
-        const ai = getGeminiClient();
-
-        const response = await ai.models.generateContent({
-            model: GEMINI_MODEL,
-            contents: prompt,
-            config: {
-                temperature: 0.7,
-                maxOutputTokens: 3000,
-                systemInstruction: "Return ONLY valid JSON. Do not include markdown or explanations.",
-            },
-        });
-
-        const text = response.text || "";
-        const clean = text.replace(/```json|```/g, "").trim();
-
-        if (!clean) {
-            throw new Error("Gemini returned an empty response.");
-        }
-
-        const parsedData = JSON.parse(clean);
-
-        // Removed permanent save to gemini_results as per user request
-
-        // ── Store in backend cache ──
-        cacheSet(cacheKey, parsedData);
-        console.log(`[Itinerary Cache] Stored result. Cache stats:`, getStats());
-
-        res.setHeader('X-Cache', 'MISS');
-        res.json(parsedData);
-    } catch (error) {
-        console.error("Error generating itinerary:", error.message);
-        const status = error.code === 'ECONNABORTED' ? 504 : 500;
-        res.status(status).json({
-            error: "Failed to generate AI itinerary.",
-            details: error.message
-        });
-    }
-};
-
-
+export const generateTripPlan = handleGeneration('summary', generateSummaryData);
+export const generateItinerary = handleGeneration('itinerary', generateItineraryData);

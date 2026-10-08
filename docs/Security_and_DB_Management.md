@@ -123,7 +123,7 @@ RLS is enabled on **all** public tables with **zero public policies**. This mean
 - [ ] **Wire up backend auth middleware** — `Backend/middleware/authMiddleware.js` is scaffolded. Apply to user-specific routes when saved trips / user profiles are built
 - [ ] **Add rate limiting to Express backend** — Use `express-rate-limit` to throttle API abuse
 
-- [x] **Limit AI trip planning** — Authenticated users receive five rolling trip-plan slots per 24 hours. Slots are claimed atomically by `claim_trip_generation_slot()` in `Backend/database/setup_trip_generation_quota.sql` before cache/provider work begins.
+- [x] **Limit AI trip planning** — Authenticated users receive five Today planning credits in the fixed `05:30 AM Asia/Kolkata → next-day 05:30 AM` window. Today plan creation and generation claims are serialized by the RPCs in `Backend/database/setup_today_trip_plans.sql`; failed sections can be recovered without another credit.
 
 ---
 
@@ -142,3 +142,4 @@ RLS is enabled on **all** public tables with **zero public policies**. This mean
 | 2026-09-09 | Fixed cache hit bug | Aligned `cacheKey` generation to use `aiData.activities` instead of `preferences.activities`, resolving 15s delay API fallback errors. |
 | 2026-09-09 | Fixed itinerary persistence | Updated frontend to properly pass generated itinerary state up to `TripPlan` so it saves successfully to `saved_trips.trip_data`. |
 | 2026-09-09 | Added Delete Trip Route | Implemented secure `DELETE /api/saved-trips/:id` controller matching `user_id` to safely remove trips from DB. |
+| 2026-10-08 | Added Today planning desk | Added persisted Today snapshots, fixed IST daily credits, server-owned generation leases, free failure recovery, and atomic Today → Saved Trips linking. |

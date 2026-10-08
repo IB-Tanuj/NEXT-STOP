@@ -17,3 +17,16 @@ If you are developing a production application, we recommend using TypeScript wi
 =======
 # NEXT-STOP
 
+## Local development
+
+Run the frontend and API in separate terminals so Vite's `/api` proxy has a backend target:
+
+```bash
+npm run dev
+npm --prefix Backend run dev
+```
+
+If Vite reports `proxy error: /api/... ECONNREFUSED 127.0.0.1:5000`, the backend terminal is not running or is using another port.
+
+Before testing the Today planning desk, run `Backend/database/setup_today_trip_plans.sql` in the Supabase SQL Editor after the Saved Trips tables exist. The migration adds the fixed 05:30 AM IST planning window, Today RPCs, generation leases, and atomic Today-to-Saved-Trips persistence.
+

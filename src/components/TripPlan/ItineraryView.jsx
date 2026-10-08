@@ -1,15 +1,24 @@
 import React from "react";
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { fetchItineraryData, buildItineraryCacheKey } from "../../utils/tripPlanUtils"
 
-export const ItineraryView = React.memo(({ theme, locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals, onItineraryLoaded, onBack }) => {
-  const [itineraryData, setItineraryData] = useState(null)
-  const [loading, setLoading] = useState(true)
+export const ItineraryView = React.memo(({ theme, locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals, onItineraryLoaded, todayPlanId, savedTripId, initialItinerary, autoGenerate = true }) => {
+  const [itineraryData, setItineraryData] = useState(initialItinerary?.length ? { itinerary: initialItinerary } : null)
+  const [loading, setLoading] = useState(autoGenerate && !initialItinerary?.length)
   const [error, setError] = useState("")
-  const [cacheSource, setCacheSource] = useState("") // "session", "backend", or "api"
+  const [retryAttempt, setRetryAttempt] = useState(0)
+  const onItineraryLoadedRef = useRef(onItineraryLoaded)
+
+  useEffect(() => {
+    onItineraryLoadedRef.current = onItineraryLoaded
+  }, [onItineraryLoaded])
 
   useEffect(() => {
     let cancelled = false
+    if (!autoGenerate) {
+      return undefined
+    }
+
     const fetchItinerary = async () => {
       // ── Build cache key ──
       const cacheKey = buildItineraryCacheKey({
@@ -17,48 +26,51 @@ export const ItineraryView = React.memo(({ theme, locationName, days, budget, st
       })
       console.log(`[Itinerary Cache] Frontend key: ${cacheKey}`)
 
-      // ── Check sessionStorage first ──
-      try {
-        const sessionCached = sessionStorage.getItem(cacheKey)
-        if (sessionCached) {
-          console.log(`[Itinerary Cache] SESSION HIT — using cached result (0 API calls)`)
-          const parsed = JSON.parse(sessionCached)
-          if (!cancelled) {
-            setItineraryData(parsed)
-            if (onItineraryLoaded) onItineraryLoaded(parsed)
-            setCacheSource("session")
-            setLoading(false)
+      // A persisted Today/Saved plan must go through the backend so its
+      // itinerary status and AI output are updated server-side. Session cache
+      // is only a shortcut for the legacy, non-persisted view.
+      if (!todayPlanId && !savedTripId) {
+        try {
+          const sessionCached = sessionStorage.getItem(cacheKey)
+          if (sessionCached) {
+            console.log(`[Itinerary Cache] SESSION HIT — using cached result (0 API calls)`)
+            const parsed = JSON.parse(sessionCached)
+            if (!cancelled) {
+              setItineraryData(parsed)
+              if (onItineraryLoadedRef.current) onItineraryLoadedRef.current(parsed)
+              setLoading(false)
+            }
+            return
           }
-          return
-        }
-        
-        // Block regeneration if they made budget changes (cache miss) but already generated once
-        const hasGenerated = sessionStorage.getItem(`has_generated_itinerary_${locationName}`)
-        if (hasGenerated) {
-          if (!cancelled) {
-            setError("You changed your preferences! Please save this trip to your dashboard to generate the updated itinerary.")
-            setLoading(false)
+
+          // Block regeneration if they made budget changes (cache miss) but already generated once
+          const hasGenerated = sessionStorage.getItem(`has_generated_itinerary_${locationName}`)
+          if (hasGenerated) {
+            if (!cancelled) {
+              setError("You changed your preferences! Please save this trip to your dashboard to generate the updated itinerary.")
+              setLoading(false)
+            }
+            return
           }
-          return
+        } catch (e) {
+          console.warn("[Itinerary Cache] sessionStorage read failed:", e)
         }
-      } catch (e) {
-        console.warn("[Itinerary Cache] sessionStorage read failed:", e)
       }
 
       // ── Fetch from backend (which has its own cache layer) ──
       try {
-        const { data, cacheStatus } = await fetchItineraryData(
-          locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals
+        const result = await fetchItineraryData(
+          locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals,
+          { todayPlanId, savedTripId }
         )
         if (!cancelled) {
-          setItineraryData(data)
-          if (onItineraryLoaded) onItineraryLoaded(data)
-          setCacheSource(cacheStatus === "HIT" ? "backend" : "api")
-          console.log(`[Itinerary Cache] Backend responded with X-Cache: ${cacheStatus}`)
+          setItineraryData(result.data)
+          if (onItineraryLoadedRef.current) onItineraryLoadedRef.current(result.data, result.plan)
+          console.log(`[Itinerary Cache] Backend responded with X-Cache: ${result.cacheStatus}`)
 
           // ── Store in sessionStorage for future same-session hits ──
           try {
-            sessionStorage.setItem(cacheKey, JSON.stringify(data))
+            sessionStorage.setItem(cacheKey, JSON.stringify(result.data))
             sessionStorage.setItem(`has_generated_itinerary_${locationName}`, "true")
           } catch (e) {
             console.warn("[Itinerary Cache] sessionStorage write failed:", e)
@@ -66,7 +78,14 @@ export const ItineraryView = React.memo(({ theme, locationName, days, budget, st
         }
       } catch (err) {
         console.error("Itinerary generation failed:", err)
-        if (!cancelled) setError("Failed to generate itinerary. Please try again.")
+        if (!cancelled) {
+          if (err.plan && onItineraryLoadedRef.current) {
+            onItineraryLoadedRef.current(err.plan.ai_data || {}, err.plan)
+          }
+          setError(["TRIP_AI_FAILED", "TRIP_QUOTA_EXCEEDED", "TODAY_SETUP_REQUIRED"].includes(err.code)
+            ? err.message
+            : "Failed to generate itinerary. Please try again.")
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -79,7 +98,7 @@ export const ItineraryView = React.memo(({ theme, locationName, days, budget, st
       cancelled = true
       clearTimeout(timeoutId)
     }
-  }, [locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals])
+  }, [locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals, todayPlanId, savedTripId, retryAttempt, autoGenerate])
 
   return (
     <div style={{
@@ -102,7 +121,13 @@ export const ItineraryView = React.memo(({ theme, locationName, days, budget, st
             textAlign: "center",
           }}>
             <div style={{ color: "#ff6b6b", fontSize: "15px", fontWeight: "800", marginBottom: "8px" }}>⚠️ {error}</div>
-            <div style={{ color: theme.text, fontSize: "13px", fontWeight: "500", opacity: 0.9 }}>Don't worry! You can generate this itinerary from the "Saved Trips" section later.</div>
+            <div style={{ color: theme.text, fontSize: "13px", fontWeight: "500", opacity: 0.9 }}>You can retry this generation. If the system failed, the retry is free.</div>
+            <button
+              onClick={() => { setError(""); setLoading(true); setRetryAttempt(attempt => attempt + 1) }}
+              style={{ marginTop: "14px", border: "1px solid #ff6b6b", background: "transparent", color: "#ff8b8b", borderRadius: "8px", padding: "8px 14px", fontWeight: "800", cursor: "pointer" }}
+            >
+              Try again
+            </button>
           </div>
         ) : itineraryData?.itinerary?.length > 0 ? (
           itineraryData.itinerary.map((dayPlan, i) => (

@@ -6,11 +6,22 @@ import { TripActivitiesTab } from "./TripPlan/TripActivitiesTab"
 import { TripBookingTab } from "./TripPlan/TripBookingTab"
 import { TripEmergencyTab } from "./TripPlan/TripEmergencyTab"
 
-const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack, onPlanGenerated }) => {
+const hasCompleteSummary = (data) => Boolean(
+  data?.activities?.length &&
+  data?.festivals?.length &&
+  data?.foodRecommendations?.length &&
+  data?.localEmergency?.length
+)
+
+const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack, onPlanGenerated, todayPlanId, savedTripId, initialAiData }) => {
   const [activeTab, setActiveTab] = useState("overview")
-  const [aiData, setAiData] = useState(null)
+  const [aiData, setAiData] = useState(initialAiData || null)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState("")
+  const [canRetryAi, setCanRetryAi] = useState(false)
+  const [generationAttempt, setGenerationAttempt] = useState(0)
+  const generationKeyRef = useRef(null)
+  const generationRequestRef = useRef(null)
 
   const foodBuffer = budgetData?.foodBuffer || 0
   const isGroup = planData?.budgetType === "group"
@@ -20,51 +31,59 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack, 
   const locationName = location?.name || ""
   const days = preferences?.days
 
-  // Use ref for callback to avoid re-render loops
+  // Keep callbacks and activity selections stable without making the request
+  // effect depend on the parent component's inline callback identity.
   const onPlanGeneratedRef = useRef(onPlanGenerated)
-  onPlanGeneratedRef.current = onPlanGenerated
-
-  // Stable ref for activities to avoid re-fetching
   const activitiesRef = useRef(preferences?.activities)
-  activitiesRef.current = preferences?.activities
 
   useEffect(() => {
-    let cancelled = false
+    onPlanGeneratedRef.current = onPlanGenerated
+  }, [onPlanGenerated])
+
+  useEffect(() => {
+    activitiesRef.current = preferences?.activities
+  }, [preferences?.activities])
+
+  useEffect(() => {
+    const generationKey = JSON.stringify({ locationName, days, foodBuffer, stayType, transport, todayPlanId, savedTripId, generationAttempt })
+    if (hasCompleteSummary(initialAiData)) return undefined
+    if (generationKeyRef.current === generationKey && generationRequestRef.current?.key === generationKey) return undefined
+    generationKeyRef.current = generationKey
+
     const fetchAiPlan = async () => {
       setAiLoading(true)
       setAiError("")
       try {
         const spots = activitiesRef.current || []
-        const data = await generateTripPlan(
+        const result = await generateTripPlan(
           locationName,
           days,
           foodBuffer,
           stayType,
           transport,
-          spots
+          spots,
+          { todayPlanId, savedTripId }
         )
-        if (!cancelled) setAiData(data)
+        if (generationKeyRef.current !== generationKey) return
+        setAiData(result.data)
+        setCanRetryAi(false)
+        onPlanGeneratedRef.current?.(result.data, result.plan, result.quota)
       } catch (err) {
         console.error("AI generation failed:", err)
-        if (!cancelled) {
-          setAiError(err.code === "TRIP_QUOTA_EXCEEDED"
+        if (generationKeyRef.current !== generationKey) return
+        setAiData(err.plan?.ai_data || null)
+        setCanRetryAi(err.code === "TRIP_AI_FAILED")
+        onPlanGeneratedRef.current?.(err.plan?.ai_data || null, err.plan, err.quota)
+          setAiError(err.code === "TRIP_QUOTA_EXCEEDED" || err.code === "TRIP_AI_FAILED" || err.code === "TODAY_SETUP_REQUIRED"
             ? err.message
             : "Could not generate AI plan — showing placeholders instead")
-        }
       } finally {
-        if (!cancelled) setAiLoading(false)
+        if (generationKeyRef.current === generationKey) setAiLoading(false)
       }
     }
-    fetchAiPlan()
-    return () => { cancelled = true }
-  }, [locationName, days, foodBuffer, stayType, transport])
-
-  // Forward aiData (including itinerary) back to parent whenever it changes
-  useEffect(() => {
-    if (aiData && onPlanGeneratedRef.current) {
-      onPlanGeneratedRef.current(aiData)
-    }
-  }, [aiData])
+    const request = fetchAiPlan()
+    generationRequestRef.current = { key: generationKey, promise: request }
+  }, [locationName, days, foodBuffer, stayType, transport, todayPlanId, savedTripId, initialAiData, generationAttempt])
 
 
   const tabs = [
@@ -145,7 +164,16 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack, 
           width: "100%",
           maxWidth: "620px",
         }}>
-          <div style={{ color: "#FFB347", fontSize: "13px" }}>⚠️ {aiError}</div>
+           <div style={{ color: "#FFB347", fontSize: "13px" }}>⚠️ {aiError}</div>
+           {canRetryAi && (
+             <button
+               onClick={() => setGenerationAttempt(attempt => attempt + 1)}
+               disabled={aiLoading}
+               style={{ marginTop: "10px", border: "1px solid #FFB347", background: "transparent", color: "#FFB347", borderRadius: "8px", padding: "7px 12px", fontSize: "12px", fontWeight: "800", cursor: aiLoading ? "default" : "pointer" }}
+             >
+               {aiLoading ? "Trying again..." : "Try again — free recovery"}
+             </button>
+           )}
         </div>
       )}
       {foodBuffer <= 0 && (
@@ -243,9 +271,12 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack, 
             transport={transport}
             selectedActivities={aiData?.activities || []}
             selectedFestivals={aiData?.festivals || []}
-            onItineraryLoaded={(data) => {
+            onItineraryLoaded={(data, plan) => {
               setAiData(prev => prev ? { ...prev, itinerary: data.itinerary } : prev)
+              onPlanGeneratedRef.current?.(plan?.ai_data || data, plan)
             }}
+            todayPlanId={todayPlanId}
+            savedTripId={savedTripId}
           />
         )}
         {activeTab === "activities" && (

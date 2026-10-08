@@ -7,6 +7,7 @@
 - `Explore` (Sidebar)
 - `Budget` (Overlay)
 - `Plan Trip` (Overlay)
+- `Today · n/5` (Planning desk sidebar)
 
 **Navigation Type** = Top navbar containing links to main features, left sidebar for Explore, overlays/modals for secondary actions.
 
@@ -18,4 +19,15 @@
 
 **Core User Journey 2** = Step-by-step: User wants to estimate trip costs. They go to Home -> click "Budget" in the Navbar -> fill out the budget calculation form in the overlay -> view their estimated expenses.
 
+## Today planning desk
+
+Today appears immediately before Explore for authenticated users. It shows the plans created in the current `05:30 AM IST → next-day 05:30 AM IST` planning window and the remaining AI planning credits.
+
+Each card supports:
+
+1. **View** — opens the stored overview snapshot without silently generating AI output.
+2. **Save** — atomically creates the Saved Trip and wallets; repeated saves show `Already saved`.
+3. **Rename** — updates the Today card title without changing its stored trip inputs.
+
+The stable client plan ID makes a repeated create request idempotent. AI summary and itinerary generation share the credit claimed when the Today card is created. A server-recorded failed section can be retried for free. Share is intentionally deferred.
 

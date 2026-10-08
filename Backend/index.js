@@ -15,6 +15,7 @@ import spotInfoRoutes from "./routes/spotInfoRoutes.js";
 import savedTripRoutes from "./routes/savedTripRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import friendRoutes from "./routes/friendRoutes.js";
+import todayPlanRoutes from "./routes/todayPlanRoutes.js";
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use(express.json());
 
 app.use("/api/trains", trainRoutes);
 app.use("/api/trip", tripRoutes);
+app.use("/api/today-plans", todayPlanRoutes);
 app.use("/api/live", liveDataRoutes);
 app.use("/api/flixbus", flixbusRoutes);
 app.use("/api/flights", flightRoutes);

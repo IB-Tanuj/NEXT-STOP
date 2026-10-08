@@ -1,5 +1,5 @@
 // Wrap your app in an error boundary or check console
-import React, { useState, useEffect, lazy, Suspense } from "react"
+import { useState, useEffect, useCallback, lazy, Suspense } from "react"
 import { Routes, Route, useNavigate, useParams, Navigate } from "react-router-dom"
 import { useTheme } from "./hooks/useTheme"
 import Navbar from "./components/Navbar"
@@ -23,6 +23,7 @@ const NewLandingPage = lazy(() => import("./components/NewLandingPage"))
 import { useAuth } from "./context/AuthContext"
 import PersonalDashboard from "./components/Dashboard/PersonalDashboard"
 import { NotificationProvider } from "./context/NotificationContext"
+import TodaySidebar from "./components/TodaySidebar"
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -115,12 +116,26 @@ function App() {
   const { theme, setLocationTheme, resetToSeason } = useTheme()
   const navigate = useNavigate()
   const [spotlightLocation, setSpotlightLocation] = useState(null)
-  const { isMobile, isTablet } = useScreenSize()
+  const { isMobile } = useScreenSize()
   const [showAbout, setShowAbout] = useState(false)
   const [showExplore, setShowExplore] = useState(false)
   const [showBudget, setShowBudget] = useState(false)
   const [showPlanTrip, setShowPlanTrip] = useState(false)
   const [showBusLovers, setShowBusLovers] = useState(false)
+  const [showToday, setShowToday] = useState(false)
+  const [todayRemaining, setTodayRemaining] = useState(5)
+  const handleTodayStateChange = useCallback((nextState) => {
+    setTodayRemaining(Number(nextState?.remaining ?? 5))
+  }, [])
+
+  const openToday = () => {
+    setShowToday(true)
+    setShowExplore(false)
+    setShowAbout(false)
+    setShowBudget(false)
+    setShowPlanTrip(false)
+    setShowBusLovers(false)
+  }
 
   const handleThemeOnly = (location) => {
     setLocationTheme(location)
@@ -261,11 +276,13 @@ function App() {
               <>
                 <EmailVerificationBanner theme={theme} />
                 <Navbar theme={theme} isMobile={isMobile}
-                  onAbout={() => setShowAbout(true)}
-                  onExplore={() => setShowExplore(true)}
-                  onBudget={() => setShowBudget(true)}
-                  onPlanTrip={() => setShowPlanTrip(true)}
-                  onBusLovers={() => setShowBusLovers(true)}
+                  onAbout={() => { setShowToday(false); setShowAbout(true) }}
+                  onExplore={() => { setShowToday(false); setShowExplore(true) }}
+                  onToday={openToday}
+                  todayRemaining={todayRemaining}
+                  onBudget={() => { setShowToday(false); setShowBudget(true) }}
+                  onPlanTrip={() => { setShowToday(false); setShowPlanTrip(true) }}
+                  onBusLovers={() => { setShowToday(false); setShowBusLovers(true) }}
                 />
                 <Hero
                   theme={theme}
@@ -326,6 +343,12 @@ function App() {
           }}
         />
       </Suspense>
+      <TodaySidebar
+        theme={theme}
+        isOpen={showToday}
+        onClose={() => setShowToday(false)}
+        onStateChange={handleTodayStateChange}
+      />
       {showBudget && (
         <Suspense fallback={null}>
           <BudgetPage theme={theme} onClose={() => setShowBudget(false)} onLocationSelect={(locationKey) => { setShowBudget(false); handleThemeOnly(locationKey); handleExplore(locationKey); }} />
