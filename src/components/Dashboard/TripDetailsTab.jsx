@@ -324,7 +324,8 @@ const TripDetailsTab = ({ trip, onUpdate }) => {
                     data.preferences.stayType,
                     data.preferences.transport,
                     aiData?.activities || [],
-                    aiData?.festivals || []
+                    aiData?.festivals || [],
+                    { savedTripId: trip.id }
                 );
                 itineraryResult = apiResult;
             }

@@ -3,13 +3,30 @@ import { useAuth } from "../context/AuthContext"
 import { useNavigate } from "react-router-dom"
 import { useNotification } from "../context/NotificationContext"
 
-const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onBusLovers }) => {
+const Navbar = ({ theme, isMobile, onAbout, onExplore, onToday, todayRemaining = 5, onBudget, onPlanTrip, onBusLovers }) => {
   const [menuOpen, setMenuOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
   const { user, session, profile, logout } = useAuth()
   const navigate = useNavigate()
   const { showAlert } = useNotification()
+
+  const navItems = ["Today", "Explore", "Plan Trip", "Bus Lovers", "Budget", "About"]
+
+  const handleNavItem = (item) => {
+    if (item === "Today") onToday()
+    if (item === "About") onAbout()
+    if (item === "Explore") onExplore()
+    if (item === "Plan Trip") onPlanTrip()
+    if (item === "Budget") {
+      if (user?.email === "t.adhikari.feb.2006@gmail.com") onBudget()
+      else showAlert("In production , i will live it soon", "info")
+    }
+    if (item === "Bus Lovers") {
+      if (user?.email === "t.adhikari.feb.2006@gmail.com") onBusLovers()
+      else showAlert("In production , i will live it soon", "info")
+    }
+  }
 
   useEffect(() => {
     if (user && session?.access_token) {
@@ -54,23 +71,11 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
       </div>
 
       {/* Desktop Nav Links */}
-      {!isMobile && (
+          {!isMobile && (
         <div style={{ display: "flex", gap: "30px", alignItems: "center" }}>
-          {["Explore", "Plan Trip", "Bus Lovers", "Budget", "About"].map((item) => (
+          {navItems.map((item) => (
             <span key={item}
-            onClick={() => {
-              if (item === "About") onAbout()
-              if (item === "Explore") onExplore()
-              if (item === "Plan Trip") onPlanTrip()
-              if (item === "Budget") {
-                if (user?.email === "t.adhikari.feb.2006@gmail.com") onBudget()
-                else showAlert("In production , i will live it soon", "info")
-              }
-              if (item === "Bus Lovers") {
-                if (user?.email === "t.adhikari.feb.2006@gmail.com") onBusLovers()
-                else showAlert("In production , i will live it soon", "info")
-              }
-            }}
+            onClick={() => handleNavItem(item)}
              style={{
               color: theme.subtext,
               cursor: "pointer",
@@ -82,7 +87,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
               onMouseEnter={e => e.target.style.color = theme.primary}
               onMouseLeave={e => e.target.style.color = theme.subtext}
             >
-              {item}
+              {item === "Today" ? `Today · ${todayRemaining}/5` : item}
             </span>
           ))}
           {user ? (
@@ -135,7 +140,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
                     { label: 'Saved Trips', path: '/dashboard/trips' },
                     { label: 'Savings Track', path: '/dashboard/savings' },
                     { label: 'Friend Requests', path: '/dashboard/requests', count: pendingCount },
-                  ].map((item, idx) => (
+                  ].map((item) => (
                     <div
                       key={item.label}
                       onClick={() => {
@@ -269,22 +274,10 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
           animation: "fadeIn 0.2s ease",
           zIndex: 100,
         }}>
-          {["Explore", "Plan Trip", "Bus Lovers", "Budget", "About"].map((item) => (
+          {navItems.map((item) => (
             <span
               key={item}
-              onClick={() => {
-                if (item === "About") onAbout()
-                if (item === "Explore") onExplore()
-                if (item === "Plan Trip") onPlanTrip()
-                if (item === "Budget") {
-                  if (user?.email === "t.adhikari.feb.2006@gmail.com") onBudget()
-                  else showAlert("In production , i will live it soon", "info")
-                }
-                if (item === "Bus Lovers") {
-                  if (user?.email === "t.adhikari.feb.2006@gmail.com") { onBusLovers(); setMenuOpen(false); }
-                  else showAlert("In production , i will live it soon", "info")
-                }
-              }}
+              onClick={() => { handleNavItem(item); setMenuOpen(false); }}
               style={{
                 color: theme.subtext,
                 cursor: "pointer",
@@ -294,7 +287,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
                 padding: "8px 0",
                 borderBottom: `1px solid ${theme.primary}22`,
               }}>
-              {item}
+               {item === "Today" ? `Today · ${todayRemaining}/5` : item}
             </span>
           ))}
           {user ? (
@@ -386,4 +379,3 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onBudget, onPlanTrip, onB
 }
 
 export default Navbar
-

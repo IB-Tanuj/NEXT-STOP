@@ -22,11 +22,41 @@ const throwApiError = async (response, fallbackMessage) => {
   error.code = payload.error
   error.remaining = payload.remaining
   error.resetAt = payload.resetAt
+  error.plan = payload.plan
+  error.quota = payload.quota
   throw error
 }
 
+const getQuota = (response, payload) => ({
+  limit: Number(response.headers.get("X-Trip-Quota-Limit") || payload?.quota?.limit || 5),
+  remaining: Number(response.headers.get("X-Trip-Quota-Remaining") || payload?.quota?.remaining || 0),
+  resetAt: payload?.quota?.resetAt || payload?.resetAt || (() => {
+    const value = response.headers.get("X-Trip-Quota-Reset")
+    return value ? new Date(Number(value) * 1000).toISOString() : null
+  })(),
+  charged: payload?.quota?.charged === true,
+})
+
+const waitForPlan = async (planId, accessToken, kind, savedTripId) => {
+    if (!planId) return null
+    for (let attempt = 0; attempt < 90; attempt += 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        const endpoint = savedTripId
+          ? `/api/today-plans/saved-trip/${savedTripId}`
+          : `/api/today-plans/${planId}`
+        const response = await fetch(endpoint, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    if (!response.ok) return null
+    const { plan } = await response.json()
+    const status = kind === "summary" ? plan.summary_status : plan.itinerary_status
+    if (status === "ready" || status === "failed") return plan
+  }
+  return null
+}
+
 // API Calls
-export const generateTripPlan = async (location, days, budget, stayType, transport, spots) => {
+export const generateTripPlan = async (location, days, budget, stayType, transport, spots, options = {}) => {
   const accessToken = await getAccessToken()
   const response = await fetch("/api/trip/generate", {
     method: "POST",
@@ -41,6 +71,8 @@ export const generateTripPlan = async (location, days, budget, stayType, transpo
       stayType,
       transport,
       spots,
+      todayPlanId: options.todayPlanId,
+      savedTripId: options.savedTripId,
     }),
   });
 
@@ -48,10 +80,14 @@ export const generateTripPlan = async (location, days, budget, stayType, transpo
     await throwApiError(response, "Trip plan generation failed")
   }
 
-  return await response.json();
+  const payload = await response.json()
+  const quota = getQuota(response, payload)
+  let plan = payload.plan
+  if (response.status === 202) plan = await waitForPlan(options.todayPlanId || plan?.id, accessToken, "summary", options.savedTripId) || plan
+  return { data: plan?.ai_data || {}, plan, quota, cacheStatus: response.headers.get("X-Cache") || "UNKNOWN" }
 }
 
-export const fetchItineraryData = async (location, days, budget, stayType, transport, selectedActivities, selectedFestivals) => {
+export const fetchItineraryData = async (location, days, budget, stayType, transport, selectedActivities, selectedFestivals, options = {}) => {
   const accessToken = await getAccessToken()
   const response = await fetch("/api/trip/generate-itinerary", {
     method: "POST",
@@ -67,6 +103,8 @@ export const fetchItineraryData = async (location, days, budget, stayType, trans
       transport,
       selectedActivities,
       selectedFestivals,
+      todayPlanId: options.todayPlanId,
+      savedTripId: options.savedTripId,
     }),
   });
 
@@ -74,9 +112,11 @@ export const fetchItineraryData = async (location, days, budget, stayType, trans
     await throwApiError(response, "Itinerary generation failed")
   }
 
-  const cacheStatus = response.headers.get("X-Cache") || "UNKNOWN"
-  const data = await response.json();
-  return { data, cacheStatus };
+  const payload = await response.json();
+  const quota = getQuota(response, payload)
+  let plan = payload.plan
+  if (response.status === 202) plan = await waitForPlan(options.todayPlanId || plan?.id, accessToken, "itinerary", options.savedTripId) || plan
+  return { data: plan?.ai_data || {}, plan, quota, cacheStatus: response.headers.get("X-Cache") || "UNKNOWN" };
 }
 
 // Cache and Bucketization logic

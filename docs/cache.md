@@ -315,6 +315,10 @@ const bucket = Math.round(budget / BUCKET_SIZE) * BUCKET_SIZE;
 
 This cache has **no TTL**. Once an image query is stored, it stays until the user clears their browser data. This is intentional — images rarely change and this saves API quota.
 
+## Today plan snapshots
+
+Today plans are persisted in `today_trip_plans`, not only in browser session storage. The overview and itinerary returned by the server are stored in the plan's `ai_data` JSONB field. Opening a Today card reads that snapshot; it does not regenerate AI output. Explicit generation requests use the Today generation RPC and may use the existing itinerary cache before recording the validated result server-side.
+
 ---
 
 ## Summary Table

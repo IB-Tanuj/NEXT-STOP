@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { transportCosts } from "../data/tripData"
 import { getDistanceBetweenStations, findNearestStation, haversineDistance } from "../data/stations"
 import TripPlan from "./TripPlan"
@@ -13,7 +13,7 @@ import { CostSummary } from "./BudgetResult/CostSummary"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { useNotification } from "../context/NotificationContext"
-import { generateTripPlan } from "../utils/tripPlanUtils"
+import { createClientPlanId, createTodayPlan, updateTodayPlan, saveTodayPlan } from "../utils/todayPlanUtils"
 
 const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const navigate = useNavigate()
@@ -22,6 +22,10 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const [isSavingTrip, setIsSavingTrip] = useState(false)
   const [isSavedLocally, setIsSavedLocally] = useState(false)
   const [localAiData, setLocalAiData] = useState(null)
+  const [todayPlan, setTodayPlan] = useState(null)
+  const [todayPlanId] = useState(createClientPlanId)
+  const todayPlanRequestRef = useRef(null)
+  const syncTodayPlanRef = useRef(null)
   const [showTripPlan, setShowTripPlan] = useState(false)
   const locationKey = location?.name?.toLowerCase()
   const routeKey = `delhi-${locationKey}` // fallback key for static data
@@ -178,7 +182,9 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [showTripPlan, onBack]);
 
-  const handleOpenTripPlan = () => {
+  const handleOpenTripPlan = async () => {
+    const plan = await syncTodayPlan()
+    if (!plan) return
     setShowTripPlan(true);
     window.history.pushState({ page: 'tripplan' }, '', window.location.href);
   };
@@ -626,6 +632,77 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const totalSpent = stayCost + totalEntryCost + transportCost
   const foodBuffer = totalBudget - totalSpent
 
+  const getDetailedTransportName = () => {
+    if (transportMedium === "personal") return "Personal Vehicle"
+    if (isMultiLeg && selectedStation) return `Train (${selectedTrainClass}) + Bus`
+    if (isDirect) return `${transportMedium} (${selectedDirectClass})`
+    return transportMedium
+  }
+
+  const buildTodayTripData = () => ({
+    hotel: {
+      name: stayOptions[selectedStayIndex]?.name || "Not selected",
+      price: stayCost,
+      days: preferences?.days || 1,
+    },
+    transport: {
+      name: getDetailedTransportName(),
+      price: transportCost,
+      medium: transportMedium,
+      from: fromStation || fromAirport || 'Origin',
+      to: toStation || locationKey,
+      class: (isMultiLeg && selectedStation) ? selectedTrainClass : selectedDirectClass,
+      distance: calculatedDist,
+    },
+    buffer: foodBuffer,
+    spots: entryBreakdown,
+    preferences: {
+      ...preferences,
+      groupMembers: planData.groupMembers || [],
+      groupSize: planData.groupSize || 1,
+    },
+  })
+
+  const syncTodayPlan = async () => {
+    if (!session?.access_token) return null
+    if (todayPlanRequestRef.current) return todayPlanRequestRef.current
+
+    const tripData = buildTodayTripData()
+    const request = (todayPlan
+      ? updateTodayPlan(session.access_token, todayPlan.id, {
+        destination: location?.name || locationKey,
+        totalBudget,
+        tripData,
+      })
+      : createTodayPlan(session.access_token, {
+        id: todayPlanId,
+        destination: location?.name || locationKey,
+        totalBudget,
+        tripData,
+      })
+    ).then(plan => {
+      setTodayPlan(plan)
+      return plan
+    }).catch(error => {
+      console.error("Today plan sync failed:", error)
+      showAlert(error.message || "Your Today plan could not be synced. You can continue planning and retry shortly.", "error")
+      return null
+    }).finally(() => {
+      todayPlanRequestRef.current = null
+    })
+
+    todayPlanRequestRef.current = request
+    return request
+  }
+
+  useEffect(() => {
+    syncTodayPlanRef.current = syncTodayPlan
+  }, [todayPlan, session?.access_token, totalBudget, location?.name, locationKey, foodBuffer, stayCost, transportCost, entryBreakdown, preferences, planData])
+
+  useEffect(() => {
+    if (session?.access_token) syncTodayPlanRef.current?.()
+  }, [session?.access_token])
+
   // ── Save Trip to Dashboard ──────────────────────────────
   const handleSaveTrip = async () => {
     if (!user) {
@@ -635,93 +712,15 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     
     setIsSavingTrip(true)
     try {
-      const getDetailedTransportName = () => {
-        if (transportMedium === "personal") return "Personal Vehicle"
-        if (isMultiLeg && selectedStation) return `Train (${selectedTrainClass}) + Bus`
-        if (isDirect) return `${transportMedium} (${selectedDirectClass})`
-        return transportMedium
-      }
-
-      // Prepare rich trip data
-      const trip_data = {
-        hotel: { 
-          name: stayOptions[selectedStayIndex]?.name || "Not selected", 
-          price: stayCost,
-          days: preferences?.days || 1
-        },
-        transport: { 
-          name: getDetailedTransportName(), 
-          price: transportCost,
-          medium: transportMedium,
-          from: fromStation || fromAirport || 'Origin',
-          to: toStation || locationKey,
-          class: (isMultiLeg && selectedStation) ? selectedTrainClass : selectedDirectClass,
-          distance: calculatedDist
-        },
-          buffer: foodBuffer,
-          spots: entryBreakdown,
-          preferences: { 
-            ...preferences, 
-            groupMembers: planData.groupMembers || [],
-            groupSize: planData.groupSize || 1
-          } // save to allow later regeneration
-        }
-
-      // If they already generated AI data by opening "See Full Trip Plan", attach it!
-      if (localAiData) {
-        trip_data.aiData = localAiData
-      }
-
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/saved-trips`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session?.access_token || ''}`
-        },
-        body: JSON.stringify({
-          destination: location?.name || locationKey,
-          total_budget: totalBudget,
-          trip_data
-        })
-      })
-
-      if (res.ok) {
-        const { trip } = await res.json()
-        setIsSavedLocally(true)
-        navigate("/dashboard/trips")
-
-        // Background generation if they haven't generated AI data yet
-        if (!localAiData) {
-          generateTripPlan(
-            location?.name || locationKey,
-            preferences?.days,
-            foodBuffer,
-            stayOptions[selectedStayIndex]?.name || preferences.stayType,
-            getDetailedTransportName(),
-            preferences.activities
-          ).then(async (aiData) => {
-            // Drop the itinerary so we force them to generate it in the dashboard (to save tokens/space if they don't want it)
-            // Or just keep the generated activities/food.
-            const modifiedAiData = { ...aiData, itinerary: null };
-            const updatedTripData = { ...trip_data, aiData: modifiedAiData };
-            
-            await fetch(`${import.meta.env.VITE_API_URL || ''}/api/saved-trips/${trip.id}`, {
-              method: 'PUT',
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${session?.access_token || ''}`
-              },
-              body: JSON.stringify({ trip_data: updatedTripData, total_budget: totalBudget })
-            });
-          }).catch(err => console.error("Background AI save failed:", err))
-        }
-
-      } else {
-        throw new Error("Failed to save trip")
-      }
+      const plan = await syncTodayPlan()
+      if (!plan) throw new Error("Today plan is not available")
+      const result = await saveTodayPlan(session.access_token, plan.id)
+      setTodayPlan(result.plan)
+      setIsSavedLocally(true)
+      navigate("/dashboard/trips")
     } catch (error) {
       console.error(error)
-      showAlert("Could not save trip.", "error")
+      showAlert(error.message || "Could not save trip.", "error")
     } finally {
       setIsSavingTrip(false)
     }
@@ -951,6 +950,9 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
               theme={theme}
               planData={planData}
               preferences={detailedPreferences}
+              todayPlanId={todayPlan?.id}
+              savedTripId={todayPlan?.saved_trip_id}
+              initialAiData={todayPlan?.ai_data || localAiData}
               budgetData={{ 
                 foodBuffer, 
                 stayCost: getStayCost(roomOption), 
@@ -960,7 +962,10 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
                 totalBudget
               }}
               onBack={handleCloseTripPlan}
-              onPlanGenerated={(data) => setLocalAiData(data)}
+              onPlanGenerated={(data, plan) => {
+                setLocalAiData(data)
+                if (plan) setTodayPlan(plan)
+              }}
             />
           </div>
         )
