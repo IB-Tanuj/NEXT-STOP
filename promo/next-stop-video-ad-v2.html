@@ -1,0 +1,265 @@
+<!doctype html>
+<!--
+  NEXT·STOP — THE TRIP STARTS HERE
+  --------------------------------
+  A second, more cinematic voiced video creative. Existing ads are preserved:
+  /promo/next-stop-ad.html and /promo/next-stop-video-ad.html.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NEXT·STOP — The Trip Starts Here</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { --yellow: #ffd447; --ink: #16142a; }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body { margin: 0; color: #f8fafc; background: #111827; font-family: Inter, system-ui, sans-serif; }
+    main { min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 15px; }
+    #stage { width: min(calc(100vw - 30px), calc((100svh - 122px) * .5625)); height: auto; display: block; aspect-ratio: 9 / 16; border-radius: 22px; background: #1e293b; box-shadow: 0 42px 130px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.13); }
+    .controls { width: min(720px, 100%); display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; background: rgba(15,23,42,.8); backdrop-filter: blur(18px); }
+    button { border: 1px solid rgba(255,255,255,.17); border-radius: 999px; padding: 9px 13px; color: #e2e8f0; background: rgba(255,255,255,.08); font: 700 12px Inter, sans-serif; cursor: pointer; white-space: nowrap; transition: transform .18s ease, background .18s ease, border-color .18s ease; }
+    button:hover { transform: translateY(-1px); border-color: rgba(255,212,71,.75); background: rgba(255,212,71,.15); }
+    button.primary { color: var(--ink); border-color: var(--yellow); background: var(--yellow); }
+    button.primary:hover { background: #ffe792; box-shadow: 0 8px 25px rgba(255,212,71,.3); }
+    button.voice-off { color: #fda4af; border-color: rgba(244,63,94,.4); }
+    #scrub { flex: 1; min-width: 50px; accent-color: var(--yellow); cursor: pointer; }
+    #time { min-width: 94px; color: #94a3b8; font: 500 11px "DM Mono", monospace; text-align: right; }
+    #status { min-height: 17px; color: #94a3b8; font-size: 12px; text-align: center; }
+    #status b { color: var(--yellow); }
+    .note { max-width: 680px; margin: 0; color: #64748b; font-size: 11px; text-align: center; }
+    @media (max-width: 620px) {
+      main { gap: 9px; padding: 8px; }
+      #stage { width: min(calc(100vw - 16px), calc((100svh - 132px) * .5625)); border-radius: 15px; }
+      .controls { flex-wrap: wrap; justify-content: center; border-radius: 18px; }
+      #scrub { order: 5; flex-basis: 100%; }
+      #time { min-width: auto; }
+      .note { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">NEXT·STOP — The Trip Starts Here</h1>
+    <canvas id="stage" width="720" height="1280" aria-label="NEXT·STOP animated voiced advertisement"></canvas>
+    <div class="controls">
+      <button id="play" class="primary" type="button">Play with voiceover</button>
+      <button id="restart" type="button">Restart</button>
+      <button id="voice" type="button">Voiceover on</button>
+      <input id="scrub" type="range" min="0" max="24000" step="10" value="0" aria-label="Video timeline" />
+      <span id="time">00.00 / 24.00</span>
+    </div>
+    <div id="status">Click Play with voiceover · Space play/pause · ←/→ seek</div>
+    <p class="note">Voiceover uses your browser’s built-in speech voice so the ad works without an external audio file.</p>
+  </main>
+
+  <script>
+  (() => {
+    'use strict';
+
+    const W = 720, H = 1280, DUR = 24, TAU = Math.PI * 2;
+    const C = {
+      yellow: '#ffd447', cream: '#fff4d6', ink: '#16142a', navy: '#102447', blue: '#1b8fa8',
+      cyan: '#70e1d0', orange: '#f47745', coral: '#ef5b65', pink: '#e87594', green: '#64b879', violet: '#8065c7', white: '#fffdf7', muted: '#536277'
+    };
+    const canvas = document.getElementById('stage');
+    const ctx = canvas.getContext('2d');
+    const playButton = document.getElementById('play');
+    const restartButton = document.getElementById('restart');
+    const voiceButton = document.getElementById('voice');
+    const scrub = document.getElementById('scrub');
+    const timeEl = document.getElementById('time');
+    const statusEl = document.getElementById('status');
+    const photos = ['/landing2/jaipur.webp', '/landing2/gangtok.webp', '/landing2/srinagar.webp'].map((src) => { const img = new Image(); img.src = src; return img; });
+    const requestFrame = window.requestAnimationFrame || ((callback) => window.setTimeout(() => callback(performance.now()), 16));
+    const cancelFrame = window.cancelAnimationFrame || window.clearTimeout;
+
+    // Safari and older embedded browsers do not expose CanvasRenderingContext2D.roundRect.
+    // Keep the creative playable there instead of failing on the first frame.
+    if (typeof ctx.roundRect !== 'function') {
+      ctx.roundRect = function (x, y, w, h, radius) {
+        const r = Math.min(Number(radius) || 0, Math.abs(w) / 2, Math.abs(h) / 2);
+        this.moveTo(x + r, y);
+        this.arcTo(x + w, y, x + w, y + h, r);
+        this.arcTo(x + w, y + h, x, y + h, r);
+        this.arcTo(x, y + h, x, y, r);
+        this.arcTo(x, y, x + w, y, r);
+        this.closePath();
+      };
+    }
+
+    const VOICEOVER = [
+      { at: .2, label: 'THE SPARK', text: 'Planning a trip should feel like the beginning of it, not a spreadsheet.' },
+      { at: 4.05, label: 'DISCOVER', text: 'Search a city or a feeling. NEXT STOP turns the spark into real possibilities.' },
+      { at: 8.05, label: 'MAKE IT WORK', text: 'Set your budget once. Watch every stay, ride, meal, and experience fall into place.' },
+      { at: 12.05, label: 'STAY IN THE KNOW', text: 'Compare live fares across trains, buses, and flights before the price moves.' },
+      { at: 16.05, label: 'MAKE IT YOURS', text: 'Then get a personal day by day itinerary, with the details that make a place yours.' },
+      { at: 20.35, label: 'NEXT STOP', text: 'NEXT STOP. Your trip starts here. Plan less. Go further.' },
+    ];
+
+    const dots = Array.from({ length: 120 }, (_, i) => ({
+      x: (i * 83) % W, y: (i * 149) % H, size: 1 + (i % 4), speed: .3 + (i % 6) * .09, phase: i * 1.7,
+    }));
+    const sparkles = Array.from({ length: 30 }, (_, i) => ({ x: (i * 137) % W, y: (i * 211) % H, r: 3 + (i % 3) * 2, phase: i * 2.31 }));
+
+    let playing = false, voiceEnabled = true, current = 0, last = performance.now(), lastVoiceIndex = -1, raf = 0;
+    const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+    const inv = (a, b, v) => clamp((v - a) / (b - a));
+    const out = (v) => 1 - Math.pow(1 - clamp(v), 3);
+    const back = (v) => { const n = 1.70158, c = n + 1; const t = clamp(v); return 1 + c * Math.pow(t - 1, 3) + n * Math.pow(t - 1, 2); };
+    const sine = (v) => -(Math.cos(Math.PI * clamp(v)) - 1) / 2;
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const fade = (t, a, b, fi = .35, fo = .35) => Math.min(clamp((t - a) / fi), clamp((b - t) / fo));
+    const ease = out;
+    function rgba(hex, alpha) { const value = hex.replace('#', ''); const r = parseInt(value.slice(0, 2), 16), g = parseInt(value.slice(2, 4), 16), b = parseInt(value.slice(4, 6), 16); return `rgba(${r},${g},${b},${alpha})`; }
+
+    function rr(x, y, w, h, r, fill, stroke, lineWidth = 1.5) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lineWidth; ctx.stroke(); } }
+    const rounded = rr;
+    function txt(value, x, y, size, weight, color, align = 'left', family = 'Inter') { ctx.font = `${weight} ${size}px "${family}", Inter, system-ui, sans-serif`; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'alphabetic'; ctx.fillText(value, x, y); }
+    const text = txt;
+    function mono(value, x, y, size, weight, color, align = 'left') { txt(value, x, y, size, weight, color, align, 'DM Mono'); }
+    function line(x1, y1, x2, y2, color, width = 1, dash = []) { ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore(); }
+    function pill(x, y, label, opts = {}) { const size = opts.size || 13, px = opts.px || 13, h = opts.h || size + 17; ctx.font = `600 ${size}px Inter, sans-serif`; const w = ctx.measureText(label).width + px * 2; rr(x, y, w, h, h / 2, opts.fill || 'rgba(255,255,255,.1)', opts.stroke || 'rgba(255,255,255,.18)'); txt(label, x + w / 2, y + h / 2 + size * .34, size, opts.weight || 600, opts.color || C.white, 'center'); return w; }
+    function wrap(value, x, y, maxWidth, size, lineHeight, color, weight = 500, align = 'left', family = 'Inter') { ctx.font = `${weight} ${size}px "${family}", Inter, sans-serif`; const words = value.split(' '); let row = '', yy = y; words.forEach((word, i) => { const test = `${row}${word} `; if (ctx.measureText(test).width > maxWidth && row) { txt(row.trim(), x, yy, size, weight, color, align, family); row = `${word} `; yy += lineHeight; } else row = test; if (i === words.length - 1) txt(row.trim(), x, yy, size, weight, color, align, family); }); return yy; }
+    function imageCover(img, x, y, w, h, radius = 0) { if (!img.complete || !img.naturalWidth) return; const scale = Math.max(w / img.naturalWidth, h / img.naturalHeight); const iw = img.naturalWidth * scale, ih = img.naturalHeight * scale; ctx.save(); if (radius) { rr(x, y, w, h, radius); ctx.clip(); } ctx.drawImage(img, x + (w - iw) / 2, y + (h - ih) / 2, iw, ih); ctx.restore(); }
+    function glow(x, y, r, color, alpha = .35) { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, rgba(color, 1)); g.addColorStop(1, rgba(color, 0)); ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2); ctx.restore(); }
+    function rotateAround(x, y, angle, fn) { ctx.save(); ctx.translate(x, y); ctx.rotate(angle); fn(); ctx.restore(); }
+    function progress(t, a, b, easing = out) { return easing(inv(a, b, t)); }
+
+    function gradientBackground(t, palette) {
+      const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, palette[0]); g.addColorStop(.45, palette[1]); g.addColorStop(1, palette[2]); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      const g2 = ctx.createLinearGradient(W, 0, 0, H); g2.addColorStop(0, rgba(palette[3], .53)); g2.addColorStop(.5, 'transparent'); g2.addColorStop(1, rgba(palette[0], .4)); ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
+      ctx.save(); ctx.globalAlpha = .3; ctx.globalCompositeOperation = 'screen';
+      dots.forEach((d, i) => { const x = (d.x + Math.sin(t * d.speed + d.phase) * 18 + W) % W, y = (d.y - t * (9 + d.speed * 8) + H * 2) % H; ctx.fillStyle = i % 4 === 0 ? palette[3] : palette[1]; ctx.beginPath(); ctx.arc(x, y, d.size * .55, 0, TAU); ctx.fill(); });
+      ctx.restore();
+    }
+    function grain(t, alpha = .06) { ctx.save(); ctx.globalAlpha = alpha; for (let i = 0; i < 340; i++) { const x = (i * 71 + Math.floor(t * 28) * 17) % W, y = (i * 97 + Math.floor(t * 31) * 11) % H; ctx.fillStyle = i % 2 ? '#fff' : '#000'; ctx.fillRect(x, y, 1, 1); } ctx.restore(); }
+    function header(t, dark = false) { ctx.save(); ctx.globalAlpha = .95; rr(44, 44, 43, 43, 13, C.yellow); txt('N→S', 65.5, 72, 15, 800, C.ink, 'center', 'Space Grotesk'); txt('NEXT·STOP', 100, 72, 16, 800, dark ? C.white : C.ink, 'left', 'Space Grotesk'); pill(510, 50, '🍁 SHARAD / LIVE', { size: 10, px: 10, h: 30, color: dark ? C.yellow : C.ink, fill: dark ? 'rgba(255,212,71,.13)' : 'rgba(255,255,255,.4)', stroke: dark ? 'rgba(255,212,71,.5)' : 'rgba(22,20,42,.18)' }); ctx.restore(); }
+
+    function routeNetwork(t, yOffset = 0, scale = 1) {
+      const points = [[-40, 720], [150, 620], [280, 745], [420, 560], [580, 660], [765, 505]].map(([x, y]) => [x, y + yOffset]);
+      const colors = [C.orange, C.cyan, C.yellow, C.coral, C.violet];
+      points.slice(0, -1).forEach(([x, y], i) => { const [nx, ny] = points[i + 1]; const bend = Math.sin(t * .8 + i) * 22; ctx.save(); ctx.strokeStyle = colors[i]; ctx.globalAlpha = .8; ctx.lineWidth = 2.5 * scale; ctx.setLineDash([15, 13]); ctx.lineDashOffset = -t * 80 - i * 40; ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo((x + nx) / 2, (y + ny) / 2 + bend, nx, ny); ctx.stroke(); ctx.restore(); const p = (t * (.17 + i * .03) + i * .2) % 1; const qx = lerp(x, nx, p), qy = lerp(y, ny, p); glow(qx, qy, 40 * scale, colors[i], .35); ctx.fillStyle = colors[i]; ctx.beginPath(); ctx.arc(qx, qy, 5 * scale, 0, TAU); ctx.fill(); });
+      points.forEach(([x, y], i) => { ctx.fillStyle = colors[i % colors.length]; ctx.beginPath(); ctx.arc(x, y, 8 * scale, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1; ctx.stroke(); });
+    }
+    function star(x, y, r, color, t, phase = 0) { const s = .4 + .6 * (Math.sin(t * 4 + phase) + 1) / 2; ctx.save(); ctx.translate(x, y); ctx.rotate(t * .3 + phase); ctx.globalAlpha = s; ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-r, 0); ctx.lineTo(r, 0); ctx.moveTo(0, -r); ctx.lineTo(0, r); ctx.stroke(); ctx.restore(); }
+
+    // Scene 01: an energetic travel question, built from routes and moving type.
+    function sceneSpark(t) {
+      if (t >= 4.2) return;
+      const a = fade(t, 0, 4.25, .3, .3); gradientBackground(t, ['#f7d6a1', '#f47745', '#162c4d', '#70e1d0']);
+      ctx.save(); ctx.globalAlpha = a; header(t, true); routeNetwork(t, 70, 1.03); glow(100, 260, 210, C.orange, .28); glow(615, 400, 270, C.cyan, .2);
+      const titleP = progress(t, .45, 1.25, back); const titleY = 410 - (1 - titleP) * 110; txt('WHERE TO', 360, titleY, 30, 800, C.ink, 'center', 'DM Mono');
+      const nextP = progress(t, .85, 1.75, back); txt('NEXT?', 360, 520 - (1 - nextP) * 130, 112, 700, C.cream, 'center', 'Space Grotesk');
+      const ringP = progress(t, 1.4, 3.0, sine); ctx.save(); ctx.translate(360, 470); ctx.rotate(t * .4); ctx.strokeStyle = `rgba(255,244,214,${.3 + ringP * .5})`; ctx.lineWidth = 3; ctx.setLineDash([20, 18]); ctx.beginPath(); ctx.arc(0, 0, 215 + ringP * 60, -.5, 4.9); ctx.stroke(); ctx.restore();
+      const copyA = fade(t, 2.05, 3.8, .3, .25); ctx.globalAlpha = copyA; wrap('A better trip starts before the first ticket.', 360, 640, 420, 20, 29, C.cream, 600, 'center');
+      const chips = [['SEARCH', C.yellow], ['BUDGET', C.cyan], ['ITINERARY', C.coral]]; chips.forEach(([label, color], i) => { const p = progress(t, 2.35 + i * .1, 2.85 + i * .1, back); ctx.save(); ctx.globalAlpha = copyA * p; ctx.translate((i - 1) * 132, 825 + (1 - p) * 24); pill(360 - 49 + (i - 1) * 132, 0, label, { size: 10, px: 12, h: 30, color: C.ink, fill: color, stroke: color, weight: 800 }); ctx.restore(); });
+      star(102, 360, 16, C.yellow, t, 1); star(620, 738, 20, C.cream, t, 2); ctx.restore(); grain(t, .055);
+    }
+
+    // Scene 02: real destination imagery collides with the actual search/card UI.
+    function sceneDiscover(t) {
+      if (t < 3.65 || t >= 8.25) return;
+      const a = fade(t, 3.65, 8.25, .35, .35); gradientBackground(t, ['#f9ead0', '#ee7560', '#d94b5e', '#1b8fa8']);
+      ctx.save(); ctx.globalAlpha = a; header(t, false); mono('01 / DISCOVER', 52, 155, 12, 500, C.ink); txt('Find the feeling.', 52, 215, 48, 700, C.ink, 'left', 'Space Grotesk');
+      // Three moving destination cards create a carousel rather than a static screenshot.
+      const cardY = 375, cardW = 340, cardH = 500, shift = Math.sin(t * .8) * 20;
+      [[0, photos[1], 'Gangtok', 'mountain air', C.cyan], [1, photos[0], 'Jaipur', 'golden light', C.orange], [2, photos[2], 'Srinagar', 'slow mornings', C.blue]].forEach(([i, img, name, sub, color]) => { const x = 190 + i * 156 + shift - ((t - 3.65) * 32); const dist = Math.abs(x + cardW / 2 - 360); const scale = 1 - Math.min(.14, dist / 1800); ctx.save(); ctx.translate(x + cardW / 2, cardY + cardH / 2); ctx.scale(scale, scale); ctx.translate(-cardW / 2, -cardH / 2); ctx.shadowColor = 'rgba(22,20,42,.35)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 18; rr(0, 0, cardW, cardH, 27, C.cream); ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; imageCover(img, 0, 0, cardW, 257, 27); ctx.fillStyle = color; ctx.fillRect(0, 257, cardW, 8); txt(name, 24, 316, 31, 700, C.ink, 'left', 'Space Grotesk'); txt(sub, 24, 348, 15, 500, C.muted); pill(24, 386, i === 1 ? '🍁 BEST IN SHARAD' : 'WORTH THE STOP', { size: 10, px: 10, h: 28, color: i === 1 ? C.ink : C.white, fill: color, stroke: color }); txt(i === 1 ? 'from ₹6,800' : 'curated for you', 24, 458, 13, 700, C.muted); rounded(270, 427, 40, 40, 20, C.ink); txt('→', 290, 454, 22, 800, C.cream, 'center'); ctx.restore(); });
+      // Search pill floats above the carousel and types itself in.
+      const searchP = progress(t, 4.0, 4.65, back); ctx.save(); ctx.globalAlpha = searchP; ctx.translate(0, (1 - searchP) * -30); rr(52, 265, 616, 64, 32, C.cream, 'rgba(22,20,42,.2)'); txt('⌕', 82, 305, 27, 500, C.muted); const typed = 'Jaipur'.slice(0, Math.floor(clamp((t - 4.5) / .11, 0, 6))); txt(typed || 'Search a city, state or vibe…', 126, 304, 17, 700, typed ? C.ink : '#8190a1'); if (typed && t < 5.3) { ctx.fillStyle = C.orange; ctx.fillRect(126 + typed.length * 10, 282, 2, 25); } rounded(613, 278, 38, 38, 19, C.orange); txt('→', 632, 304, 22, 800, C.cream, 'center'); ctx.restore();
+      ctx.restore(); grain(t, .045);
+    }
+
+    // Scene 03: a budget wheel splits apart and recomposes as animated UI cards.
+    function sceneBudget(t) {
+      if (t < 7.7 || t >= 12.25) return;
+      const a = fade(t, 7.7, 12.25, .3, .3); gradientBackground(t, ['#143653', '#1b8fa8', '#f47745', '#ffd447']);
+      ctx.save(); ctx.globalAlpha = a; header(t, true); mono('02 / MAKE IT WORK', 52, 155, 12, 500, C.yellow); txt('Your budget,', 52, 214, 47, 700, C.cream, 'left', 'Space Grotesk'); txt('still yours.', 52, 268, 47, 700, C.yellow, 'left', 'Space Grotesk');
+      const cx = 360, cy = 535, radius = 148, thickness = 48; const pieces = [[.4, C.orange, 'STAY', '₹10,000'], [.25, C.cyan, 'TRAVEL', '₹6,250'], [.2, C.pink, 'FOOD', '₹5,000'], [.15, C.yellow, 'DO', '₹3,750']];
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(-t * .13); ctx.lineWidth = thickness; ctx.strokeStyle = 'rgba(255,244,214,.18)'; ctx.beginPath(); ctx.arc(0, 0, radius, 0, TAU); ctx.stroke(); let start = -Math.PI / 2;
+      pieces.forEach(([part, color], i) => { const p = progress(t, 8.05 + i * .12, 8.75 + i * .12, back); ctx.save(); ctx.strokeStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 20; ctx.beginPath(); ctx.arc(0, 0, radius + Math.sin(t * 2 + i) * 2, start + .035, start + part * TAU * p - .035); ctx.stroke(); ctx.restore(); start += part * TAU; }); ctx.restore();
+      txt('₹25K', cx, cy + 12, 42, 700, C.cream, 'center', 'Space Grotesk'); mono('SMART SPLIT', cx, cy + 40, 11, 500, C.cyan, 'center');
+      pieces.forEach(([part, color, label, amount], i) => { const p = progress(t, 8.2 + i * .12, 8.9 + i * .12, back); const x = 58 + (i % 2) * 314, y = 785 + Math.floor(i / 2) * 112 + (1 - p) * 30; ctx.save(); ctx.globalAlpha = p; rr(x, y, 286, 82, 18, 'rgba(8,24,44,.62)', 'rgba(255,244,214,.18)'); ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x + 25, y + 27, 6, 0, TAU); ctx.fill(); txt(label, x + 43, y + 31, 12, 800, C.cream); txt(amount, x + 25, y + 60, 18, 700, color, 'left', 'Space Grotesk'); txt(`${Math.round(part * 100)}%`, x + 255, y + 60, 12, 700, C.cream, 'right'); ctx.restore(); });
+      ctx.restore(); grain(t, .055);
+    }
+
+    // Scene 04: moving transit lines and live fare cards show a reason to use the product now.
+    function sceneFares(t) {
+      if (t < 11.7 || t >= 16.25) return;
+      const a = fade(t, 11.7, 16.25, .3, .3); gradientBackground(t, ['#ffd447', '#f47745', '#ef5b65', '#8065c7']);
+      ctx.save(); ctx.globalAlpha = a; header(t, false); mono('03 / STAY IN THE KNOW', 52, 155, 12, 500, C.ink); txt('Catch the', 52, 214, 48, 700, C.ink, 'left', 'Space Grotesk'); txt('right moment.', 52, 270, 48, 700, C.white, 'left', 'Space Grotesk');
+      // Moving colored lanes behind the UI.
+      const lanes = [[C.blue, 420, 'TRAIN'], [C.orange, 520, 'BUS'], [C.violet, 620, 'FLIGHT']]; lanes.forEach(([color, yy, label], i) => { ctx.save(); ctx.strokeStyle = color; ctx.globalAlpha = .7; ctx.lineWidth = 4; ctx.setLineDash([28, 18]); ctx.lineDashOffset = -t * (70 + i * 20); ctx.beginPath(); ctx.moveTo(0, yy); ctx.bezierCurveTo(180, yy - 90, 260, yy + 100, 460, yy); ctx.bezierCurveTo(560, yy - 60, 630, yy + 30, 720, yy - 32); ctx.stroke(); ctx.restore(); const p = (t * (.18 + i * .06) + i * .33) % 1; const px = lerp(70, 660, p); const py = yy - Math.sin(p * Math.PI) * 45; glow(px, py, 35, color, .35); ctx.fillStyle = color; ctx.beginPath(); ctx.arc(px, py, 7, 0, TAU); ctx.fill(); });
+      const panelP = progress(t, 12.15, 12.8, back); ctx.save(); ctx.globalAlpha = panelP; ctx.translate(0, (1 - panelP) * 50); rr(48, 338, 624, 570, 27, 'rgba(16,36,71,.91)', 'rgba(255,255,255,.3)'); text('Delhi  →  Jaipur', 83, 397, 25, 700, C.white, 'left', 'Space Grotesk'); pill(523, 370, '● LIVE', { size: 11, px: 10, h: 29, color: C.coral, fill: 'rgba(239,91,101,.14)', stroke: 'rgba(239,91,101,.55)' }); mono('LOWEST FARE TODAY', 83, 443, 11, 500, '#b8c7d9'); text('₹755', 83, 498, 43, 700, C.yellow, 'left', 'Space Grotesk'); pill(209, 466, '▼ 12%', { size: 11, px: 10, h: 29, color: C.green, fill: 'rgba(100,184,121,.14)', stroke: 'rgba(100,184,121,.5)' });
+      const fares = [['🚆', C.cyan, 'Shatabdi Express', '₹755', 'BEST PRICE'], ['🚌', C.pink, 'Volvo AC Sleeper', '₹899', 'PRICE MOVING'], ['✈️', C.yellow, 'IndiGo 6E 2131', '₹3,420', 'FASTEST']]; fares.forEach(([icon, color, name, price, tag], i) => { const yy = 570 + i * 93, p = progress(t, 12.55 + i * .12, 13.15 + i * .12, back); ctx.save(); ctx.globalAlpha = p; rr(76, yy, 568, 73, 16, i === 0 ? 'rgba(255,212,71,.12)' : 'rgba(255,255,255,.06)', i === 0 ? 'rgba(255,212,71,.55)' : 'rgba(255,255,255,.14)'); text(icon, 107, yy + 45, 22, 400, C.white, 'center'); text(name, 141, yy + 31, 14, 700, C.white); mono(tag, 141, yy + 52, 10, 500, color); text(price, 612, yy + 40, 18, 700, color, 'right', 'Space Grotesk'); ctx.restore(); }); ctx.restore();
+      ctx.restore(); grain(t, .05);
+    }
+
+    // Scene 05: a physical-looking itinerary sheet is assembled from cards, stamps and routes.
+    function sceneItinerary(t) {
+      if (t < 15.7 || t >= 20.65) return;
+      const a = fade(t, 15.7, 20.65, .3, .35); gradientBackground(t, ['#162c4d', '#1b8fa8', '#64b879', '#fff4d6']); routeNetwork(t, -110, .48);
+      ctx.save(); ctx.globalAlpha = a; header(t, true); mono('04 / MAKE IT YOURS', 52, 150, 12, 500, C.yellow); txt('A plan with', 52, 205, 46, 700, C.cream, 'left', 'Space Grotesk'); txt('room to wander.', 52, 258, 46, 700, C.yellow, 'left', 'Space Grotesk');
+      const sheetP = progress(t, 16.05, 16.8, back); rotateAround(360, 710, -.035 + Math.sin(t * .4) * .006, () => { ctx.globalAlpha = a * sheetP; ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 38; ctx.shadowOffsetY = 24; rr(78, 286, 564, 700, 24, C.cream); ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; txt('YOUR JAIPUR TRIP', 118, 350, 13, 800, C.coral, 'left', 'DM Mono'); txt('3 days · 2 travellers', 118, 387, 28, 700, C.ink, 'left', 'Space Grotesk'); line(118, 420, 602, 420, 'rgba(22,20,42,.18)', 1); pill(118, 443, 'DAY 1', { size: 11, px: 11, h: 29, color: C.ink, fill: C.yellow, stroke: C.yellow, weight: 800 }); pill(192, 443, 'DAY 2', { size: 11, px: 11, h: 29, color: C.muted, fill: 'rgba(22,20,42,.05)', stroke: 'rgba(22,20,42,.17)' }); pill(266, 443, 'DAY 3', { size: 11, px: 11, h: 29, color: C.muted, fill: 'rgba(22,20,42,.05)', stroke: 'rgba(22,20,42,.17)' });
+        line(142, 545, 142, 845, 'rgba(239,91,101,.45)', 2); const items = [['09:00', 'Amber Fort', 'Entry ₹200 · beat the queues', '🎟'], ['13:00', 'Lunch at LMB', 'Old City · try the ghewar', '🍛'], ['16:30', 'Hawa Mahal', 'Best light at golden hour', '📸'], ['19:30', 'Chokhi Dhani', 'Cab ₹350 · book ahead', '🚕']]; items.forEach(([time, name, desc, icon], i) => { const p = progress(t, 16.45 + i * .22, 17.0 + i * .22, back), yy = 500 + i * 93; ctx.save(); ctx.globalAlpha = p; ctx.fillStyle = i === 0 ? C.coral : C.ink; ctx.beginPath(); ctx.arc(142, yy + 24, 15, 0, TAU); ctx.fill(); txt(icon, 142, yy + 29, 11, 400, C.cream, 'center'); mono(time, 177, yy + 17, 11, 500, C.coral); txt(name, 177, yy + 40, 18, 700, C.ink, 'left', 'Space Grotesk'); txt(desc, 177, yy + 61, 11, 500, C.muted); ctx.restore(); });
+        const stampP = progress(t, 18.6, 19.2, back); ctx.save(); ctx.globalAlpha = stampP * .82; ctx.translate(515, 860); ctx.rotate(-.13); ctx.strokeStyle = C.green; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(-72, -24, 144, 48, 9); ctx.stroke(); mono('READY TO GO', 0, 5, 16, 700, C.green, 'center'); ctx.restore();
+       });
+       // Keep the itinerary scene alive after the cards have entered: a live sync
+       // signal travels down the route while the destination count breathes.
+       const syncPulse = .78 + Math.sin(t * 5.5) * .22;
+       ctx.save(); ctx.globalAlpha = a; rr(495, 263, 170, 31, 16, `rgba(16,36,71,${.72 + syncPulse * .12})`, 'rgba(255,212,71,.52)'); ctx.fillStyle = C.green; ctx.beginPath(); ctx.arc(515, 279, 5 + syncPulse * 2, 0, TAU); ctx.fill(); mono('4 STOPS SYNCED', 529, 283, 9, 500, C.cream);
+       const trailP = (t * .24) % 1; const trailY = 350 + trailP * 610; ctx.strokeStyle = C.yellow; ctx.globalAlpha = a * .7; ctx.lineWidth = 2; ctx.setLineDash([8, 9]); ctx.beginPath(); ctx.moveTo(668, 335); ctx.lineTo(668, 970); ctx.stroke(); ctx.setLineDash([]); glow(668, trailY, 34, C.yellow, .35); ctx.fillStyle = C.yellow; ctx.beginPath(); ctx.arc(668, trailY, 6, 0, TAU); ctx.fill(); ctx.restore();
+       ctx.restore(); grain(t, .045);
+    }
+
+    // Scene 06: the visual system explodes into a warm, colorful brand lockup.
+    function sceneEnd(t) {
+      if (t < 20.25) return;
+      const a = fade(t, 20.25, 24, .45, .5); gradientBackground(t, ['#ef5b65', '#f47745', '#ffd447', '#1b8fa8']);
+      ctx.save(); ctx.globalAlpha = a;
+      // Rotating color blocks keep the ending alive behind the lockup.
+      [[-50, 220, 260, 470, C.cyan, -.13], [510, 180, 310, 520, C.violet, .16], [-70, 820, 350, 380, C.orange, .09], [470, 870, 340, 340, C.green, -.12]].forEach(([x, y, w, h, color, rot], i) => { rotateAround(x + w / 2, y + h / 2, rot + Math.sin(t * .35 + i) * .04, () => { ctx.globalAlpha = a * .65; rr(x, y, w, h, 34, color); }); });
+      header(t, true); const p = progress(t, 20.65, 21.45, back); const logoScale = .8 + p * .2; ctx.save(); ctx.translate(360, 515); ctx.scale(logoScale, logoScale); glow(0, 0, 260, C.yellow, .22); rr(-91, -91, 182, 182, 43, C.yellow); txt('N→S', 0, 22, 58, 700, C.ink, 'center', 'Space Grotesk'); ctx.restore();
+      txt('NEXT·STOP', 360, 770, 71, 700, C.cream, 'center', 'Space Grotesk'); wrap('Every stop, every stay, every fare — live.', 360, 833, 510, 22, 31, C.ink, 700, 'center');
+      const ctaP = progress(t, 21.6, 22.35, back); ctx.save(); ctx.globalAlpha = ctaP; ctx.translate(360, 960); ctx.scale(.8 + .2 * ctaP, .8 + .2 * ctaP); rr(-230, -35, 460, 70, 35, C.ink); txt('START PLANNING  →', 0, 8, 20, 800, C.cream, 'center', 'DM Mono'); ctx.restore();
+      const labels = [['🌸', 'Vasant'], ['☀️', 'Grishma'], ['🌧️', 'Varsha'], ['🍁', 'Sharad'], ['❄️', 'Hemant'], ['☃️', 'Shishir']]; labels.forEach(([em, name], i) => { const x = 92 + i * 108; const q = progress(t, 22.0 + i * .06, 22.45 + i * .06, back); ctx.save(); ctx.globalAlpha = a * q; ctx.translate(x, 1110 + (1 - q) * 30); txt(em, 0, 0, 27, 400, C.cream, 'center'); txt(name, 0, 25, 10, 700, i === 3 ? C.ink : C.cream, 'center'); ctx.restore(); });
+      ctx.restore(); grain(t, .06);
+    }
+
+    function caption(t) { const i = VOICEOVER.findIndex((item, index) => t >= item.at && t < (VOICEOVER[index + 1]?.at || DUR)); if (i < 0) return; const item = VOICEOVER[i]; const a = fade(t, item.at, VOICEOVER[i + 1]?.at || DUR, .18, .24); ctx.save(); ctx.globalAlpha = a * .96; rr(35, 1168, 650, 76, 17, 'rgba(15,23,42,.86)', 'rgba(255,212,71,.45)'); mono(item.label, 58, 1193, 10, 500, C.yellow); wrap(item.text, 58, 1218, 605, 13, 17, C.white, 600); ctx.restore(); }
+    function render(t) { current = clamp(t, 0, DUR); ctx.clearRect(0, 0, W, H); sceneSpark(current); sceneDiscover(current); sceneBudget(current); sceneFares(current); sceneItinerary(current); sceneEnd(current); caption(current); }
+
+    function voiceIndex(t) { return VOICEOVER.findIndex((item, index) => t >= item.at && t < (VOICEOVER[index + 1]?.at || DUR)); }
+    function speak(i) {
+      if (!voiceEnabled || !window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined' || i < 0) return;
+      try {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(VOICEOVER[i].text);
+        u.rate = .94; u.pitch = 1.02;
+        const voices = typeof window.speechSynthesis.getVoices === 'function' ? window.speechSynthesis.getVoices() : [];
+        u.voice = voices.find((v) => /en-IN/i.test(v.lang)) || voices.find((v) => /^en/i.test(v.lang)) || null;
+        window.speechSynthesis.speak(u);
+      } catch (error) {
+        statusEl.textContent = 'Playing animation · browser voiceover unavailable';
+      }
+    }
+    function updateVoice(t) { const i = voiceIndex(t); if (i !== lastVoiceIndex) { lastVoiceIndex = i; if (i >= 0) speak(i); } }
+    function setPlaying(value) { playing = value; playButton.textContent = playing ? 'Pause' : 'Play with voiceover'; last = performance.now(); if (!playing) window.speechSynthesis?.pause(); else { window.speechSynthesis?.resume(); updateVoice(current); } statusEl.innerHTML = playing ? '<b>● Playing</b> · animated scenes + voiceover' : 'Paused · press Play with voiceover to continue'; }
+    function restart() { window.speechSynthesis?.cancel(); current = 0; lastVoiceIndex = -1; setPlaying(true); }
+    function seek(value) { current = clamp(value, 0, DUR); lastVoiceIndex = voiceIndex(current) - 1; render(current); if (playing) updateVoice(current); }
+
+    playButton.addEventListener('click', () => setPlaying(!playing));
+    restartButton.addEventListener('click', restart);
+    voiceButton.addEventListener('click', () => { voiceEnabled = !voiceEnabled; voiceButton.textContent = voiceEnabled ? 'Voiceover on' : 'Voiceover off'; voiceButton.classList.toggle('voice-off', !voiceEnabled); if (!voiceEnabled) window.speechSynthesis?.cancel(); else if (playing) { lastVoiceIndex = -1; updateVoice(current); } });
+    scrub.addEventListener('input', () => { const wasPlaying = playing; setPlaying(false); seek(Number(scrub.value) / 1000); if (wasPlaying) setPlaying(true); });
+    window.addEventListener('keydown', (event) => { if (event.code === 'Space') { event.preventDefault(); setPlaying(!playing); } else if (event.code === 'ArrowRight') seek(current + (event.shiftKey ? .1 : 1)); else if (event.code === 'ArrowLeft') seek(current - (event.shiftKey ? .1 : 1)); else if (event.code === 'KeyR') restart(); });
+
+    function tick(now) { const dt = Math.min(.1, (now - last) / 1000); last = now; if (playing) { current += dt; updateVoice(current); if (current >= DUR) { current = DUR; playing = false; playButton.textContent = 'Play with voiceover'; statusEl.innerHTML = '<b>Finished</b> · press Restart for another play'; window.speechSynthesis?.cancel(); } } render(current); scrub.value = Math.round(current * 1000); timeEl.textContent = `${current.toFixed(2).padStart(5, '0')} / 24.00`; raf = requestFrame(tick); }
+    render(0); raf = requestFrame(tick); window.addEventListener('beforeunload', () => { cancelFrame(raf); window.speechSynthesis?.cancel(); });
+  })();
+  </script>
+</body>
+</html>

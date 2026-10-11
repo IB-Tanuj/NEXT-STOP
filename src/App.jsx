@@ -16,6 +16,7 @@ const PlanTripPage = lazy(() => import("./components/PlanTripPage"))
 const BusLoversPage = lazy(() => import("./components/BusLoversPage"))
 const DevAdminPage = lazy(() => import("./components/DevAdminPage"))
 const LegalPage = lazy(() => import("./components/LegalPage"))
+const ProductAdPage = lazy(() => import("./components/ProductAdPage"))
 
 import { allIndiaLocations } from "./data/allLocations"
 const LandingPage = lazy(() => import("./components/LandingPage"))
@@ -260,6 +261,9 @@ function App() {
           {/* Legal Pages */}
           <Route path="/privacy" element={<LegalPage type="privacy" />} />
           <Route path="/terms" element={<LegalPage type="terms" />} />
+
+          {/* Product ad / UI showcase */}
+          <Route path="/ad" element={<ProductAdPage />} />
 
           {/* New Marketing Landing Page (V2) */}
           <Route path="/" element={<NewLandingPage />} />
