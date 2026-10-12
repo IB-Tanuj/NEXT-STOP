@@ -3,7 +3,7 @@ import { transportCosts } from "../data/tripData"
 import { getDistanceBetweenStations, findNearestStation, haversineDistance } from "../data/stations"
 import TripPlan from "./TripPlan"
 
-import { DESTINATION_STATIONS, DEFAULT_FOOD_COSTS, generateDynamicMediumData, generateDynamicMultiLegData, calculateSmartSplit } from "../utils/budgetUtils"
+import { DESTINATION_STATIONS, generateDynamicMediumData, generateDynamicMultiLegData } from "../utils/budgetUtils"
 import { BudgetStatus } from "./BudgetResult/BudgetStatus"
 import { StayCard } from "./BudgetResult/StayCard"
 import { TransportCard } from "./BudgetResult/TransportCard"
@@ -37,12 +37,15 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   // ── Spot Info Data (Dynamic via Gemini API) ─────────
   const [spotInfos, setSpotInfos] = useState({})
   const [spotLoading, setSpotLoading] = useState(true)
+  const [spotRefreshToken, setSpotRefreshToken] = useState(0)
   const [removedSpots, setRemovedSpots] = useState([])
   const [expandedSpots, setExpandedSpots] = useState({}) // Tracks which spots are expanded
 
   const activeActivities = preferences.activities?.filter(a => !removedSpots.includes(a)) || []
 
-  const fetchAllSpots = async () => {
+  useEffect(() => {
+    const controller = new AbortController()
+    const fetchAllSpots = async () => {
     if (!preferences.activities?.length) {
       setSpotLoading(false)
       return
@@ -52,26 +55,26 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     try {
       const res = await fetch('/api/spots/info-batch', {
         method: 'POST',
+        signal: controller.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ spots: preferences.activities, locationName: location?.name })
       })
       
       if (res.ok) {
         const data = await res.json()
-        setSpotInfos(data)
+        if (!controller.signal.aborted) setSpotInfos(data)
       } else {
         console.error("Batch spot fetch failed:", res.status)
       }
     } catch (err) {
-      console.error("Failed to fetch spot info batch", err)
+      if (err.name !== 'AbortError') console.error("Failed to fetch spot info batch", err)
     }
 
-    setSpotLoading(false)
-  }
-
-  useEffect(() => {
+    if (!controller.signal.aborted) setSpotLoading(false)
+    }
     fetchAllSpots()
-  }, [preferences.activities, location?.name])
+    return () => controller.abort()
+  }, [preferences.activities, location?.name, spotRefreshToken])
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -86,8 +89,8 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
 
   // ── Live train data from API ────────────────────────
   const [liveTrainData, setLiveTrainData] = useState(null)
-  const [trainLoading, setTrainLoading] = useState(false)
-  const [trainError, setTrainError] = useState(null)
+  const [, setTrainLoading] = useState(false)
+  const [, setTrainError] = useState(null)
 
   const fromStation = preferences.selectedStation?.code
   const fromAirport = preferences.selectedAirport?.code
@@ -144,8 +147,8 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
 
   // ── Live flight data from API ────────────────────────
   const [liveFlightData, setLiveFlightData] = useState(null)
-  const [flightLoading, setFlightLoading] = useState(false)
-  const [flightError, setFlightError] = useState(null)
+  const [, setFlightLoading] = useState(false)
+  const [, setFlightError] = useState(null)
 
   useEffect(() => {
     if (preferences.transport === "flight") {
@@ -167,11 +170,11 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
         })
         .finally(() => setFlightLoading(false))
     }
-  }, [locationKey, preferences.transport])
+  }, [locationKey, fromAirport, preferences.transport])
 
   // Tie internal overlay state to browser history
   useEffect(() => {
-    const handlePopState = (event) => {
+    const handlePopState = () => {
       if (showTripPlan) {
         setShowTripPlan(false);
       } else {
@@ -198,11 +201,11 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
 
 
   // ── Live vehicle data from API ───────────────────────
-  const [vehicleType, setVehicleType] = useState("hatchback")
-  const [fuelType, setFuelType] = useState("petrol")
+  const vehicleType = "hatchback"
+  const fuelType = "petrol"
   const [liveVehicleData, setLiveVehicleData] = useState(null)
   const [vehicleLoading, setVehicleLoading] = useState(false)
-  const [vehicleError, setVehicleError] = useState(null)
+  const [, setVehicleError] = useState(null)
 
   useEffect(() => {
     if (preferences.transport === "personal") {
@@ -392,7 +395,17 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
       })
 
     return () => controller.abort()
-  }, [locationKey, preferences.stayType])
+  }, [
+    locationKey,
+    location?.name,
+    preferences.stayType,
+    preferences.days,
+    preferences.transport,
+    preferences.budgetType,
+    calculatedDist,
+    groupSize,
+    isGroup,
+  ])
 
   // If there's an error, selectedStay is undefined, so it gracefully falls back to manualPrice
   const selectedStay = stayOptions[selectedStayIndex]
@@ -531,17 +544,11 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
 
   // ── Multi-leg state ────────────────────────────────────
   const stationKeys = isMultiLeg ? Object.keys(mediumData.stations) : []
-  const [selectedStation, setSelectedStation] = useState(stationKeys[0] || "")
+  const [stationChoice, setSelectedStation] = useState("")
+  const selectedStation = stationKeys.includes(stationChoice) ? stationChoice : stationKeys[0] || ""
   const [selectedTrainClass, setSelectedTrainClass] = useState("")
   const [selectedTransferType, setSelectedTransferType] = useState("bus")
   const [selectedTransferClass, setSelectedTransferClass] = useState("")
-
-  // Ensure selectedStation updates if stationKeys change
-  useEffect(() => {
-    if (isMultiLeg && stationKeys.length > 0 && !selectedStation) {
-      setSelectedStation(stationKeys[0])
-    }
-  }, [isMultiLeg, stationKeys, selectedStation])
 
   // ── Direct transport state ─────────────────────────────
   const [selectedDirectClass, setSelectedDirectClass] = useState("")
@@ -697,7 +704,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
 
   useEffect(() => {
     syncTodayPlanRef.current = syncTodayPlan
-  }, [todayPlan, session?.access_token, totalBudget, location?.name, locationKey, foodBuffer, stayCost, transportCost, entryBreakdown, preferences, planData])
+  })
 
   useEffect(() => {
     if (session?.access_token) syncTodayPlanRef.current?.()
@@ -733,53 +740,6 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     const avg = Math.round((m.min + m.max) / 2) * 2 * (isGroup ? groupSize : 1)
     return { mode, cost: avg }
   }).filter(Boolean)
-
-  const card = (children, extra = {}) => (
-    <div style={{
-      background: theme.card,
-      borderRadius: "16px",
-      padding: "24px",
-      border: `1px solid ${theme.primary}33`,
-      ...extra,
-    }}>
-      {children}
-    </div>
-  )
-
-  const sectionLabel = (text) => (
-    <div style={{ color: theme.subtext, fontSize: "12px", letterSpacing: "2px", marginBottom: "14px" }}>
-      {text}
-    </div>
-  )
-
-  const selectableRow = (label, sublabel, rightTop, rightBottom, isSelected, onClick, danger = false, keyProp) => (
-    <div
-      key={keyProp || `${label}-${sublabel}`}
-      onClick={onClick}
-      style={{
-        padding: "12px 16px",
-        borderRadius: "12px",
-        marginBottom: "8px",
-        border: `2px solid ${isSelected ? theme.primary : danger ? "#ff6b6b33" : theme.primary + "22"}`,
-        background: isSelected ? `${theme.primary}22` : "transparent",
-        cursor: "pointer",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        transition: "all 0.3s ease",
-      }}>
-      <div>
-        <div style={{ color: isSelected ? theme.primary : theme.text, fontWeight: isSelected ? "800" : "600", fontSize: "14px" }}>
-          {isSelected ? "⭐ " : ""}{label}
-        </div>
-        {sublabel && <div style={{ color: theme.subtext, fontSize: "11px" }}>{sublabel}</div>}
-      </div>
-      <div style={{ textAlign: "right" }}>
-        <div style={{ color: danger ? "#ff6b6b" : theme.primary, fontWeight: "800", fontSize: "13px" }}>{rightTop}</div>
-        {rightBottom && <div style={{ color: theme.subtext, fontSize: "11px" }}>{rightBottom}</div>}
-      </div>
-    </div>
-  )
 
   return (
     <div style={{
@@ -855,7 +815,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
           spotLoading={spotLoading} spotInfos={spotInfos} preferences={preferences}
           entryBreakdown={entryBreakdown} totalEntryCost={totalEntryCost}
           expandedSpots={expandedSpots} setExpandedSpots={setExpandedSpots}
-          isGroup={isGroup} groupSize={groupSize} retryFetchSpots={fetchAllSpots}
+          isGroup={isGroup} groupSize={groupSize} retryFetchSpots={() => setSpotRefreshToken(value => value + 1)}
         />
 
         <CostSummary 

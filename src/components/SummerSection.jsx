@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { summerGetaways } from "../data/homepageData"
 
-const ImageSlider = ({ images, theme }) => {
+const ImageSlider = ({ images }) => {
   const [current, setCurrent] = useState(0)
 
   useEffect(() => {

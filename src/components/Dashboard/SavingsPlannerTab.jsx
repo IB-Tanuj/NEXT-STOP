@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import LiquidCityAnimation from './LiquidCityAnimation';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -136,21 +136,17 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
 
     const [fundingAmount, setFundingAmount] = useState('');
     const [selectedWallet, setSelectedWallet] = useState(sortedWallets[0]?.id || '');
-    const [contributorName, setContributorName] = useState(allContributors[0]);
+    const [selectedContributorName, setContributorName] = useState(allContributors[0]);
     const [isSaving, setIsSaving] = useState(false);
     const [justFunded, setJustFunded] = useState(null);
     const [membersOpen, setMembersOpen] = useState(true);
 
     const isOwner = session?.user?.id === trip.user_id;
-
-    // Ensure non-owners can only contribute as themselves
-    useEffect(() => {
-        if (!isOwner) {
-            setContributorName(currentUserName);
-        } else if (!contributorName || !allContributors.includes(contributorName)) {
-            setContributorName(allContributors[0]);
-        }
-    }, [isOwner, currentUserName, allContributors, contributorName]);
+    const contributorName = !isOwner
+        ? currentUserName
+        : allContributors.includes(selectedContributorName)
+            ? selectedContributorName
+            : allContributors[0];
 
     // Calculate Member Contributions
     const personalTarget = allContributors.length > 0 ? Math.round(totalTarget / allContributors.length) : totalTarget;
@@ -176,19 +172,14 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
         let activeOwnerFunds = 0;
         wallets.forEach(w => {
             if (w.wallet_transactions) {
-                let currentBalance = 0;
-                let memberNet = 0;
-                w.wallet_transactions.forEach(tx => {
-                    if (tx.contributor_name === contributorName) {
-                        const amt = Number(tx.amount);
-                        currentBalance += amt;
-                        // If added by someone other than the owner (i.e. the member themselves)
-                        if (tx.added_by && tx.added_by !== trip.user_id) {
-                            memberNet += amt;
-                        }
-                    }
-                });
-                activeOwnerFunds += Math.max(0, currentBalance - memberNet);
+                const ownerBalance = w.wallet_transactions
+                    .filter(tx => tx.contributor_name === contributorName)
+                    .filter(tx => tx.funded_by
+                        ? tx.funded_by === trip.user_id
+                        : (!tx.added_by || tx.added_by === trip.user_id))
+                    .reduce((sum, tx) => sum + Number(tx.amount), 0);
+
+                activeOwnerFunds += Math.max(0, ownerBalance);
             }
         });
         return activeOwnerFunds;
@@ -273,15 +264,16 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
             });
 
             if (!res.ok) throw new Error('Failed to save to backend');
-            const { wallet: dbWallet } = await res.json();
+            const { wallet: dbWallet, transaction: dbTransaction } = await res.json();
             
             const newWallets = wallets.map(w => {
                 if (w.id === wallet.id) {
-                    const newTx = { contributor_name: contributorName, amount: amountToAdd, added_by: session?.user?.id };
                     return { 
-                        ...w, 
-                        saved_amount: Number(w.saved_amount) + amountToAdd,
-                        wallet_transactions: w.wallet_transactions ? [...w.wallet_transactions, newTx] : [newTx]
+                        ...w,
+                        ...dbWallet,
+                        wallet_transactions: w.wallet_transactions
+                            ? [...w.wallet_transactions, dbTransaction]
+                            : [dbTransaction]
                     };
                 }
                 return w;
@@ -390,7 +382,7 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
             {/* ─── Group Members ─── */}
             {trip.member_ids && trip.member_ids.length > 0 && (
                 <div className="accordion-card animate-entrance" style={{ margin: '28px 0', animationDelay: '0.12s' }}>
-                    <div className="accordion-header" onClick={() => setMembersOpen(!membersOpen)}>
+                    <button type="button" className="accordion-header" aria-expanded={membersOpen} onClick={() => setMembersOpen(!membersOpen)}>
                         <h3>
                             <span className="section-dot" style={{ background: '#0ea5e9' }} />
                             Group Members
@@ -398,7 +390,7 @@ const SavingsPlannerTab = ({ trip, onUpdate }) => {
                         <span className={`accordion-chevron ${membersOpen ? 'open' : ''}`}>
                             <IconChevronDown />
                         </span>
-                    </div>
+                    </button>
                     {membersOpen && (
                         <div className="accordion-body">
                             {loadingMembers ? (

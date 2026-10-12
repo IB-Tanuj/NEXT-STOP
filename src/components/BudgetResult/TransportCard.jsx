@@ -1,7 +1,7 @@
-import React from "react";
+import { memo } from "react";
 import { card, sectionLabel, selectableRow } from "./SharedUI";
 
-export const TransportCard = React.memo(({
+export const TransportCard = memo(({
   theme,
   location,
   planData,
@@ -64,7 +64,7 @@ export const TransportCard = React.memo(({
             <div style={{ color: theme.text, fontWeight: "700", fontSize: "15px", margin: "16px 0 10px" }}>
               Step 2 — Select train class ({planData.selectedStationName || "Origin"} → {mediumData.stations[selectedStation]?.label}):
             </div>
-            {mediumData.stations[selectedStation]?.options?.map((opt, i) => {
+            {mediumData.stations[selectedStation]?.options?.map(opt => {
               return selectableRow(
                 theme,
                 opt.type, null,
@@ -187,7 +187,7 @@ export const TransportCard = React.memo(({
         <div style={{ color: theme.text, fontWeight: "700", fontSize: "15px", margin: "16px 0 10px" }}>
           Step 2 — Airport → {location?.name} transfer:
         </div>
-        {Object.entries(mediumData.transfer || {}).map(([key, val], i) => selectableRow(
+        {Object.entries(mediumData.transfer || {}).map(([key, val]) => selectableRow(
           theme,
           key === "cab" ? "🚕 Cab" : key === "selfDrive" ? "🚗 Self Drive" : "🚙 SUV/Premium Cab",
           `Duration: ${val.duration}`,
@@ -195,7 +195,7 @@ export const TransportCard = React.memo(({
           selectedFlightTransfer === key,
           () => setSelectedFlightTransfer(key),
           false,
-          i
+          key
         ))}
 
         <div style={{

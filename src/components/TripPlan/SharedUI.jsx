@@ -1,4 +1,3 @@
-import React from "react";
 
 export const ShimmerSkeleton = () => (
   <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "10px 0" }}>

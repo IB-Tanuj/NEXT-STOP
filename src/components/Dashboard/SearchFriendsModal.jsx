@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import ViewProfileModal from './ViewProfileModal';
 import './ProfileTab.css'; // Reuse existing styles
@@ -160,7 +160,8 @@ const SearchFriendsModal = ({ onClose }) => {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {searchResults.map(userItem => (
                                 <div key={userItem.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <div 
+                                    <button
+                                        type="button"
                                         style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', flex: 1, overflow: 'hidden' }}
                                         onClick={() => setSelectedProfile(userItem)}
                                     >
@@ -181,7 +182,7 @@ const SearchFriendsModal = ({ onClose }) => {
                                                 </div>
                                             )}
                                         </div>
-                                    </div>
+                                    </button>
                                     <button 
                                         onClick={() => handleSendRequest(userItem.username, userItem.id)}
                                         disabled={requestLoadingId === userItem.id}

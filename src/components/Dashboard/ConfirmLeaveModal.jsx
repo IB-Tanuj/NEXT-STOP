@@ -1,4 +1,3 @@
-import React from 'react';
 
 const ConfirmLeaveModal = ({ isOpen, onClose, onConfirm, loading }) => {
     if (!isOpen) return null;

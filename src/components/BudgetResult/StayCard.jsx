@@ -1,7 +1,7 @@
-import React from "react";
+import { memo } from "react";
 import { card, sectionLabel, selectableRow } from "./SharedUI";
 
-export const StayCard = React.memo(({
+export const StayCard = memo(({
   theme,
   location,
   preferences,

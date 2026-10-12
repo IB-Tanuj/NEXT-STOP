@@ -3,11 +3,10 @@ import BudgetResult from "./BudgetResult"
 import { getStationsByCity, getNearbyStations, haversineDistance } from "../data/stations"
 import { getAirportsByCity, getNearbyAirports } from "../data/airports"
 
-const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
+const TripPreferences = ({ location, theme, planData, onBack }) => {
   const [days, setDays] = useState("")
   const [transport, setTransport] = useState(null)
   const [stayType, setStayType] = useState(null)
-  const [foodType, setFoodType] = useState(null)
   const [activities, setActivities] = useState([])
   const [showBudget, setShowBudget] = useState(false)
   const [prefData, setPrefData] = useState(null)
@@ -46,13 +45,6 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
     { id: "budget", label: "Budget Hotel", emoji: "🏨", desc: "₹800-2000/night, basic comfort" },
     { id: "mid", label: "Mid Range", emoji: "🏩", desc: "₹2000-5000/night, good amenities" },
     { id: "luxury", label: "Luxury", emoji: "🏰", desc: "₹5000+/night, premium experience" },
-  ]
-
-  const foodOptions = [
-    { id: "local", label: "Local Dhabas", emoji: "🍛", desc: "₹100-300/day, authentic taste" },
-    { id: "mix", label: "Mix", emoji: "🍽️", desc: "₹300-600/day, best of both" },
-    { id: "restaurant", label: "Restaurants", emoji: "🍴", desc: "₹600-1500/day, comfortable dining" },
-    { id: "hotel_meals", label: "Hotel Meals", emoji: "🛎️", desc: "₹800-2000/day, all inclusive" },
   ]
 
   const activityOptions = location?.spots?.map(spot => ({
@@ -100,7 +92,7 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
 
   useEffect(() => {
     // Popstate listener to handle browser back button
-    const handlePopState = (event) => {
+    const handlePopState = () => {
       if (showBudget) {
         setShowBudget(false);
       } else {
@@ -198,7 +190,7 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
           </div>
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "12px" }}>
             {[1, 2, 3, 4, 5, 7, 10].map((d) => (
-              <div
+              <button type="button"
                 key={d}
                 onClick={() => setDays(String(d))}
                 style={{
@@ -213,7 +205,7 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
                   transition: "all 0.3s ease",
                 }}>
                 {d} {d === 1 ? "day" : "days"}
-              </div>
+              </button>
             ))}
           </div>
           <input
@@ -253,7 +245,7 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               {transportOptions.map((opt) => (
-                <div
+                <button type="button"
                   key={opt.id}
                   onClick={() => {
                     setTransport(opt.id)
@@ -276,7 +268,7 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
                   <div style={{ color: theme.subtext, fontSize: "11px", marginTop: "4px" }}>
                     {opt.desc}
                   </div>
-                </div>
+                </button>
               ))}
             </div>
             {transport === "personal" && (
@@ -306,10 +298,10 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
               animation: "fadeIn 0.3s ease",
             }}>
               {availableStations.map((st, i) => (
-                <div
+                <button type="button"
                   key={st.code}
                   onClick={() => setSelectedStation(st)}
-                  style={{
+                   style={{
                     padding: "16px",
                     display: "flex",
                     justifyContent: "space-between",
@@ -318,13 +310,13 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
                     borderBottom: i < availableStations.length - 1 ? `1px solid ${theme.primary}33` : "none",
                     background: selectedStation?.code === st.code ? `${theme.primary}22` : "transparent",
                     transition: "all 0.2s ease"
-                  }}>
+                   }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <span style={{ fontSize: "20px" }}>🚂</span>
                     <span style={{ color: theme.text, fontWeight: "600", fontSize: "14px" }}>{st.name}</span>
                   </div>
                   <span style={{ color: theme.primary, fontWeight: "800", fontSize: "14px" }}>{st.code}</span>
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -339,7 +331,7 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
               animation: "fadeIn 0.3s ease",
             }}>
               {availableAirports.map((ap, i) => (
-                <div
+                <button type="button"
                   key={ap.code}
                   onClick={() => setSelectedAirport(ap)}
                   style={{
@@ -351,7 +343,7 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
                     borderBottom: i < availableAirports.length - 1 ? `1px solid ${theme.primary}33` : "none",
                     background: selectedAirport?.code === ap.code ? `${theme.primary}22` : "transparent",
                     transition: "all 0.2s ease"
-                  }}>
+                   }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <span style={{ fontSize: "20px" }}>✈️</span>
                     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -361,7 +353,7 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
                     </div>
                   </div>
                   <span style={{ color: theme.primary, fontWeight: "800", fontSize: "14px", marginLeft: "10px" }}>{ap.code}</span>
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -382,7 +374,7 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
             {stayOptions.map((opt) => (
-              <div
+              <button type="button"
                 key={opt.id}
                 onClick={() => setStayType(opt.id)}
                 style={{
@@ -393,7 +385,7 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
                   cursor: "pointer",
                   transition: "all 0.3s ease",
                   textAlign: "center",
-                }}>
+                 }}>
                 <div style={{ fontSize: "28px", marginBottom: "6px" }}>{opt.emoji}</div>
                 <div style={{ color: stayType === opt.id ? theme.primary : theme.text, fontWeight: "700", fontSize: "14px" }}>
                   {opt.label}
@@ -401,7 +393,7 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
                 <div style={{ color: theme.subtext, fontSize: "11px", marginTop: "4px" }}>
                   {opt.desc}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -425,7 +417,7 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
             {activityOptions.map((opt) => (
-              <div
+              <button type="button"
                 key={opt.id}
                 onClick={() => {
                   setActivities(prev =>
@@ -444,7 +436,7 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
                   display: "flex",
                   alignItems: "center",
                   gap: "10px",
-                }}>
+                 }}>
                 <span style={{ fontSize: "20px" }}>{opt.emoji}</span>
                 <span style={{
                   color: activities.includes(opt.id) ? theme.primary : theme.text,
@@ -456,7 +448,7 @@ const TripPreferences = ({ location, theme, planData, onBack, onNext }) => {
                 {activities.includes(opt.id) && (
                   <span style={{ marginLeft: "auto", color: theme.primary, fontSize: "12px" }}>✓</span>
                 )}
-              </div>
+              </button>
             ))}
           </div>
         </div>

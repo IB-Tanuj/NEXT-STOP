@@ -102,7 +102,7 @@ const RainAudio = ({ enabled = true }) => {
       if (audioCtxRef.current?.state === "suspended") audioCtxRef.current.resume()
       const el = fileRef.current
       if (el && el.paused && !muted) {
-        el.play().catch(() => {})
+        el.play().catch(error => console.debug('Rain audio loop could not restart', error))
       }
       return
     }
@@ -161,8 +161,8 @@ const RainAudio = ({ enabled = true }) => {
     return () => {
       if (fileRef.current) { fileRef.current.pause(); fileRef.current = null }
       if (synthRef.current) {
-        try { synthRef.current.noise.stop() } catch {}
-        try { synthRef.current.swell.stop() } catch {}
+        try { synthRef.current.noise.stop() } catch (error) { console.debug('Rain noise was already stopped', error) }
+        try { synthRef.current.swell.stop() } catch (error) { console.debug('Rain swell was already stopped', error) }
         synthRef.current = null
       }
       if (audioCtxRef.current) { audioCtxRef.current.close().catch(() => {}) }
@@ -186,7 +186,7 @@ const RainAudio = ({ enabled = true }) => {
   const toggleMute = () => {
     const next = !muted
     setMuted(next)
-    try { localStorage.setItem(MUTED_KEY, next ? "1" : "0") } catch {}
+    try { localStorage.setItem(MUTED_KEY, next ? "1" : "0") } catch (error) { console.debug('Could not persist audio preference', error) }
     if (next) {
       // Muting
       if (fileRef.current) {

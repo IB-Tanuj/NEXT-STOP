@@ -37,7 +37,6 @@ async function optimize() {
     const outputPath = join(OUTPUT_DIR, `${name}.webp`)
 
     try {
-      const inputMeta = await sharp(inputPath).metadata()
       const inputSize = (await sharp(inputPath).toBuffer()).length
 
       const output = await sharp(inputPath)

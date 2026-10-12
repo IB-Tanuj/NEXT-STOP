@@ -100,7 +100,6 @@ export const searchFlights = async (req, res) => {
           if (firstFlight && firstFlight.price) {
             apiData = apiRes.data;
             const basePrice = firstFlight.price;
-            const airline = firstFlight.flights?.[0]?.airline || "Flight";
             const duration = firstFlight.duration?.text || "2 hr";
             
             flightOptions = [

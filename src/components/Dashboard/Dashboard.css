@@ -462,6 +462,11 @@
     position: relative;
     overflow: hidden;
     user-select: none;
+    width: 100%;
+    border: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
 }
 
 .accordion-header:hover {
@@ -959,6 +964,12 @@
     padding: 6px 10px;
     border-radius: 10px;
     transition: background 0.2s;
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
 }
 
 .spot-item-header:hover {

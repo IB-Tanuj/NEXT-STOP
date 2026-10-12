@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import './Dashboard.css';
 
 const LiquidCityAnimation = ({ percentage, city }) => {

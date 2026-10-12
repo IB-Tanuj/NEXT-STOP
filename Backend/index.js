@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import supabase from "./config/supabase.js";
 import trainRoutes from "./routes/trainRoutes.js";
 import tripRoutes from "./routes/tripRoutes.js";
 import liveDataRoutes from "./routes/liveDataRoutes.js";

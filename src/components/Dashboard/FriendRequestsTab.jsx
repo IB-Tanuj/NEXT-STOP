@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
 import ViewProfileModal from './ViewProfileModal';
@@ -25,7 +25,7 @@ const FriendRequestsTab = () => {
     const [loading, setLoading] = useState(true);
     const [selectedProfile, setSelectedProfile] = useState(null);
 
-    const fetchRequests = async () => {
+    const fetchRequests = useCallback(async () => {
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/friends/requests`, {
                 headers: {
@@ -42,11 +42,11 @@ const FriendRequestsTab = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [session]);
 
     useEffect(() => {
         fetchRequests();
-    }, [session]);
+    }, [fetchRequests]);
 
     const handleAction = async (requestId, action) => {
         try {

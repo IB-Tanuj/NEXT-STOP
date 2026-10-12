@@ -1,4 +1,4 @@
-import React from "react";
+import { memo } from "react";
 import { useState } from "react"
 import { localPhrases } from "../../data/localPhrases"
 import { card, sectionLabel, comingSoon, ShimmerSkeleton } from "./SharedUI"
@@ -9,14 +9,20 @@ const PhraseCategory = ({ category, theme }) => {
   return (
     <div style={{ borderBottom: `1px solid ${theme.primary}11` }}>
       {/* Category Header */}
-      <div
+      <button
+        type="button"
         onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
         style={{
           padding: "14px 24px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           cursor: "pointer",
+          width: "100%",
+          border: "none",
+          background: "transparent",
+          textAlign: "left",
           transition: "background 0.2s ease",
         }}
         onMouseEnter={e => e.currentTarget.style.background = `${theme.primary}11`}
@@ -39,7 +45,7 @@ const PhraseCategory = ({ category, theme }) => {
             display: "inline-block",
           }}>▼</span>
         </div>
-      </div>
+      </button>
 
       {/* Phrases List */}
       {expanded && (
@@ -69,7 +75,7 @@ const PhraseCategory = ({ category, theme }) => {
   )
 }
 
-export const TripOverviewTab = React.memo(({
+export const TripOverviewTab = memo(({
   theme,
   locationName,
   days,

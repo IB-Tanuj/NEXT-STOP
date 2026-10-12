@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -206,7 +206,7 @@ const ProfileTab = () => {
                         {/* Row 3: Stats */}
                         <div className="profile-hero__stats">
                             <span className="profile-hero__stat"><strong>0</strong> posts</span>
-                            <span className="profile-hero__stat" onClick={() => setIsFriendsListModalOpen(true)} style={{ cursor: 'pointer' }}><strong>{friendsCount}</strong> friends</span>
+                        <button type="button" className="profile-hero__stat" onClick={() => setIsFriendsListModalOpen(true)} style={{ cursor: 'pointer', background: 'none', border: 'none', color: 'inherit', padding: 0 }}><strong>{friendsCount}</strong> friends</button>
                             <span className="profile-hero__stat"><strong>0</strong> wanderlogs</span>
                         </div>
 

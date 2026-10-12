@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect } from 'react';
 import supabase from '../config/supabase';
 
 const AuthContext = createContext();
@@ -60,7 +60,9 @@ export const AuthProvider = ({ children }) => {
     const cleanEmail = email.trim();
     try {
       localStorage.setItem('nextstop_signup_email', cleanEmail);
-    } catch (_) {}
+    } catch (error) {
+      console.debug('Could not persist signup email locally', error);
+    }
 
     const redirectUrl = `${window.location.origin}/?auth=login&verified=true&email=${encodeURIComponent(cleanEmail)}`;
 

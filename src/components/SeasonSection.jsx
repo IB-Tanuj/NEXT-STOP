@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { seasonGetaways, getCurrentSeason } from "../data/homepageData"
 import { locationData } from "../data/locationData"
 import { fetchImagesWithCache, getCachedImages } from "../utils/imageCache"
@@ -153,6 +153,27 @@ const SeasonSection = ({ theme, onLocationClick }) => {
   const sectionRef = useRef(null)
   const fetchedRef = useRef(false)
 
+  const fetchAllCardImages = useCallback(async () => {
+    for (const spot of data.spots) {
+      const query = `${spot.name} ${spot.state} India tourism landscape`
+      const isCached = !!getCachedImages(query)
+
+      setLoadingCards(prev => ({ ...prev, [spot.name]: true }))
+      try {
+        const urls = await fetchImagesWithCache(query, 4)
+        setCardImages(prev => ({ ...prev, [spot.name]: urls.length > 0 ? urls : null }))
+      } catch {
+        setCardImages(prev => ({ ...prev, [spot.name]: null }))
+      } finally {
+        setLoadingCards(prev => ({ ...prev, [spot.name]: false }))
+      }
+
+      if (!isCached) {
+        await new Promise(resolve => setTimeout(resolve, 1500))
+      }
+    }
+  }, [data.spots])
+
   // Fetch images when section scrolls into view
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -176,29 +197,7 @@ const SeasonSection = ({ theme, onLocationClick }) => {
     )
     if (sectionRef.current) observer.observe(sectionRef.current)
     return () => observer.disconnect()
-  }, [])
-
-  const fetchAllCardImages = async () => {
-    for (const spot of data.spots) {
-      const query = `${spot.name} ${spot.state} India tourism landscape`
-      const isCached = !!getCachedImages(query)
-      
-      setLoadingCards(prev => ({ ...prev, [spot.name]: true }))
-      try {
-        const urls = await fetchImagesWithCache(query, 4)
-        setCardImages(prev => ({ ...prev, [spot.name]: urls.length > 0 ? urls : null }))
-      } catch {
-        setCardImages(prev => ({ ...prev, [spot.name]: null }))
-      } finally {
-        setLoadingCards(prev => ({ ...prev, [spot.name]: false }))
-      }
-      
-      // Rate limit delay only if we actually hit the network
-      if (!isCached) {
-        await new Promise(r => setTimeout(r, 1500))
-      }
-    }
-  }
+  }, [data.spots, fetchAllCardImages])
 
   const openLightbox = (spotName, imageIndex) => {
     const imgs = cardImages[spotName]

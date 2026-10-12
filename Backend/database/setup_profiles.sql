@@ -27,10 +27,16 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 -- Enable RLS
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
--- Policies
-CREATE POLICY "Users can view all profiles"
+-- Profile search and friend/member lookups go through the authenticated
+-- backend endpoints, which explicitly project safe public fields. Direct
+-- table reads are limited to the current user's own profile so private
+-- fields such as dob, gender, preferences, and tags are not exposed by the
+-- browser client.
+DROP POLICY IF EXISTS "Users can view all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
+CREATE POLICY "Users can view their own profile"
     ON public.profiles FOR SELECT
-    USING (true); -- Anyone can view profiles (needed for adding friends later)
+    USING (auth.uid() = id);
 
 CREATE POLICY "Users can update own profile"
     ON public.profiles FOR UPDATE

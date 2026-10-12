@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -68,7 +68,12 @@ const PersonalDashboard = () => {
         fetchTrips();
     }, [user, session]);
 
-    const filteredTrips = trips.filter(t => tripType === 'solo' ? (!t.member_ids || t.member_ids.length === 0) : (t.member_ids && t.member_ids.length > 0));
+    const filteredTrips = useMemo(
+        () => trips.filter(t => tripType === 'solo'
+            ? (!t.member_ids || t.member_ids.length === 0)
+            : (t.member_ids && t.member_ids.length > 0)),
+        [trips, tripType]
+    );
 
     useEffect(() => {
         if (filteredTrips.length > 0 && !filteredTrips.find(t => t.id === selectedTrip?.id)) {
@@ -76,7 +81,7 @@ const PersonalDashboard = () => {
         } else if (filteredTrips.length === 0) {
             setSelectedTrip(null);
         }
-    }, [tripType, trips]);
+    }, [filteredTrips, selectedTrip?.id]);
 
     if (!user) return <div className="dashboard-container" style={{ paddingTop: '100px' }}><h2>Please log in to view your dashboard.</h2></div>;
     if (loading) return <div className="dashboard-container" style={{ paddingTop: '100px' }}><div className="loader"></div></div>;

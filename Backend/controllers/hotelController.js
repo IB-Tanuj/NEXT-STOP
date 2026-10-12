@@ -61,8 +61,6 @@ export const searchHotels = async (req, res) => {
         const checkoutStr = formatDate(checkoutDate);
 
         const cacheKey = `${locationId}-${checkinStr}-${checkoutStr}-${adults}`;
-        const now = Date.now();
-
         const cached = await cache.get(cacheKey);
         if (cached) {
             console.log(`🏨 Serving hotels from cache for location ${locationId}`);

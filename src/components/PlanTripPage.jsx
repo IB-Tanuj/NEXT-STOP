@@ -145,7 +145,7 @@ const PlanTripPage = ({ theme, onClose, onStartPlanning }) => {
             background: `linear-gradient(180deg, ${theme.primary}, ${theme.primary}22)`,
           }} />
 
-          {steps.map((step, i) => (
+          {steps.map(step => (
             <div
               key={step.number}
               style={{

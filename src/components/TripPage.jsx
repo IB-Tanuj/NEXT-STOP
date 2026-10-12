@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
+import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet"
 import "leaflet/dist/leaflet.css"
 import L from "leaflet"
 import PlanningPage from "./PlanningPage"
@@ -123,7 +123,7 @@ const LocationBoundary = ({ coords, zoom, theme, locationName, boundaryQueryName
     fetchBoundary()
 
     return () => { layerGroup.remove() }
-  }, [locationName, boundaryQueryName, coords, zoom, theme, customBoundary])
+  }, [map, locationName, boundaryQueryName, coords, zoom, theme, customBoundary])
 
   return null
 }
@@ -144,7 +144,7 @@ const TripPage = ({ location, theme, onBack }) => {
 
   // Tie internal overlay state to browser history
   useEffect(() => {
-    const handlePopState = (event) => {
+    const handlePopState = () => {
       // If we are currently showing planning page, going back should hide it
       if (planningVisible) {
         setPlanningVisible(false);
@@ -230,7 +230,6 @@ const TripPage = ({ location, theme, onBack }) => {
     spots: [],
     customBoundary: null
   }
-  const locationKey = location?.toLowerCase()
 
   const handleContinue = () => {
     setMapVisible(false)
@@ -464,7 +463,8 @@ const TripPage = ({ location, theme, onBack }) => {
                   </div>
                 )}
               </div>
-              <div
+              <button
+                type="button"
                 onClick={() => setActiveSpot(null)}
                 style={{
                   color: theme.subtext,
@@ -472,6 +472,8 @@ const TripPage = ({ location, theme, onBack }) => {
                   textAlign: "center",
                   marginTop: "12px",
                   cursor: "pointer",
+                  background: "transparent",
+                  border: "none",
                   opacity: 0.7,
                   transition: "opacity 0.2s ease",
                 }}
@@ -479,7 +481,7 @@ const TripPage = ({ location, theme, onBack }) => {
                 onMouseLeave={e => e.currentTarget.style.opacity = "0.7"}
               >
                 tap here to close ✕
-              </div>
+              </button>
             </div>
           )}
 
@@ -505,7 +507,8 @@ const TripPage = ({ location, theme, onBack }) => {
                 }}
               >
                 {/* Close button */}
-                <div
+                <button
+                  type="button"
                   onClick={() => setLightboxIndex(null)}
                   style={{
                     position: "absolute",
@@ -523,12 +526,13 @@ const TripPage = ({ location, theme, onBack }) => {
                     background: "rgba(255,255,255,0.1)",
                     transition: "background 0.2s ease",
                     zIndex: 3001,
+                    border: "none",
                   }}
                   onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.2)"}
                   onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
                 >
                   ✕
-                </div>
+                </button>
 
                 {/* Spot name */}
                 <div style={{
@@ -563,7 +567,8 @@ const TripPage = ({ location, theme, onBack }) => {
                 {/* Prev / Next buttons */}
                 {total > 1 && (
                   <>
-                    <div
+                    <button
+                      type="button"
                       onClick={e => {
                         e.stopPropagation()
                         setLightboxIndex((lightboxIndex - 1 + total) % total)
@@ -586,13 +591,15 @@ const TripPage = ({ location, theme, onBack }) => {
                         color: "#fff",
                         transition: "all 0.2s ease",
                         backdropFilter: "blur(8px)",
+                        padding: 0,
                       }}
                       onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.2)"}
                       onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
                     >
                       ‹
-                    </div>
-                    <div
+                    </button>
+                    <button
+                      type="button"
                       onClick={e => {
                         e.stopPropagation()
                         setLightboxIndex((lightboxIndex + 1) % total)
@@ -615,12 +622,13 @@ const TripPage = ({ location, theme, onBack }) => {
                         color: "#fff",
                         transition: "all 0.2s ease",
                         backdropFilter: "blur(8px)",
+                        padding: 0,
                       }}
                       onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.2)"}
                       onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
                     >
                       ›
-                    </div>
+                    </button>
                   </>
                 )}
 

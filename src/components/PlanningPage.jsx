@@ -21,8 +21,6 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
   const [suggestions, setSuggestions] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [showPreferences, setShowPreferences] = useState(false)
-  const [planData, setPlanData] = useState(null)
-  const [showBudget, setShowBudget] = useState(false)
   const [friends, setFriends] = useState([])
   const [showFriendsModal, setShowFriendsModal] = useState({ show: false, index: null })
 
@@ -84,7 +82,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
 
           setLeavingFrom(foundLocation)
           setSelectedCity(foundLocation)
-        } catch (err) {
+        } catch {
           console.warn("Reverse geocoding failed, falling back to 'Current Location'")
           setLeavingFrom("Current Location")
           setSelectedCity("Current Location")
@@ -92,7 +90,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
 
         setLocationLoading(false)
       },
-      (error) => {
+      () => {
         setLocationError("Could not get location. Please search for your city manually.")
         setLocationLoading(false)
       }
@@ -114,10 +112,8 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
 
   // Tie internal overlay state to browser history
   useEffect(() => {
-    const handlePopState = (event) => {
-      if (showBudget) {
-        setShowBudget(false);
-      } else if (showPreferences) {
+    const handlePopState = () => {
+      if (showPreferences) {
         setShowPreferences(false);
       } else {
         onBack();
@@ -126,7 +122,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [showPreferences, showBudget, onBack]);
+  }, [showPreferences, onBack]);
 
   const handleOpenPreferences = () => {
     setShowPreferences(true);
@@ -136,19 +132,6 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
   const handleClosePreferences = () => {
     setShowPreferences(false);
     if (window.history.state?.page === 'preferences') {
-      window.history.back();
-    }
-  };
-
-  const handleOpenBudget = (prefs) => {
-    setPlanData(prefs);
-    setShowBudget(true);
-    window.history.pushState({ page: 'budget' }, '', window.location.href);
-  };
-
-  const handleCloseBudget = () => {
-    setShowBudget(false);
-    if (window.history.state?.page === 'budget') {
       window.history.back();
     }
   };
@@ -167,7 +150,8 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
     }}>
 
       {/* Back Button */}
-      <div
+      <button
+        type="button"
         onClick={onBack}
         style={{
           position: "fixed",
@@ -178,9 +162,11 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
           fontSize: "14px",
           fontWeight: "600",
           zIndex: 10,
+          background: 'transparent',
+          border: 'none',
         }}>
         ← Back
-      </div>
+      </button>
 
       {/* Header */}
       <div style={{
@@ -291,6 +277,11 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
               boxSizing: "border-box",
             }}
           />
+          {locationError && (
+            <p role="alert" style={{ color: '#f87171', fontSize: '12px', margin: '8px 0 0' }}>
+              {locationError}
+            </p>
+          )}
           {/* City Suggestions Dropdown */}
           {showSuggestions && suggestions.length > 0 && (
             <div style={{
@@ -304,9 +295,9 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
               overflowY: "auto",
             }}>
               {suggestions.map((city, i) => (
-                <div
+                <button type="button"
                   key={city}
-                  onMouseDown={() => {
+                  onClick={() => {
                     setLeavingFrom(city)
                     setSelectedCity(city)
                     setShowSuggestions(false)
@@ -317,11 +308,17 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                     cursor: "pointer",
                     borderBottom: i < suggestions.length - 1 ? `1px solid ${theme.primary}22` : "none",
                     transition: "background 0.2s ease",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = `${theme.primary}22`}
+                     display: "flex",
+                     alignItems: "center",
+                     gap: "12px",
+                     background: 'transparent',
+                     borderLeft: 'none',
+                     borderRight: 'none',
+                     borderTop: 'none',
+                     textAlign: 'left',
+                     width: '100%',
+                   }}
+                   onMouseEnter={e => e.currentTarget.style.background = `${theme.primary}22`}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                 >
                   <span style={{ fontSize: "18px" }}>📍</span>
@@ -335,7 +332,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                     </div>
 
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -391,7 +388,8 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
 
           <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
             {["solo", "group"].map((type) => (
-              <div
+              <button
+                type="button"
                 key={type}
                 onClick={() => { setBudgetType(type); setBudget(""); setGroupSize("") }}
                 style={{
@@ -408,9 +406,9 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                   transition: "all 0.3s ease",
                   textTransform: "uppercase",
                   letterSpacing: "1px",
-                }}>
+                 }}>
                 {type === "solo" ? "👤 Solo" : "👥 Group"}
-              </div>
+              </button>
             ))}
           </div>
 
@@ -464,7 +462,8 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
               </div>
               <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
                 {[2, 3, 4, 5, 6, "7+"].map((num) => (
-                  <div
+                  <button
+                    type="button"
                     key={num}
                     onClick={() => {
                       setGroupSize(String(num));
@@ -481,9 +480,9 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                       fontWeight: "700",
                       fontSize: "15px",
                       transition: "all 0.3s ease",
-                    }}>
+                     }}>
                     {num}
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -556,7 +555,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                               showAlert(data.error || "Failed to send friend request", "error");
                             }
                           }
-                        } catch (err) {
+                        } catch {
                           showAlert("Failed to process request", "error");
                         }
                       }}
@@ -755,7 +754,6 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
             theme={theme}
             planData={{ leavingFrom, originCoords: leavingCoords, originCity: selectedCity, budget, budgetType, groupSize, groupMembers }}
             onBack={handleClosePreferences}
-            onNext={handleOpenBudget}
           />
         </div>
       )}
@@ -786,7 +784,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                 </div>
               ) : (
                 friends.map(friend => (
-                  <div key={friend.id}
+                  <button type="button" key={friend.id}
                     onClick={() => {
                       const newMembers = [...groupMembers];
                       newMembers[showFriendsModal.index] = { name: friend.full_name || friend.username || friend.unique_id, uid: friend.username, id: friend.id };
@@ -801,7 +799,10 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                       background: `${theme.primary}11`,
                       borderRadius: '12px',
                       cursor: 'pointer',
-                      border: `1px solid ${theme.primary}22`
+                      border: `1px solid ${theme.primary}22`,
+                      color: theme.text,
+                      textAlign: 'left',
+                      width: '100%'
                     }}>
                     <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: theme.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', overflow: 'hidden' }}>
                       {friend.avatar_url ? (
@@ -814,7 +815,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                       <div style={{ color: theme.text, fontWeight: 'bold' }}>{friend.full_name || friend.username}</div>
                       {friend.username && <div style={{ color: theme.subtext, fontSize: '12px' }}>@{friend.username}</div>}
                     </div>
-                  </div>
+                  </button>
                 ))
               )}
             </div>

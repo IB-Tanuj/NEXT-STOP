@@ -87,6 +87,7 @@ export async function cleanWebData(rawText, outputSchema, extractionGoal) {
  * all calls now use GEMINI_EXTRA via getGeminiClient().
  */
 export async function cleanWebDataWithKey(rawText, outputSchema, extractionGoal, _apiKey) {
+    void _apiKey;
     const ai = getGeminiClient();
 
     // Truncate raw text to 10000 chars to save tokens while keeping enough data for top 5 hotels
@@ -133,6 +134,6 @@ ${truncated}`;
         console.error("--- RAW TEXT ---");
         console.error(text);
         console.error("----------------");
-        throw new Error("Gemini returned invalid JSON. Try searching again.");
+        throw new Error("Gemini returned invalid JSON. Try searching again.", { cause: err });
     }
 }
