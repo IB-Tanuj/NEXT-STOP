@@ -1,7 +1,7 @@
-import React from "react";
+import { memo } from "react";
 import { card, sectionLabel } from "./SharedUI";
 
-export const CostSummary = React.memo(({
+export const CostSummary = memo(({
   theme,
   stayCost,
   transportCost,

@@ -218,8 +218,6 @@ export const allIndiaLocations = [
 
 // Budget recommendation engine
 export const getRecommendations = (budget, groupSize = 1, days = 3) => {
-  const perPersonBudget = budget / groupSize
-
   return allIndiaLocations.map(loc => {
     let minTransport = loc.minTransport
     let minStayPerNight = loc.minStayPerNight
@@ -254,10 +252,11 @@ export const getRecommendations = (budget, groupSize = 1, days = 3) => {
     const remainingPerPerson = remaining / groupSize
     const percentUsed = minTotal > 0 ? (minTotal / budget) * 100 : 0
 
-    let status = "recommended"
-    if (percentUsed > 100) status = "outofreach"
-    else if (percentUsed > 75) status = "stretch"
-    else status = "recommended"
+    const status = percentUsed > 100
+      ? "outofreach"
+      : percentUsed > 75
+        ? "stretch"
+        : "recommended"
 
     return {
       ...loc,

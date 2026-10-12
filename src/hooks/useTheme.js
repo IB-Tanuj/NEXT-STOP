@@ -1,15 +1,11 @@
 import { useState, useEffect } from "react"
-import { getSeasonTheme, themes, locationThemes } from "../themes"
+import { getSeasonTheme, locationThemes } from "../themes"
 import { allIndiaLocations } from "../data/allLocations"
 
 export const useTheme = () => {
   const [theme, setTheme] = useState(getSeasonTheme())
-  const [currentSeason, setCurrentSeason] = useState(theme.name)
+  const currentSeason = theme.name
   const [currentLocation, setCurrentLocation] = useState(null)
-
-  useEffect(() => {
-    applyTheme(theme)
-  }, [theme])
 
   const applyTheme = (t) => {
     const root = document.documentElement
@@ -23,6 +19,10 @@ export const useTheme = () => {
     root.style.setProperty("--gradient", t.gradient)
     root.style.setProperty("--hero-gradient", t.heroGradient)
   }
+
+  useEffect(() => {
+    applyTheme(theme)
+  }, [theme])
 
   const setLocationTheme = (locationInput) => {
     if (!locationInput || !locationInput.trim()) {

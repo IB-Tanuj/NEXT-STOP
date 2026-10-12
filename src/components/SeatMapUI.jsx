@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
-const SeatMapUI = ({ tripId, theme }) => {
+const SeatMapUI = ({ tripId }) => {
   const [seatData, setSeatData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedSeat, setSelectedSeat] = useState(null);
@@ -110,9 +110,13 @@ const SeatMapUI = ({ tripId, theme }) => {
               }
 
               return (
-                <div
+                <button
+                  type="button"
                   key={colIdx}
                   onClick={() => isAvailable && setSelectedSeat(seat.seat_number)}
+                  disabled={!isAvailable}
+                  aria-label={`${seat.category || 'Seat'} ${seat.seat_number}${isAvailable ? '' : ' booked'}`}
+                  aria-pressed={isSelected}
                   style={{
                     width: '42px',
                     height: isBed ? '72px' : '42px',
@@ -142,7 +146,7 @@ const SeatMapUI = ({ tripId, theme }) => {
                   }}
                 >
                   {seat.seat_number}
-                </div>
+                </button>
               );
             })}
           </div>

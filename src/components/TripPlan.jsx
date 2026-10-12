@@ -106,11 +106,12 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack, 
     }}>
 
       {/* Back */}
-      <div onClick={onBack} style={{
+      <button type="button" onClick={onBack} style={{
         position: "fixed", top: "30px", left: "40px",
         color: theme.subtext, cursor: "pointer",
+        background: "transparent", border: "none", padding: 0,
         fontSize: "14px", fontWeight: "600", zIndex: 10,
-      }}>← Back</div>
+      }}>← Back</button>
 
       {/* Header */}
       <div style={{ color: theme.primary, fontSize: "13px", letterSpacing: "4px", fontWeight: "700", marginBottom: "8px" }}>
@@ -215,7 +216,7 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack, 
       )}
 
       {/* Tabs */}
-      <div style={{
+      <div role="tablist" style={{
         display: "flex",
         gap: "8px",
         marginBottom: "24px",
@@ -225,9 +226,12 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack, 
         maxWidth: "620px",
       }}>
         {tabs.map(tab => (
-          <div
+          <button
+            type="button"
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
+            aria-selected={activeTab === tab.id}
+            role="tab"
             style={{
               padding: "10px 16px",
               borderRadius: "20px",
@@ -238,9 +242,9 @@ const TripPlan = ({ location, theme, planData, preferences, budgetData, onBack, 
               fontWeight: "700",
               fontSize: "13px",
               transition: "all 0.3s ease",
-            }}>
+             }}>
             {tab.label}
-          </div>
+          </button>
         ))}
       </div>
 

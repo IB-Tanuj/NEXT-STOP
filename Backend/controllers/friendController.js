@@ -32,6 +32,8 @@ export const sendFriendRequest = async (req, res) => {
             .or(`and(requester_id.eq.${userId},addressee_id.eq.${targetUser.id}),and(requester_id.eq.${targetUser.id},addressee_id.eq.${userId})`)
             .maybeSingle();
 
+        if (existingError) throw existingError;
+
         if (existing) {
             if (existing.status === 'pending') {
                 return res.status(400).json({ error: 'Friend request is already pending' });

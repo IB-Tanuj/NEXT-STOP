@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import SeatMapUI from './SeatMapUI';
 
 const BACKEND = 'http://localhost:5000/api/flixbus';

@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
-import { generateTripPlan, fetchItineraryData, buildItineraryCacheKey } from '../../utils/tripPlanUtils';
-import { ItineraryView } from '../TripPlan/ItineraryView';
+import { fetchItineraryData, buildItineraryCacheKey } from '../../utils/tripPlanUtils';
 import ViewProfileModal from './ViewProfileModal';
 import './Dashboard.css';
 
@@ -73,7 +72,7 @@ const SpotItem = ({ spot, theme, groupSize = 1 }) => {
     const cost = (spot.cost ?? spot.total ?? 0) * groupSize;
     return (
         <li className="spot-item">
-            <div className="spot-item-header" onClick={() => setOpen(!open)}>
+            <button type="button" className="spot-item-header" aria-expanded={open} onClick={() => setOpen(!open)}>
                 <div>
                     <div style={{ fontWeight: 600, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', color: open ? theme.primary : '#e2e8f0', transition: 'color 0.2s' }}>
                         {spot.name} 
@@ -90,7 +89,7 @@ const SpotItem = ({ spot, theme, groupSize = 1 }) => {
                     </div>
                 </div>
                 <div style={{ fontWeight: 700, fontSize: '15px', color: '#e2e8f0' }}>₹{cost}</div>
-            </div>
+            </button>
             {open && (
                 <div className="spot-detail-panel">
                     {spot.info?.openingHours && <p style={{ marginBottom: '4px' }}><strong>Hours:</strong> {spot.info.openingHours.open} - {spot.info.openingHours.close} {spot.info.openingHours.closedOn && <span style={{color: '#fb7185'}}>(Closed: {spot.info.openingHours.closedOn})</span>}</p>}
@@ -152,8 +151,6 @@ const DonutChart = ({ segments, total }) => {
     const circumference = 2 * Math.PI * radius;
     const center = size / 2;
 
-    let cumulativePercent = 0;
-
     return (
         <div ref={chartRef} style={{ position: 'relative', display: 'inline-block' }}>
             <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)', filter: 'drop-shadow(0 6px 20px rgba(0,0,0,0.3))' }}>
@@ -163,8 +160,9 @@ const DonutChart = ({ segments, total }) => {
                 {segments.map((seg, idx) => {
                     const pct = seg.percent / 100;
                     const dashLength = circumference * pct;
-                    const dashOffset = circumference * cumulativePercent;
-                    cumulativePercent += pct;
+                     const dashOffset = circumference * segments
+                         .slice(0, idx)
+                         .reduce((sum, segment) => sum + segment.percent / 100, 0);
                     
                     return (
                         <circle
@@ -391,7 +389,7 @@ const TripDetailsTab = ({ trip, onUpdate }) => {
             transition: 'border-color 0.3s, box-shadow 0.3s, background 0.3s',
             ...(expandedSections[key] ? { boxShadow: `inset 3px 0 12px -6px ${dotColor}44` } : {})
         }}>
-            <div className="accordion-header" onClick={() => toggleSection(key)}>
+            <button type="button" className="accordion-header" aria-expanded={Boolean(expandedSections[key])} onClick={() => toggleSection(key)}>
                 <h3>
                     <span className="section-dot" style={{ background: dotColor, boxShadow: `0 0 8px ${dotColor}66` }} />
                     {title}
@@ -399,7 +397,7 @@ const TripDetailsTab = ({ trip, onUpdate }) => {
                 <span className={`accordion-chevron ${expandedSections[key] ? 'open' : ''}`}>
                     <IconChevronDown />
                 </span>
-            </div>
+            </button>
             {expandedSections[key] && (
                 <div className="accordion-body">
                     {children}
@@ -429,7 +427,7 @@ const TripDetailsTab = ({ trip, onUpdate }) => {
             {/* ─── Group Members ─── */}
             {trip.member_ids && trip.member_ids.length > 0 && (
                 <div className="accordion-card animate-entrance" style={{ marginBottom: '20px' }}>
-                    <div className="accordion-header" onClick={() => toggleSection('members')}>
+                    <button type="button" className="accordion-header" aria-expanded={Boolean(expandedSections.members)} onClick={() => toggleSection('members')}>
                         <h3>
                             <span className="section-dot" style={{ background: '#0ea5e9' }} />
                             Group Members
@@ -437,7 +435,7 @@ const TripDetailsTab = ({ trip, onUpdate }) => {
                         <span className={`accordion-chevron ${expandedSections.members ? 'open' : ''}`}>
                             <IconChevronDown />
                         </span>
-                    </div>
+                    </button>
                     {expandedSections.members && (
                         <div className="accordion-body">
                             {loadingMembers ? (

@@ -1,7 +1,7 @@
-import React from "react";
+import { memo } from "react";
 import { card, sectionLabel } from "./SharedUI";
 
-export const PersonalVehicleCard = React.memo(({
+export const PersonalVehicleCard = memo(({
   theme,
   vehicleLoading,
   liveVehicleData,

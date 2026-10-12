@@ -59,8 +59,6 @@ export const searchTrains = async (req, res) => {
         }
 
         const cacheKey = `${from}-${toCode}`;
-        const now = Date.now();
-
         const cached = await cache.get(cacheKey);
         if (cached) {
             console.log(`🚂 Serving from cache: ${from} → ${toCode}`);

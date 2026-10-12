@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
 import './ProfileTab.css';
@@ -29,7 +29,7 @@ const ViewProfileModal = ({ userProfile, onClose }) => {
     const { session, user } = useAuth();
     const { showAlert } = useNotification();
     const [activeTab, setActiveTab] = useState('posts');
-    const [stats, setStats] = useState({ posts: 0, friends: 0, mutuals: 0 });
+    const [stats] = useState({ posts: 0, friends: 0, mutuals: 0 });
     
     const [requestStatus, setRequestStatus] = useState('loading'); // 'loading', 'none', 'sending', 'pending_outgoing', 'pending_incoming', 'accepted'
 

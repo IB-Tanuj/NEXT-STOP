@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react"
+import { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { getCurrentSeason } from "../data/homepageData"
 import { themes } from "../themes"
 import { allIndiaLocations } from "../data/allLocations"
@@ -295,17 +295,17 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
   const subtitle = "Smart trip planning with budget distribution, routes, local phrases and more — all in one place."
   const { displayed: typedSubtitle, done: typingDone } = useTypewriter(subtitle, 25)
 
-  const [seasonLabel, seasonKey] = useState(() => {
+  const [seasonLabel] = useState(() => {
     const key = getCurrentSeason()
     const t = themes[key]
     return [`${t.emoji} ${t.label}`, key]
   })
 
-  const getRandomMsg = (exclude) => {
+  const getRandomMsg = useCallback((exclude) => {
     const msgs = seasonMessages[seasonLabel[1]] || seasonMessages.varsha
     const available = msgs.filter(m => m !== exclude)
     return available[Math.floor(Math.random() * available.length)]
-  }
+  }, [seasonLabel])
 
   // Trigger entrance animations
   useEffect(() => {
@@ -332,7 +332,7 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
     showMessages()
     const interval = setInterval(showMessages, 5000)
     return () => clearInterval(interval)
-  }, [])
+  }, [getRandomMsg])
 
   const handleSearch = (e) => {
     e.preventDefault()

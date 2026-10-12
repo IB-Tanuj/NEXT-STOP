@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import supabase from '../../config/supabase';
+import { useState, useEffect } from 'react';
 import './ProfileTab.css';
 
-const NotificationSettingsModal = ({ profile, onClose, onSave }) => {
+const NotificationSettingsModal = ({ profile, onClose }) => {
     const [preferences, setPreferences] = useState({
         friend_requests: true,
         trip_reminders: true
@@ -74,9 +73,9 @@ const NotificationSettingsModal = ({ profile, onClose, onSave }) => {
                                 <strong>Friend Requests</strong>
                                 <span>Get notified when someone sends you a friend request.</span>
                             </div>
-                            <div className={`toggle-switch ${preferences.friend_requests ? 'active' : ''}`} onClick={() => handleToggle('friend_requests')}>
+                            <button type="button" className={`toggle-switch ${preferences.friend_requests ? 'active' : ''}`} aria-pressed={preferences.friend_requests} aria-label="Toggle friend request notifications" onClick={() => handleToggle('friend_requests')}>
                                 <div className="toggle-knob"></div>
-                            </div>
+                            </button>
                         </label>
                     </div>
 
@@ -86,9 +85,9 @@ const NotificationSettingsModal = ({ profile, onClose, onSave }) => {
                                 <strong>Trip Reminders</strong>
                                 <span>Get notified about your upcoming trips and saved itineraries.</span>
                             </div>
-                            <div className={`toggle-switch ${preferences.trip_reminders ? 'active' : ''}`} onClick={() => handleToggle('trip_reminders')}>
+                            <button type="button" className={`toggle-switch ${preferences.trip_reminders ? 'active' : ''}`} aria-pressed={preferences.trip_reminders} aria-label="Toggle trip reminders" onClick={() => handleToggle('trip_reminders')}>
                                 <div className="toggle-knob"></div>
-                            </div>
+                            </button>
                         </label>
                     </div>
 

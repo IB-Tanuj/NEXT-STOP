@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import supabase from '../../config/supabase';
+import { useState, useEffect } from 'react';
 import './ProfileTab.css';
 
-const PermissionsSettingsModal = ({ profile, onClose, onSave }) => {
+const PermissionsSettingsModal = ({ profile, onClose }) => {
     const [permissions, setPermissions] = useState({
         location: false,
         camera: false
@@ -74,9 +73,9 @@ const PermissionsSettingsModal = ({ profile, onClose, onSave }) => {
                                 <strong>Location Access</strong>
                                 <span>Allow NEXT STOP to use your location for nearby recommendations. (If denied, this feature will not be used).</span>
                             </div>
-                            <div className={`toggle-switch ${permissions.location ? 'active' : ''}`} onClick={() => handleToggle('location')}>
+                            <button type="button" className={`toggle-switch ${permissions.location ? 'active' : ''}`} aria-pressed={permissions.location} aria-label="Toggle location access" onClick={() => handleToggle('location')}>
                                 <div className="toggle-knob"></div>
-                            </div>
+                            </button>
                         </label>
                     </div>
 
@@ -86,9 +85,9 @@ const PermissionsSettingsModal = ({ profile, onClose, onSave }) => {
                                 <strong>Camera Access</strong>
                                 <span>Allow NEXT STOP to use your camera for profile pictures and posts. (If denied, this feature will not be used).</span>
                             </div>
-                            <div className={`toggle-switch ${permissions.camera ? 'active' : ''}`} onClick={() => handleToggle('camera')}>
+                            <button type="button" className={`toggle-switch ${permissions.camera ? 'active' : ''}`} aria-pressed={permissions.camera} aria-label="Toggle camera access" onClick={() => handleToggle('camera')}>
                                 <div className="toggle-knob"></div>
-                            </div>
+                            </button>
                         </label>
                     </div>
 

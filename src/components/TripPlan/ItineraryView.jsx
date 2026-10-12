@@ -1,8 +1,8 @@
-import React from "react";
+import { memo } from "react";
 import { useState, useEffect, useRef } from "react"
 import { fetchItineraryData, buildItineraryCacheKey } from "../../utils/tripPlanUtils"
 
-export const ItineraryView = React.memo(({ theme, locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals, onItineraryLoaded, todayPlanId, savedTripId, initialItinerary, autoGenerate = true }) => {
+export const ItineraryView = memo(({ theme, locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals, onItineraryLoaded, todayPlanId, savedTripId, initialItinerary, autoGenerate = true }) => {
   const [itineraryData, setItineraryData] = useState(initialItinerary?.length ? { itinerary: initialItinerary } : null)
   const [loading, setLoading] = useState(autoGenerate && !initialItinerary?.length)
   const [error, setError] = useState("")

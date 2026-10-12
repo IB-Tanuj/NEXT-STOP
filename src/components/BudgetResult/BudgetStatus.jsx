@@ -1,5 +1,5 @@
-import React from "react";
-export const BudgetStatus = React.memo(({ foodBuffer, theme }) => (
+import { memo } from "react";
+export const BudgetStatus = memo(({ foodBuffer, theme }) => (
   <div style={{
     background: foodBuffer >= 0 ? `${theme.primary}22` : "#ff6b6b22",
     border: `2px solid ${foodBuffer >= 0 ? theme.primary : "#ff6b6b"}`,

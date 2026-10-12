@@ -37,7 +37,7 @@ const LandingPage = () => {
       setPrefillEmail(emailParam)
       setAuthSuccessMessage('✓ Email confirmed successfully! Enter your password to log in.')
       setIsAuthOpen(true)
-      try { localStorage.removeItem('nextstop_signup_email') } catch (_) {}
+       try { localStorage.removeItem('nextstop_signup_email') } catch (error) { console.debug('Could not clear signup email', error) }
       window.history.replaceState({}, '', '/classic')
     } else if (params.get('auth') === 'login') {
       setAuthMode('login')
@@ -64,7 +64,7 @@ const LandingPage = () => {
   // Always show rain on the classic monsoon page
   const showRain = true
 
-  const { timerCard, seasonBadge, seasonEmoji, seasonName } = SeasonTimer()
+  const { seasonBadge, seasonEmoji, seasonName } = SeasonTimer()
 
   // Parallax background scroll tracking
   useEffect(() => {
@@ -72,6 +72,7 @@ const LandingPage = () => {
     if (!bgImg) return
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     const INTRO_MS = 1300
+    pageStartRef.current = performance.now()
 
     const tick = (now) => {
       // Safety check: sometimes 'now' from requestAnimationFrame isn't perfectly formed immediately

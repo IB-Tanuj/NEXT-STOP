@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import { useState } from "react"
 import { locationData } from "../data/locationData"
 import BudgetResult from "./BudgetResult"
 import { useNavigate } from "react-router-dom"

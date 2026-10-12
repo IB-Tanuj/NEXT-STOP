@@ -1,8 +1,8 @@
-import React from "react";
+import { memo } from "react";
 import { card, sectionLabel, bookingLink } from "./SharedUI"
 import { getTransportLinks, getStayLinks } from "../../utils/tripPlanUtils"
 
-export const TripBookingTab = React.memo(({ theme, transport, stayType, locationName }) => {
+export const TripBookingTab = memo(({ theme, transport, stayType, locationName }) => {
   const transportLinks = getTransportLinks(transport, locationName)
   const stayLinks = getStayLinks(stayType)
 

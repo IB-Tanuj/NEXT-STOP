@@ -1,4 +1,3 @@
-import React from 'react';
 
 const UnfriendConfirmModal = ({ isOpen, onClose, onConfirm, loading, sharedTripsCount }) => {
     if (!isOpen) return null;

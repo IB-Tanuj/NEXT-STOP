@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
 import ViewProfileModal from './ViewProfileModal';
@@ -19,13 +19,7 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
     const [sharedTripsCount, setSharedTripsCount] = useState(0);
     const [isUnfriending, setIsUnfriending] = useState(false);
 
-    useEffect(() => {
-        if (isOpen && session?.access_token) {
-            fetchFriends();
-        }
-    }, [isOpen, session]);
-
-    const fetchFriends = async () => {
+    const fetchFriends = useCallback(async () => {
         setLoading(true);
         setError('');
         try {
@@ -38,12 +32,18 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
             } else {
                 setError('Failed to fetch friends');
             }
-        } catch (err) {
+        } catch {
             setError('Error loading friends');
         } finally {
             setLoading(false);
         }
-    };
+    }, [session]);
+
+    useEffect(() => {
+        if (isOpen && session?.access_token) {
+            fetchFriends();
+        }
+    }, [fetchFriends, isOpen, session?.access_token]);
 
     const handleUnfriendClick = async (friendId, e) => {
         e.stopPropagation();
@@ -59,8 +59,8 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
                 const data = await res.json();
                 setSharedTripsCount(data.sharedTripsCount || 0);
             }
-        } catch (err) {
-            console.error('Error fetching shared trips count:', err);
+        } catch (error) {
+            console.error('Error fetching shared trips count:', error);
         }
         
         setUnfriendModalOpen(true);
@@ -85,7 +85,7 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
             } else {
                 showAlert('Failed to unfriend', 'error');
             }
-        } catch (err) {
+        } catch {
             showAlert('Error unfriending user', 'error');
         } finally {
             setIsUnfriending(false);
@@ -110,7 +110,8 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
                     )}
                     {friends.map(friend => (
                         <div key={friend.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
-                            <div 
+                            <button
+                                type="button"
                                 style={{ display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer' }}
                                 onClick={() => setSelectedProfile(friend)}
                             >
@@ -125,7 +126,7 @@ const FriendsListModal = ({ isOpen, onClose, onFriendRemoved }) => {
                                     <h4 style={{ margin: 0, color: '#fff', fontSize: '16px' }}>{friend.full_name || friend.username}</h4>
                                     {friend.username && <p style={{ margin: '4px 0 0', color: '#94a3b8', fontSize: '13px' }}>@{friend.username}</p>}
                                 </div>
-                            </div>
+                            </button>
                             <div style={{ display: 'flex', gap: '10px' }}>
                                 <button 
                                     className="unfriend-btn"

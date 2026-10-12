@@ -73,7 +73,7 @@ export const getLocationId = async (destination) => {
             
         } catch (error) {
             console.error(`[Hotel Cache] Error fetching auto-complete for "${destination}":`, error.response?.data || error.message);
-            throw new Error(`Failed to fetch location ID for ${destination}`);
+            throw new Error(`Failed to fetch location ID for ${destination}`, { cause: error });
         }
     })();
 

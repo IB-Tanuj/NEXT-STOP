@@ -1,7 +1,7 @@
-import React from "react";
+import { memo } from "react";
 import { card, sectionLabel, comingSoon, ShimmerSkeleton } from "./SharedUI"
 
-export const TripEmergencyTab = React.memo(({ theme, locationName, aiLoading, aiData }) => {
+export const TripEmergencyTab = memo(({ theme, locationName, aiLoading, aiData }) => {
   return (
     <div style={{ animation: "fadeIn 0.3s ease" }}>
       {card(theme, <>

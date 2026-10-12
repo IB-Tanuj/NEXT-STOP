@@ -74,10 +74,12 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onToday, todayRemaining =
           {!isMobile && (
         <div style={{ display: "flex", gap: "30px", alignItems: "center" }}>
           {navItems.map((item) => (
-            <span key={item}
+            <button type="button" key={item}
             onClick={() => handleNavItem(item)}
              style={{
               color: theme.subtext,
+              background: 'transparent',
+              border: 'none',
               cursor: "pointer",
               fontSize: "14px",
               letterSpacing: "1px",
@@ -88,11 +90,11 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onToday, todayRemaining =
               onMouseLeave={e => e.target.style.color = theme.subtext}
             >
               {item === "Today" ? `Today · ${todayRemaining}/5` : item}
-            </span>
+            </button>
           ))}
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative' }}>
-              <div 
+              <button type="button"
                 onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                 style={{
                 width: '36px', height: '36px', borderRadius: '50%',
@@ -102,6 +104,8 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onToday, todayRemaining =
                 transition: "transform 0.2s ease",
                 position: 'relative'
               }} title="Profile Menu"
+              aria-expanded={profileMenuOpen}
+              aria-label="Open profile menu"
               onMouseEnter={e => e.currentTarget.style.transform = "scale(1.1)"}
               onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
               >
@@ -113,7 +117,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onToday, todayRemaining =
                 {((profile && !profile.username) || pendingCount > 0) && (
                   <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '12px', height: '12px', backgroundColor: '#ff4757', borderRadius: '50%', border: `2px solid ${theme.bg}` }} title={pendingCount > 0 ? "New Notifications" : "Action Required"} />
                 )}
-              </div>
+              </button>
 
               {profileMenuOpen && (
                 <div style={{
@@ -141,7 +145,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onToday, todayRemaining =
                     { label: 'Savings Track', path: '/dashboard/savings' },
                     { label: 'Friend Requests', path: '/dashboard/requests', count: pendingCount },
                   ].map((item) => (
-                    <div
+                    <button type="button"
                       key={item.label}
                       onClick={() => {
                         navigate(item.path);
@@ -155,9 +159,13 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onToday, todayRemaining =
                         fontSize: '14px',
                         fontWeight: '500',
                         transition: 'background 0.2s',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
+                         display: 'flex',
+                         justifyContent: 'space-between',
+                         alignItems: 'center',
+                         background: 'transparent',
+                         border: 'none',
+                         textAlign: 'left',
+                         width: '100%'
                       }}
                       onMouseEnter={e => e.currentTarget.style.backgroundColor = `${theme.primary}22`}
                       onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
@@ -182,10 +190,10 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onToday, todayRemaining =
                           {item.count}
                         </span>
                       )}
-                    </div>
+                    </button>
                   ))}
                   <div style={{ height: '1px', background: `${theme.primary}22`, margin: '4px 0' }} />
-                  <div
+                  <button type="button"
                     onClick={() => { logout(); setProfileMenuOpen(false); }}
                     style={{
                       padding: '8px 12px',
@@ -193,14 +201,18 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onToday, todayRemaining =
                       borderRadius: '8px',
                       color: '#ff4757',
                       fontSize: '14px',
-                      fontWeight: '600',
-                      transition: 'background 0.2s',
+                       fontWeight: '600',
+                       transition: 'background 0.2s',
+                       background: 'transparent',
+                       border: 'none',
+                       textAlign: 'left',
+                       width: '100%',
                     }}
                     onMouseEnter={e => e.currentTarget.style.backgroundColor = '#ff475722'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     Logout
-                  </div>
+                  </button>
                 </div>
               )}
             </div>
@@ -230,7 +242,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onToday, todayRemaining =
 
       {/* Mobile Hamburger */}
       {isMobile && (
-        <div
+        <button type="button"
           onClick={() => setMenuOpen(!menuOpen)}
           style={{
             cursor: "pointer",
@@ -238,6 +250,8 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onToday, todayRemaining =
             flexDirection: "column",
             gap: "5px",
             padding: "4px",
+            background: 'transparent',
+            border: 'none',
           }}>
           {[0, 1, 2].map(i => (
             <div key={i} style={{
@@ -254,7 +268,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onToday, todayRemaining =
               opacity: menuOpen && i === 1 ? 0 : 1,
             }} />
           ))}
-        </div>
+        </button>
       )}
 
       {/* Mobile Menu Dropdown */}
@@ -275,11 +289,14 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onToday, todayRemaining =
           zIndex: 100,
         }}>
           {navItems.map((item) => (
-            <span
+            <button type="button"
               key={item}
               onClick={() => { handleNavItem(item); setMenuOpen(false); }}
               style={{
                 color: theme.subtext,
+                background: 'transparent',
+                textAlign: 'left',
+                border: 'none',
                 cursor: "pointer",
                 fontSize: "16px",
                 letterSpacing: "1px",
@@ -288,7 +305,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onToday, todayRemaining =
                 borderBottom: `1px solid ${theme.primary}22`,
               }}>
                {item === "Today" ? `Today · ${todayRemaining}/5` : item}
-            </span>
+            </button>
           ))}
           {user ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
@@ -301,7 +318,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onToday, todayRemaining =
                 { label: 'Savings Track', path: '/dashboard/savings' },
                 { label: 'Friend Requests', path: '/dashboard/requests', count: pendingCount },
               ].map((item) => (
-                <div
+                <button type="button"
                   key={item.label}
                   onClick={() => { navigate(item.path); setMenuOpen(false); }}
                   style={{
@@ -311,8 +328,14 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onToday, todayRemaining =
                     cursor: 'pointer',
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'center',
-                    borderBottom: `1px solid ${theme.primary}22`
+                     alignItems: 'center',
+                     borderBottom: `1px solid ${theme.primary}22`,
+                     background: 'transparent',
+                     borderLeft: 'none',
+                     borderRight: 'none',
+                     borderTop: 'none',
+                     textAlign: 'left',
+                     width: '100%'
                   }}
                 >
                   <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -335,7 +358,7 @@ const Navbar = ({ theme, isMobile, onAbout, onExplore, onToday, todayRemaining =
                       {item.count}
                     </span>
                   )}
-                </div>
+                </button>
               ))}
               <button
                 onClick={() => { logout(); setMenuOpen(false); }}

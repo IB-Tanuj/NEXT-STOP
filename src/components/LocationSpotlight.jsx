@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { spotPhotos } from "../data/homepageData"
 import { fetchImagesWithCache } from "../utils/imageCache"
 
@@ -8,6 +8,25 @@ const LocationSpotlight = ({ theme, activeLocation, locationData }) => {
   const [loading, setLoading] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(null)
   const fetchedForRef = useRef(null) // track which location we already fetched
+
+  const fetchLocationImages = useCallback(async (key) => {
+    const loc = locationData?.[key]
+    if (!loc) return
+
+    setLoading(true)
+    try {
+      const query = `${loc.name} India famous places tourism`
+      const urls = await fetchImagesWithCache(query, 6)
+      if (urls.length > 0) {
+        setImages(urls)
+      }
+    } catch (error) {
+      console.error("LocationSpotlight image fetch failed:", error)
+      // Keep static fallback if API fails
+    } finally {
+      setLoading(false)
+    }
+  }, [locationData])
 
   useEffect(() => {
     if (!activeLocation) return
@@ -33,26 +52,7 @@ const LocationSpotlight = ({ theme, activeLocation, locationData }) => {
     }
 
     return () => clearTimeout(t)
-  }, [activeLocation])
-
-  const fetchLocationImages = async (key) => {
-    const loc = locationData?.[key]
-    if (!loc) return
-
-    setLoading(true)
-    try {
-      const query = `${loc.name} India famous places tourism`
-      const urls = await fetchImagesWithCache(query, 6)
-      if (urls.length > 0) {
-        setImages(urls)
-      }
-    } catch (err) {
-      console.error("LocationSpotlight image fetch failed:", err)
-      // Keep static fallback if API fails
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [activeLocation, fetchLocationImages])
 
   if (!activeLocation) return null
 

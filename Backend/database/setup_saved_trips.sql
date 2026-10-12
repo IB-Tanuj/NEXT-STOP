@@ -7,29 +7,35 @@ CREATE TABLE IF NOT EXISTS public.saved_trips (
     end_date DATE,
     total_budget NUMERIC,
     trip_data JSONB NOT NULL,
+    member_ids UUID[] NOT NULL DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Keep this migration safe for databases created with an older version of
+-- this script (member_ids was originally added by setup_today_trip_plans.sql).
+ALTER TABLE public.saved_trips
+    ADD COLUMN IF NOT EXISTS member_ids UUID[] NOT NULL DEFAULT '{}';
 
 -- Enable RLS for saved_trips
 ALTER TABLE public.saved_trips ENABLE ROW LEVEL SECURITY;
 
--- Create policy so users can only view their own trips
+DROP POLICY IF EXISTS "Users can view their own trips" ON public.saved_trips;
 CREATE POLICY "Users can view their own trips"
     ON public.saved_trips FOR SELECT
-    USING (auth.uid() = user_id);
+    USING (auth.uid() = user_id OR auth.uid() = ANY(member_ids));
 
--- Create policy so users can insert their own trips
+DROP POLICY IF EXISTS "Users can insert their own trips" ON public.saved_trips;
 CREATE POLICY "Users can insert their own trips"
     ON public.saved_trips FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
--- Create policy so users can update their own trips
+DROP POLICY IF EXISTS "Users can update their own trips" ON public.saved_trips;
 CREATE POLICY "Users can update their own trips"
     ON public.saved_trips FOR UPDATE
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
--- Create policy so users can delete their own trips
+DROP POLICY IF EXISTS "Users can delete their own trips" ON public.saved_trips;
 CREATE POLICY "Users can delete their own trips"
     ON public.saved_trips FOR DELETE
     USING (auth.uid() = user_id);
@@ -45,21 +51,31 @@ CREATE TABLE IF NOT EXISTS public.trip_wallets (
     UNIQUE(trip_id, wallet_type)
 );
 
+ALTER TABLE public.trip_wallets
+    DROP CONSTRAINT IF EXISTS trip_wallets_target_amount_check,
+    DROP CONSTRAINT IF EXISTS trip_wallets_saved_amount_check;
+
+ALTER TABLE public.trip_wallets
+    ADD CONSTRAINT trip_wallets_target_amount_check
+        CHECK (target_amount >= 0 AND target_amount NOT IN ('NaN'::numeric, 'Infinity'::numeric, '-Infinity'::numeric)),
+    ADD CONSTRAINT trip_wallets_saved_amount_check
+        CHECK (saved_amount >= 0 AND saved_amount NOT IN ('NaN'::numeric, 'Infinity'::numeric, '-Infinity'::numeric));
+
 -- Enable RLS for trip_wallets
 ALTER TABLE public.trip_wallets ENABLE ROW LEVEL SECURITY;
 
--- Users can view their own wallets
+DROP POLICY IF EXISTS "Users can view their own wallets" ON public.trip_wallets;
 CREATE POLICY "Users can view their own wallets"
     ON public.trip_wallets FOR SELECT
     USING (
         EXISTS (
             SELECT 1 FROM public.saved_trips 
             WHERE saved_trips.id = trip_wallets.trip_id 
-            AND saved_trips.user_id = auth.uid()
+            AND (saved_trips.user_id = auth.uid() OR auth.uid() = ANY(saved_trips.member_ids))
         )
     );
 
--- Users can insert their own wallets
+DROP POLICY IF EXISTS "Users can insert their own wallets" ON public.trip_wallets;
 CREATE POLICY "Users can insert their own wallets"
     ON public.trip_wallets FOR INSERT
     WITH CHECK (
@@ -70,23 +86,10 @@ CREATE POLICY "Users can insert their own wallets"
         )
     );
 
--- Users can update their own wallets
-CREATE POLICY "Users can update their own wallets"
-    ON public.trip_wallets FOR UPDATE
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.saved_trips 
-            WHERE saved_trips.id = trip_wallets.trip_id 
-            AND saved_trips.user_id = auth.uid()
-        )
-    )
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM public.saved_trips 
-            WHERE saved_trips.id = trip_wallets.trip_id 
-            AND saved_trips.user_id = auth.uid()
-        )
-    );
+-- Wallet balances must only be changed by the atomic RPCs in
+-- setup_wallet_transactions.sql.  In particular, do not expose a direct
+-- UPDATE policy that would allow a balance and its ledger to diverge.
+DROP POLICY IF EXISTS "Users can update their own wallets" ON public.trip_wallets;
 
 -- Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_saved_trips_user_id ON public.saved_trips(user_id);

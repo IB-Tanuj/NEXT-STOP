@@ -1,8 +1,8 @@
-import React from "react";
+import { memo } from "react";
 import { useState } from "react"
 import { card, sectionLabel, comingSoon, ShimmerSkeleton } from "./SharedUI"
 
-export const TripActivitiesTab = React.memo(({ theme, locationName, aiLoading, aiData }) => {
+export const TripActivitiesTab = memo(({ theme, locationName, aiLoading, aiData }) => {
   const [liveData, setLiveData] = useState({}) // { "activity_ScubaDiving": { loading, data, error } }
 
   const fetchLivePrice = async (type, name, extraBody = {}) => {

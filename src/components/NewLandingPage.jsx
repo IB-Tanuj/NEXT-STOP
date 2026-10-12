@@ -7,7 +7,6 @@ import FeatureCarousel from "./Landing/FeatureCarousel"
 import ScrollableDestinationGrid from "./Landing/ScrollableDestinationGrid"
 import LandingAuthDrawer from "./Landing/LandingAuthDrawer"
 import "./Landing/LandingStyles.css" // Keep original styles for base structure
-import { getSeasonKey } from "../themes"
 
 const NewLandingPage = () => {
   const navigate = useNavigate()
@@ -16,8 +15,7 @@ const NewLandingPage = () => {
   const bgRef = useRef(null)
   const rafRef = useRef(null)
   const bgYRef = useRef(0)
-  const pageStartRef = useRef(performance.now())
-  const seasonKey = getSeasonKey()
+  const pageStartRef = useRef(null)
 
   // Drawer state
   const [isAuthOpen, setIsAuthOpen] = useState(false)
@@ -37,7 +35,7 @@ const NewLandingPage = () => {
       setPrefillEmail(emailParam)
       setAuthSuccessMessage('✓ Email confirmed successfully! Enter your password to log in.')
       setIsAuthOpen(true)
-      try { localStorage.removeItem('nextstop_signup_email') } catch (_) {}
+       try { localStorage.removeItem('nextstop_signup_email') } catch (error) { console.debug('Could not clear signup email', error) }
       window.history.replaceState({}, '', '/')
     } else if (params.get('auth') === 'login') {
       setAuthMode('login')
@@ -69,6 +67,7 @@ const NewLandingPage = () => {
     if (!bgImg) return
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     const INTRO_MS = 1300
+    pageStartRef.current = performance.now()
 
     const tick = (now) => {
       const safeNow = typeof now === 'number' && !isNaN(now) ? now : performance.now()
