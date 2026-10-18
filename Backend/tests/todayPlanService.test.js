@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { callPlanRpc, getGenerationInputs, publicPlan, resolveGenerationPlan, runPlanGeneration } from '../services/todayPlanService.js';
+import { callPlanRpc, getGenerationInputs, getTodayPlanHistory, publicPlan, resolveGenerationPlan, runPlanGeneration } from '../services/todayPlanService.js';
 
 const planId = '11111111-1111-4111-8111-111111111111';
 const userId = '22222222-2222-4222-8222-222222222222';
@@ -129,6 +129,27 @@ test('public plans never expose generation leases', () => {
         id: planId,
         summary_status: 'ready',
     });
+});
+
+test('Today history uses the owner-scoped RPC and redacts generation leases', async () => {
+    const client = {
+        rpc: async (name, params) => {
+            assert.equal(name, 'get_today_trip_history');
+            assert.deepEqual(params, { p_user_id: userId });
+            return {
+                data: {
+                    plans: [
+                        { id: planId, window_start: '2026-10-15T00:00:00.000Z', summary_token: token, itinerary_token: token },
+                    ],
+                },
+                error: null,
+            };
+        },
+    };
+
+    assert.deepEqual(await getTodayPlanHistory(client, userId), [
+        { id: planId, window_start: '2026-10-15T00:00:00.000Z' },
+    ]);
 });
 
 test('missing Today RPCs return an actionable setup error', async () => {

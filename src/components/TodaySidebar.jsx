@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useAuth } from "../context/AuthContext"
 import { useNotification } from "../context/NotificationContext"
-import { getTodayPlans, renameTodayPlan, saveTodayPlan } from "../utils/todayPlanUtils"
+import { getTodayPlanHistory, getTodayPlans, renameTodayPlan, saveTodayPlan } from "../utils/todayPlanUtils"
 import TodayPlanViewer from "./TodayPlanViewer"
 
 const formatCountdown = (resetAt, now) => {
@@ -12,10 +12,26 @@ const formatCountdown = (resetAt, now) => {
   return `${hours}h ${String(minutes).padStart(2, "0")}m`
 }
 
+const formatPlanDate = (plan) => {
+  const value = plan?.created_at || plan?.window_start
+  if (!value) return "Earlier"
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return "Earlier"
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Kolkata",
+  }).format(date)
+}
+
 const TodaySidebar = ({ theme, isOpen, onClose, onStateChange }) => {
   const { session } = useAuth()
   const { showAlert, showPrompt } = useNotification()
   const [state, setState] = useState({ plans: [], limit: 5, remaining: 5, resetAt: null })
+  const [historyPlans, setHistoryPlans] = useState([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyError, setHistoryError] = useState("")
   const [loading, setLoading] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const [viewingPlan, setViewingPlan] = useState(null)
@@ -24,15 +40,28 @@ const TodaySidebar = ({ theme, isOpen, onClose, onStateChange }) => {
   const loadPlans = useCallback(async () => {
     if (!session?.access_token) return
     setLoading(true)
-    try {
-      const nextState = await getTodayPlans(session.access_token)
-      setState(nextState)
-      onStateChange?.(nextState)
-    } catch (error) {
-      showAlert(error.message || "Could not load Today plans.", "error")
-    } finally {
-      setLoading(false)
+    setHistoryLoading(true)
+    const [todayResult, historyResult] = await Promise.allSettled([
+      getTodayPlans(session.access_token),
+      getTodayPlanHistory(session.access_token),
+    ])
+
+    if (todayResult.status === "fulfilled") {
+      setState(todayResult.value)
+      onStateChange?.(todayResult.value)
+    } else {
+      showAlert(todayResult.reason?.message || "Could not load Today plans.", "error")
     }
+
+    if (historyResult.status === "fulfilled") {
+      setHistoryPlans(historyResult.value.plans || [])
+      setHistoryError("")
+    } else {
+      setHistoryError(historyResult.reason?.message || "Could not load previous plans.")
+    }
+
+    setLoading(false)
+    setHistoryLoading(false)
   }, [onStateChange, session, showAlert])
 
   useEffect(() => {
@@ -66,6 +95,7 @@ const TodaySidebar = ({ theme, isOpen, onClose, onStateChange }) => {
   const replacePlan = (plan) => {
     if (!plan) return
     setState(current => ({ ...current, plans: current.plans.map(item => item.id === plan.id ? plan : item) }))
+    setHistoryPlans(current => current.map(item => item.id === plan.id ? plan : item))
     setViewingPlan(current => current?.id === plan.id ? plan : current)
   }
 
@@ -93,6 +123,23 @@ const TodaySidebar = ({ theme, isOpen, onClose, onStateChange }) => {
     }
   }
 
+  const renderPlanCard = (plan, index, isHistory = false) => {
+    const days = plan.trip_data?.preferences?.days || plan.trip_data?.hotel?.days || "—"
+    return (
+      <div key={plan.id} style={{ background: theme.card, border: `1px solid ${theme.primary}33`, borderRadius: "14px", padding: "16px", marginBottom: "12px" }}>
+        <div style={{ color: theme.primary, fontSize: "11px", letterSpacing: "2px", fontWeight: "800", marginBottom: "5px" }}>{isHistory ? "PREVIOUS PLAN" : `TRIP ${index + 1}`}</div>
+        <div style={{ color: theme.text, fontSize: "17px", fontWeight: "800", marginBottom: "4px" }}>{plan.title || plan.destination}</div>
+        <div style={{ color: theme.subtext, fontSize: "12px", marginBottom: isHistory ? "5px" : "14px" }}>{plan.destination} · {days} days · ₹{Number(plan.total_budget || 0).toLocaleString("en-IN")}</div>
+        {isHistory && <div style={{ color: theme.subtext, fontSize: "12px", marginBottom: "14px" }}>Planned {formatPlanDate(plan)}</div>}
+        <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
+          <button aria-label={`View ${plan.title || plan.destination}`} onClick={() => setViewingPlan(plan)} style={{ border: `1px solid ${theme.primary}`, background: `${theme.primary}18`, color: theme.primary, borderRadius: "8px", padding: "8px 11px", fontSize: "12px", fontWeight: "800", cursor: "pointer" }}>View</button>
+          <button aria-label={plan.saved_trip_id ? `${plan.title || plan.destination} is already saved` : `Save ${plan.title || plan.destination}`} onClick={() => handleSave(plan)} disabled={Boolean(plan.saved_trip_id)} style={{ border: `1px solid ${theme.primary}55`, background: plan.saved_trip_id ? `${theme.primary}18` : "transparent", color: plan.saved_trip_id ? theme.primary : theme.text, borderRadius: "8px", padding: "8px 11px", fontSize: "12px", fontWeight: "800", cursor: plan.saved_trip_id ? "default" : "pointer" }}>{plan.saved_trip_id ? "✓ Already saved" : "Save"}</button>
+          <button aria-label={`Rename ${plan.title || plan.destination}`} onClick={() => handleRename(plan)} style={{ border: `1px solid ${theme.primary}55`, background: "transparent", color: theme.subtext, borderRadius: "8px", padding: "8px 11px", fontSize: "12px", fontWeight: "800", cursor: "pointer" }}>Rename</button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
       {isOpen && <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} />}
@@ -118,24 +165,20 @@ const TodaySidebar = ({ theme, isOpen, onClose, onStateChange }) => {
               <div style={{ color: theme.text, fontWeight: "800", marginBottom: "6px" }}>Your planning desk is empty</div>
               Plan a trip and it will appear here for quick access today.
             </div>
-          ) : state.plans.map((plan, index) => {
-            const days = plan.trip_data?.preferences?.days || plan.trip_data?.hotel?.days || "—"
-            return (
-              <div key={plan.id} style={{ background: theme.card, border: `1px solid ${theme.primary}33`, borderRadius: "14px", padding: "16px", marginBottom: "12px" }}>
-                <div style={{ color: theme.primary, fontSize: "11px", letterSpacing: "2px", fontWeight: "800", marginBottom: "5px" }}>TRIP {index + 1}</div>
-                <div style={{ color: theme.text, fontSize: "17px", fontWeight: "800", marginBottom: "4px" }}>{plan.title || plan.destination}</div>
-                <div style={{ color: theme.subtext, fontSize: "12px", marginBottom: "14px" }}>{plan.destination} · {days} days · ₹{Number(plan.total_budget || 0).toLocaleString("en-IN")}</div>
-                <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
-                   <button aria-label={`View ${plan.title || plan.destination}`} onClick={() => setViewingPlan(plan)} style={{ border: `1px solid ${theme.primary}`, background: `${theme.primary}18`, color: theme.primary, borderRadius: "8px", padding: "8px 11px", fontSize: "12px", fontWeight: "800", cursor: "pointer" }}>View</button>
-                   <button aria-label={plan.saved_trip_id ? `${plan.title || plan.destination} is already saved` : `Save ${plan.title || plan.destination}`} onClick={() => handleSave(plan)} disabled={Boolean(plan.saved_trip_id)} style={{ border: `1px solid ${theme.primary}55`, background: plan.saved_trip_id ? `${theme.primary}18` : "transparent", color: plan.saved_trip_id ? theme.primary : theme.text, borderRadius: "8px", padding: "8px 11px", fontSize: "12px", fontWeight: "800", cursor: plan.saved_trip_id ? "default" : "pointer" }}>{plan.saved_trip_id ? "✓ Already saved" : "Save"}</button>
-                   <button aria-label={`Rename ${plan.title || plan.destination}`} onClick={() => handleRename(plan)} style={{ border: `1px solid ${theme.primary}55`, background: "transparent", color: theme.subtext, borderRadius: "8px", padding: "8px 11px", fontSize: "12px", fontWeight: "800", cursor: "pointer" }}>Rename</button>
-                </div>
-              </div>
-            )
-          })}
+          ) : state.plans.map((plan, index) => renderPlanCard(plan, index))}
+
+          <section style={{ marginTop: "28px", paddingTop: "22px", borderTop: `1px solid ${theme.primary}22` }}>
+            <div style={{ color: theme.primary, fontSize: "11px", letterSpacing: "3px", fontWeight: "800", marginBottom: "6px" }}>PREVIOUS PLANS</div>
+            <div style={{ color: theme.subtext, fontSize: "12px", marginBottom: "14px" }}>View or save trips from earlier planning days.</div>
+            {historyLoading ? <div style={{ color: theme.subtext, fontSize: "13px", padding: "12px 0" }}>Loading previous plans...</div> : historyError ? (
+              <div style={{ color: "#fbbf24", fontSize: "13px", lineHeight: 1.5 }}>{historyError}</div>
+            ) : historyPlans.length === 0 ? (
+              <div style={{ color: theme.subtext, fontSize: "13px", padding: "12px 0" }}>No previous plans yet.</div>
+            ) : historyPlans.map((plan, index) => renderPlanCard(plan, index, true))}
+          </section>
         </div>
       </aside>
-      {viewingPlan && <TodayPlanViewer theme={theme} plan={viewingPlan} onClose={() => setViewingPlan(null)} onUpdated={replacePlan} />}
+      {viewingPlan && <TodayPlanViewer theme={theme} plan={viewingPlan} isHistory={historyPlans.some(plan => plan.id === viewingPlan.id)} onClose={() => setViewingPlan(null)} onUpdated={replacePlan} />}
     </>
   )
 }

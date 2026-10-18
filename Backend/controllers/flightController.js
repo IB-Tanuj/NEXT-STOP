@@ -1,4 +1,4 @@
-import axios from 'axios';
+ import axios from 'axios';
 import { getAirportByDestination, getAirportByCode, searchAirports as searchAirportsUtil } from '../utils/destinationAirports.js';
 import { searchAndFetchMultiple } from '../services/tinyfishService.js';
 import { generateFlightSearchQuery, cleanWebDataWithKey } from '../services/queryRouterService.js';
@@ -135,7 +135,7 @@ export const searchFlights = async (req, res) => {
         }
       }
 
-      // Method 2: Real-time search via TinyFish + Groq (if RapidAPI didn't run)
+      // Method 2: Real-time search via TinyFish + Gemini (if RapidAPI didn't run)
       if (usedMethod !== "rapidapi") {
         try {
           const searchQuery = generateFlightSearchQuery(fromCode, toCode);
@@ -147,12 +147,10 @@ export const searchFlights = async (req, res) => {
             ]
           };
 
-          const apiKey = process.env.GROQ_FLIGHT_CLEANING_KEY || process.env.GROQ_PROMPT_CLEANING_KEY || process.env.GROQ_API_KEY;
           const result = await cleanWebDataWithKey(
             text,
             schema,
-            `Extract up to 5 real-time flight options from ${fromCode} to ${toCode} from the text. Provide airline name (e.g. IndiGo, Air India, Akasa Air, Vistara), flight duration, and ticket price in INR (number only). Extract ONLY real flight schedules.`,
-            apiKey
+            `Extract up to 5 real-time flight options from ${fromCode} to ${toCode} from the text. Provide airline name (e.g. IndiGo, Air India, Akasa Air, Vistara), flight duration, and ticket price in INR (number only). Extract ONLY real flight schedules.`
           );
 
           if (Array.isArray(result?.flights) && result.flights.length > 0) {

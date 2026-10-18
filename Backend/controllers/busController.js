@@ -10,7 +10,7 @@ const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 /**
  * POST /api/buses/search
- * Searches for bus schedules and prices using TinyFish and Groq
+ * Searches for bus schedules and prices using TinyFish and Gemini
  */
 export const searchBuses = async (req, res) => {
     try {
@@ -46,23 +46,20 @@ export const searchBuses = async (req, res) => {
             // Steps 2 & 3: TinyFish searches and fetches TOP 2 results in parallel
             const { text } = await searchAndFetchMultiple(searchQuery);
 
-            // Step 4: Groq cleans the data into structured bus options
+            // Step 4: Gemini cleans the data into structured bus options
             const schema = {
                 buses: [
                     { operatorName: "", departureTime: "", arrivalTime: "", price: 0, duration: "" }
                 ]
             };
 
-            // Use a dedicated API key for bus cleaning if available, fallback to main key
-            const apiKey = process.env.GROQ_BUS_CLEANING_KEY || process.env.GROQ_API_KEY;
             const result = await cleanWebDataWithKey(
                 text,
                 schema,
                 `Extract up to 5 actual bus travel options from ${from} to ${to}, India from the text. For each, provide the bus operator name (e.g., Zingbus, IntrCity, Redbus, etc.), departure time, arrival time, price in INR (number only), and estimated duration. Extract ONLY real bus operator names and schedules. 
 CRITICAL RULES FOR PRICES:
 1. If the scraped price is in USD ($), you MUST convert it to INR by multiplying by 96.
-2. Ensure the price is a valid number. Estimate a realistic INR price (e.g., 500-2000 INR) if it is missing in the text but the operator is found.`,
-                apiKey
+                2. Ensure the price is a valid number. Estimate a realistic INR price (e.g., 500-2000 INR) if it is missing in the text but the operator is found.`
             );
 
             // Ensure we have an array of buses

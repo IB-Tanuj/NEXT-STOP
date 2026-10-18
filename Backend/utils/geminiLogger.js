@@ -1,4 +1,5 @@
 import supabase from '../config/supabase.js';
+import { getGeminiModel } from '../services/geminiConfig.js';
 
 /**
  * Retrieves a cached Gemini API result from the `gemini_results` table based on a unique lookup key.
@@ -51,7 +52,7 @@ export function saveGeminiResult(requestType, inputPrompt, outputResult, outputT
         .from('gemini_results')
         .upsert({
             request_type: requestType,
-            model: 'gemini-3.6-flash',
+            model: getGeminiModel(),
             input_prompt: inputPrompt,
             output_result: outputResult,
             output_text: outputText,

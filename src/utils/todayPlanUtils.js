@@ -41,6 +41,11 @@ export const getTodayPlans = async (token) => {
   return parseResponse(response, "Could not load Today plans.")
 }
 
+export const getTodayPlanHistory = async (token) => {
+  const response = await fetch(`${API_BASE}/api/today-plans/history`, { headers: authHeaders(token) })
+  return parseResponse(response, "Could not load previous plans.")
+}
+
 export const createTodayPlan = async (token, { id, destination, totalBudget, tripData }) => {
   const response = await fetch(`${API_BASE}/api/today-plans`, {
     method: "POST",

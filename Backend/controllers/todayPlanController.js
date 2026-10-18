@@ -1,11 +1,15 @@
 import supabase from '../config/supabase.js';
-import { apiError, callPlanRpc, getOwnedTodayPlan, isUuid, publicPlan, resolveGenerationPlan, resolveGroupMembers, throwIfTodayDatabaseMissing } from '../services/todayPlanService.js';
+import { apiError, callPlanRpc, getOwnedTodayPlan, getTodayPlanHistory as loadTodayPlanHistory, isUuid, publicPlan, resolveGenerationPlan, resolveGroupMembers, throwIfTodayDatabaseMissing } from '../services/todayPlanService.js';
+import { isSavedTripLimitError, savedTripLimitResponse } from '../utils/savedTripLimit.js';
 
 const handle = (callback) => async (req, res) => {
     try { await callback(req, res); }
     catch (error) {
         console.error('Today plans:', error.message);
-        res.status(error.status || 503).json({
+        if (isSavedTripLimitError(error)) {
+            return res.status(409).json(savedTripLimitResponse());
+        }
+        return res.status(error.status || 503).json({
             error: error.code || 'TODAY_PLANS_UNAVAILABLE',
             message: error.status ? error.message : 'Today plans are temporarily unavailable. Please try again shortly.',
             remaining: error.remaining,
@@ -17,6 +21,10 @@ const handle = (callback) => async (req, res) => {
 
 export const getTodayPlans = handle(async (req, res) => {
     res.json(await callPlanRpc(supabase, 'get_today_trip_state', { p_user_id: req.user.id }));
+});
+
+export const getTodayPlanHistory = handle(async (req, res) => {
+    res.json({ plans: await loadTodayPlanHistory(supabase, req.user.id) });
 });
 
 export const createTodayPlan = handle(async (req, res) => {

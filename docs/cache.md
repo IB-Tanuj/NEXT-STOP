@@ -255,7 +255,7 @@ The response includes a `cached: boolean` flag so the client knows whether the r
 
 ### Implementation
 
-A two-layer caching system to avoid expensive Groq API token usage for AI itinerary generation. 
+A two-layer caching system to avoid expensive Gemini API token usage for AI itinerary generation. 
 
 - **Storage:**
   - **Frontend:** `sessionStorage`
@@ -280,7 +280,7 @@ const bucket = Math.round(budget / BUCKET_SIZE) * BUCKET_SIZE;
 3. On miss, Frontend calls `/api/trip/generate-itinerary`.
 4. Backend builds key using `buildCacheKey()` (same logic).
 5. Backend checks in-memory Map. On hit, responds with `X-Cache: HIT`.
-6. On miss, Backend calls Groq, saves result, and responds with `X-Cache: MISS`.
+6. On miss, Backend calls Gemini, saves result, and responds with `X-Cache: MISS`.
 7. Frontend receives response and saves it in `sessionStorage`.
 
 ---

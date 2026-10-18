@@ -1,5 +1,6 @@
 import supabase from '../config/supabase.js';
 import { callWalletRpc, isWalletType, parsePositiveWalletAmount } from '../services/walletService.js';
+import { isSavedTripLimitError, savedTripLimitResponse } from '../utils/savedTripLimit.js';
 
 const isUuid = (value) => typeof value === 'string'
     && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -184,6 +185,9 @@ export const saveTrip = async (req, res) => {
         res.status(201).json({ message: 'Trip saved successfully!', trip });
     } catch (error) {
         console.error('Error saving trip:', error);
+        if (isSavedTripLimitError(error)) {
+            return res.status(409).json(savedTripLimitResponse());
+        }
         res.status(500).json({ error: 'Failed to save trip' });
     }
 };

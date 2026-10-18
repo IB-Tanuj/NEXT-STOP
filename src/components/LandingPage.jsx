@@ -6,6 +6,7 @@ import SeasonTimer from "./Landing/SeasonTimer"
 import FeatureCarousel from "./Landing/FeatureCarousel"
 import DestinationGrid from "./Landing/DestinationGrid"
 import LandingAuthDrawer from "./Landing/LandingAuthDrawer"
+import SeasonNavButtons from "./Landing/SeasonNavButtons"
 import "./Landing/LandingStyles.css"
 import { getSeasonKey } from "../themes"
 
@@ -38,19 +39,19 @@ const LandingPage = () => {
       setAuthSuccessMessage('✓ Email confirmed successfully! Enter your password to log in.')
       setIsAuthOpen(true)
        try { localStorage.removeItem('nextstop_signup_email') } catch (error) { console.debug('Could not clear signup email', error) }
-      window.history.replaceState({}, '', '/classic')
+      window.history.replaceState({}, '', location.pathname)
     } else if (params.get('auth') === 'login') {
       setAuthMode('login')
       setPrefillEmail(emailParam)
       setAuthSuccessMessage('')
       setIsAuthOpen(true)
-      window.history.replaceState({}, '', '/classic')
+      window.history.replaceState({}, '', location.pathname)
     } else if (params.get('auth') === 'signup') {
       setAuthMode('signup')
       setPrefillEmail('')
       setAuthSuccessMessage('')
       setIsAuthOpen(true)
-      window.history.replaceState({}, '', '/classic')
+      window.history.replaceState({}, '', location.pathname)
     }
   }, [location.search])
 
@@ -64,7 +65,7 @@ const LandingPage = () => {
   // Always show rain on the classic monsoon page
   const showRain = true
 
-  const { seasonBadge, seasonEmoji, seasonName } = SeasonTimer()
+  const { timerCard, seasonEmoji, seasonName } = SeasonTimer({ targetSeason: "Varsha" })
 
   // Parallax background scroll tracking
   useEffect(() => {
@@ -167,27 +168,6 @@ const LandingPage = () => {
         initialSuccessMessage={authSuccessMessage}
       />
 
-      {/* Switch to New View Toggle */}
-      <button 
-        onClick={() => navigate("/")} 
-        style={{
-            position: 'fixed',
-            top: '80px',
-            right: '20px',
-            zIndex: 100,
-            padding: '8px 16px',
-            background: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(5px)',
-            border: '1px solid rgba(255, 255, 255, 0.4)',
-            color: '#fff',
-            borderRadius: '20px',
-            cursor: 'pointer',
-            transition: 'background 0.3s'
-        }}
-      >
-        New View ✨
-      </button>
-
       {/* ── HERO ── */}
       <section className="hero" id="home">
         <header className="topbar">
@@ -196,7 +176,7 @@ const LandingPage = () => {
             <span className="brand-name">NEXT·STOP</span>
           </a>
           <nav className="topbar-right">
-            <span className="season-badge">{seasonBadge}</span>
+            <SeasonNavButtons currentSeason="monsoon" />
             <button className="btn btn-ghost" type="button" onClick={() => openAuth('login')}>Login</button>
             <button className="btn btn-solid" type="button" onClick={() => openAuth('signup')}>Sign Up</button>
           </nav>
@@ -206,6 +186,10 @@ const LandingPage = () => {
           <p className="season-line">
             <span>{seasonEmoji}</span> It's <strong>{seasonName}</strong> — {seasonDescriptions[seasonKey] || seasonDescriptions.varsha}
           </p>
+
+          <div className="monsoon-timer">
+            {timerCard}
+          </div>
 
           <h1 className="logo">NEXT<span className="logo-dash">–</span>STOP</h1>
           <p className="tagline">Every stop, every stay, every fare — live. One itinerary built around you.</p>
@@ -224,6 +208,7 @@ const LandingPage = () => {
               Explore {seasonName} Picks
             </a>
           </div>
+
         </main>
 
         <a className="scroll-hint" href="#destinations" aria-label="Scroll down">▾</a>

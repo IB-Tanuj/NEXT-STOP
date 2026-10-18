@@ -180,7 +180,7 @@ const TripPage = ({ location, theme, onBack }) => {
     // Fetch Best Time data
     const fetchBestTime = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/best-time/${locKey}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/best-time/${locKey}`);
         if (res.ok) {
           const data = await res.json();
           setBestTimeData(data);

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import SeatMapUI from './SeatMapUI';
 
-const BACKEND = 'http://localhost:5000/api/flixbus';
+const BACKEND = `${import.meta.env.VITE_API_URL || ''}/api/flixbus`;
 const EUR_TO_INR = 92; // Approximate conversion
 
 const BusLoversPage = ({ theme, onClose }) => {

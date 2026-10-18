@@ -50,9 +50,19 @@ const waitForPlan = async (planId, accessToken, kind, savedTripId) => {
     if (!response.ok) return null
     const { plan } = await response.json()
     const status = kind === "summary" ? plan.summary_status : plan.itinerary_status
-    if (status === "ready" || status === "failed") return plan
+    if (status === "ready") return plan
+    if (status === "failed") {
+      const error = new Error("We could not finish the AI generation. Try again for free.")
+      error.status = 502
+      error.code = "TRIP_AI_FAILED"
+      error.plan = plan
+      throw error
+    }
   }
-  return null
+  const error = new Error("AI generation is taking too long. Please try again.")
+  error.status = 504
+  error.code = "TRIP_AI_TIMEOUT"
+  throw error
 }
 
 // API Calls

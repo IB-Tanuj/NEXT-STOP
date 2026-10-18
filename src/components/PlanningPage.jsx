@@ -3,6 +3,7 @@ import TripPreferences from "./TripPreferences"
 import { searchCities } from "../data/stations"
 import { useAuth } from "../context/AuthContext"
 import { useNotification } from "../context/NotificationContext"
+import { containsUsernameWhitespace } from "../utils/usernameUtils"
 
 const PlanningPage = ({ location, theme, choice, onBack }) => {
   const { session } = useAuth();
@@ -525,8 +526,13 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                           setGroupMembers(newMembers);
                           return;
                         }
-                        const usernameInput = await showPrompt("Enter the friend's Username (e.g. tanuj):");
+                        const usernameInput = await showPrompt("Enter the friend's Username (e.g. Sky!Walker_2):");
                         if (!usernameInput || !usernameInput.trim()) return;
+                        if (containsUsernameWhitespace(usernameInput)) {
+                          showAlert("Spaces are not allowed in usernames.", "error");
+                          return;
+                        }
+                        const username = usernameInput.trim();
                         try {
                           const reqRes = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/friends/request`, {
                             method: 'POST',
@@ -534,7 +540,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                               'Content-Type': 'application/json',
                               'Authorization': `Bearer ${session?.access_token || ''}`
                             },
-                            body: JSON.stringify({ targetUsername: usernameInput.trim() })
+                            body: JSON.stringify({ targetUsername: username })
                           });
                           const data = await reqRes.json();
                           if (reqRes.ok) {
@@ -542,7 +548,9 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
                           } else {
                             // If they are already friends, we can fetch their info and add them directly
                             if (data.error === 'You are already friends') {
-                              const userRes = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/user/search/${usernameInput.trim()}`);
+                              const userRes = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/user/search/${encodeURIComponent(username)}`, {
+                                headers: { 'Authorization': `Bearer ${session?.access_token || ''}` }
+                              });
                               if (userRes.ok) {
                                 const userData = await userRes.json();
                                 const newMembers = [...groupMembers];

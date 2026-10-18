@@ -126,6 +126,88 @@
   backdrop-filter: blur(8px);
 }
 
+/* ── Seasonal Page Switcher in Topbar ─────────────────── */
+
+.landing-page .season-nav-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(8, 20, 18, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 4px 6px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.landing-page .season-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: rgba(240, 253, 244, 0.72);
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 7px 15px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  user-select: none;
+  line-height: 1.2;
+}
+
+.landing-page .season-nav-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Monsoon button */
+.landing-page .season-nav-btn.season-btn-monsoon:hover {
+  background: rgba(87, 217, 163, 0.14);
+  border-color: rgba(87, 217, 163, 0.4);
+  color: #57d9a3;
+  box-shadow: 0 2px 12px rgba(87, 217, 163, 0.25);
+}
+
+.landing-page .season-nav-btn.season-btn-monsoon.active {
+  background: rgba(87, 217, 163, 0.22);
+  border-color: rgba(87, 217, 163, 0.65);
+  color: #57d9a3;
+  box-shadow: 0 0 16px rgba(87, 217, 163, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  font-weight: 700;
+}
+
+/* Sharad button */
+.landing-page .season-nav-btn.season-btn-sharad:hover {
+  background: rgba(253, 224, 71, 0.14);
+  border-color: rgba(253, 224, 71, 0.4);
+  color: #fde047;
+  box-shadow: 0 2px 12px rgba(253, 224, 71, 0.25);
+}
+
+.landing-page .season-nav-btn.season-btn-sharad.active {
+  background: rgba(253, 224, 71, 0.22);
+  border-color: rgba(253, 224, 71, 0.65);
+  color: #fde047;
+  box-shadow: 0 0 16px rgba(253, 224, 71, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  font-weight: 700;
+}
+
+.landing-page .season-nav-btn .season-btn-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+  display: inline-block;
+  margin-left: 2px;
+}
+
 /* ── Buttons ─────────────────────────────────────────── */
 
 .landing-page .btn {
@@ -192,6 +274,18 @@
 .landing-page .hero-content > .description { animation-delay: 0.9s; }
 .landing-page .hero-content > .hero-actions { animation-delay: 1.04s; }
 .landing-page .hero-content > .timer-card { animation-delay: 1.18s; }
+
+/* Keep the monsoon countdown visible in the first hero view. */
+.landing-page .monsoon-timer {
+  width: min(100%, 560px);
+  animation: none;
+}
+
+.landing-page .monsoon-timer .timer-card {
+  margin-top: 0;
+  animation: none;
+  opacity: 1;
+}
 
 .landing-page .season-line {
   font-family: "Playfair Display", serif;
@@ -599,6 +693,17 @@
 @media (max-width: 720px) {
   .landing-page .topbar {
     justify-content: center;
+  }
+
+  .landing-page .season-nav-group {
+    padding: 3px 4px;
+    gap: 3px;
+  }
+
+  .landing-page .season-nav-btn {
+    padding: 6px 11px;
+    font-size: 0.78rem;
+    gap: 5px;
   }
 
   .landing-page .destination-grid {

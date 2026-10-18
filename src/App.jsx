@@ -265,10 +265,12 @@ function App() {
           {/* Product ad / UI showcase */}
           <Route path="/ad" element={<ProductAdPage />} />
 
-          {/* New Marketing Landing Page (V2) */}
+          {/* Sharad Landing Page */}
           <Route path="/" element={<NewLandingPage />} />
+          <Route path="/sharad" element={<NewLandingPage />} />
 
-          {/* Classic Landing Page (V1) */}
+          {/* Monsoon Landing Page */}
+          <Route path="/monsoon" element={<LandingPage />} />
           <Route path="/classic" element={<LandingPage />} />
 
           {/* Login Page Redirects to Drawer on Landing */}

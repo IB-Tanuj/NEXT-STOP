@@ -11,7 +11,7 @@ const completeSummary = (data) => Boolean(
   data?.foodRecommendations?.length && data?.localEmergency?.length
 )
 
-const TodayPlanViewer = ({ theme, plan: initialPlan, onClose, onUpdated }) => {
+const TodayPlanViewer = ({ theme, plan: initialPlan, isHistory = false, onClose, onUpdated }) => {
   const { session } = useAuth()
   const { showAlert } = useNotification()
   const [plan, setPlan] = useState(initialPlan)
@@ -92,10 +92,10 @@ const TodayPlanViewer = ({ theme, plan: initialPlan, onClose, onUpdated }) => {
     <div style={{ position: "fixed", inset: 0, zIndex: 5000, background: theme.bg, overflowY: "auto" }}>
       <div style={{ maxWidth: "760px", margin: "0 auto", padding: "28px 20px 60px", fontFamily: "'Segoe UI', sans-serif" }}>
         <button onClick={onClose} style={{ background: "transparent", border: "none", color: theme.subtext, cursor: "pointer", fontSize: "14px", padding: "8px 0", marginBottom: "28px" }}>
-          ← Back to Today
+          ← Back to {isHistory ? "Previous Plans" : "Today"}
         </button>
 
-        <div style={{ color: theme.primary, fontSize: "12px", letterSpacing: "3px", fontWeight: "800", marginBottom: "8px" }}>TODAY · SAVED SNAPSHOT</div>
+        <div style={{ color: theme.primary, fontSize: "12px", letterSpacing: "3px", fontWeight: "800", marginBottom: "8px" }}>{isHistory ? "PREVIOUS PLAN · SAVED SNAPSHOT" : "TODAY · SAVED SNAPSHOT"}</div>
         <h1 style={{ color: theme.text, fontSize: "clamp(24px, 5vw, 38px)", margin: "0 0 8px", lineHeight: 1.1 }}>{plan?.title || plan?.destination}</h1>
         <div style={{ color: theme.subtext, fontSize: "14px", marginBottom: "24px" }}>{plan?.destination} · {preferences.days || "—"} days</div>
 

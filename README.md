@@ -24,13 +24,20 @@ Vite proxies `/api` requests to the local backend. If the browser reports `ECONN
 
 Create a local `.env` file from the values used by your development Supabase/API accounts. Keep it out of source control.
 
+You can copy `.env.example` as a starting point:
+
+```bash
+cp .env.example .env
+```
+
 ### Backend
 
 | Variable | Purpose |
 | --- | --- |
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only Supabase service-role key |
-| `GEMINI_API_KEY` / provider-specific keys | AI generation and validation |
+| `GEMINI_EXTRA` | AI generation and live-data cleanup |
+| `GEMINI_KEY` / `GEMINI_KEY_1`…`GEMINI_KEY_3` | Optional spot-information key rotation |
 | RapidAPI/TinyFish variables | Optional live transport and hotel providers |
 
 ### Frontend
@@ -50,7 +57,18 @@ Run these files in the Supabase SQL editor in order:
 1. `Backend/database/setup_profiles.sql`
 2. `Backend/database/setup_saved_trips.sql`
 3. `Backend/database/setup_wallet_transactions.sql`
-4. The remaining feature migrations required by the feature you are testing, such as `setup_today_trip_plans.sql`, `setup_friendships.sql`, and `setup_flixbus.sql`.
+4. `Backend/database/setup_caches.sql`
+5. `Backend/database/setup_gemini_results.sql`
+6. The remaining feature migrations required by the feature you are testing, such as `setup_today_trip_plans.sql`, `setup_friendships.sql`, and `setup_flixbus.sql`.
+
+For Today plan retention and Saved Trip limits, run these after the base Today and Saved Trips setup:
+
+```text
+Backend/database/setup_saved_trip_limit.sql
+Backend/database/setup_today_plan_cleanup.sql
+```
+
+The cleanup migration uses Supabase `pg_cron` to remove unsaved Today plans after seven days. Saved Trips and their wallets are never removed by that job.
 
 The saved-trip wallet migration installs signed ledger constraints and atomic RPCs. Wallet balance changes must go through those RPCs so a balance and its transaction history cannot diverge.
 
@@ -91,3 +109,14 @@ The automated suite covers authenticated middleware behavior, quota RPC calls, T
 - Interactive UI controls should use native buttons or links, expose expanded/selected state where applicable, and preserve keyboard focus behavior in dialogs.
 - Profile searches and friend/member lookups are served through backend projections. Direct browser reads of the full `profiles` table are restricted by RLS.
 - Run database migrations in a development Supabase project before exercising database-backed features.
+
+## Vercel deployment
+
+The repository is configured for a single Vercel deployment:
+
+- Vite builds the frontend into `dist`.
+- `api/index.js` exposes the Express backend as a serverless function.
+- `/api/*` requests are rewritten to that function.
+- The root `package.json` includes the backend runtime dependencies so Vercel can package the API.
+
+In Vercel, keep the project root set to the repository root and add the variables from `.env.example` in **Project Settings → Environment Variables**. For a combined frontend/API deployment, leave `VITE_API_URL` empty. Never add `SUPABASE_SERVICE_ROLE_KEY` to a `VITE_*` variable.
