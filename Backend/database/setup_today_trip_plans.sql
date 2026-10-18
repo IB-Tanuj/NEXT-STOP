@@ -1,6 +1,6 @@
 -- Run in Supabase SQL Editor after setup_saved_trips.sql.
 -- Daily planning window: 05:30 AM Asia/Kolkata (00:00 UTC) to the next 05:30 AM.
--- Old Today records are retained; only the current window is listed by the app.
+-- Old Today records are retained; the app lists the current and immediately previous windows.
 begin;
 
 alter table public.saved_trips add column if not exists member_ids uuid[] not null default '{}';
@@ -69,6 +69,22 @@ as $$
         'plans', coalesce((select jsonb_agg(to_jsonb(p) - array['summary_token', 'itinerary_token'] order by p.created_at)
             from public.today_trip_plans p
             where p.user_id = p_user_id and p.window_start = public.trip_planning_window_start()), '[]'::jsonb)
+    );
+$$;
+
+create or replace function public.get_today_trip_history(p_user_id uuid)
+returns jsonb language sql security definer
+set search_path = public, pg_temp
+as $$
+    select jsonb_build_object(
+        'plans', coalesce((select jsonb_agg(
+            to_jsonb(p) - array['summary_token', 'itinerary_token']
+            order by p.window_start desc, p.created_at desc, p.id desc
+        )
+        from public.today_trip_plans p
+        where p.user_id = p_user_id
+          and p.window_start >= public.trip_planning_window_start() - interval '1 day'
+          and p.window_start < public.trip_planning_window_start()), '[]'::jsonb)
     );
 $$;
 
@@ -290,6 +306,7 @@ $$;
 
 revoke all on function public.trip_planning_window_start() from public;
 revoke all on function public.get_today_trip_state(uuid) from public;
+revoke all on function public.get_today_trip_history(uuid) from public;
 revoke all on function public.create_today_trip_plan(uuid, uuid, text, numeric, jsonb) from public;
 revoke all on function public.begin_today_trip_generation(uuid, uuid, text) from public;
 revoke all on function public.finish_today_trip_generation(uuid, uuid, text, uuid, jsonb) from public;
@@ -297,6 +314,7 @@ revoke all on function public.save_today_trip_plan(uuid, uuid, uuid[]) from publ
 revoke all on function public.link_saved_today_trip_plan(uuid, uuid) from public;
 grant execute on function public.trip_planning_window_start() to service_role;
 grant execute on function public.get_today_trip_state(uuid) to service_role;
+grant execute on function public.get_today_trip_history(uuid) to service_role;
 grant execute on function public.create_today_trip_plan(uuid, uuid, text, numeric, jsonb) to service_role;
 grant execute on function public.begin_today_trip_generation(uuid, uuid, text) to service_role;
 grant execute on function public.finish_today_trip_generation(uuid, uuid, text, uuid, jsonb) to service_role;

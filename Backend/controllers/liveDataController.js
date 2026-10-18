@@ -20,7 +20,7 @@ export const getActivityPrice = async (req, res) => {
             return res.status(400).json({ error: "activityName and location are required" });
         }
 
-        // Step 1: Groq generates the search query
+        // Step 1: Gemini generates the search query
         const searchQuery = await generateSearchQuery({
             type: "price, timing, and duration",
             name: activityName,
@@ -30,7 +30,7 @@ export const getActivityPrice = async (req, res) => {
         // Steps 2 & 3: TinyFish searches the web and fetches the page
         const { text } = await searchAndFetch(searchQuery);
 
-        // Step 4: Groq cleans the raw text into structured JSON
+        // Step 4: Gemini cleans the raw text into structured JSON
         const schema = {
             activityName: "",
             location: "",
@@ -72,7 +72,7 @@ export const verifyRestaurant = async (req, res) => {
             return res.status(400).json({ error: "restaurantName and location are required" });
         }
 
-        // Step 1: Groq generates the search query
+        // Step 1: Gemini generates the search query
         const searchQuery = await generateSearchQuery({
             type: "restaurant rating, cuisine, and price range",
             name: restaurantName,
@@ -82,7 +82,7 @@ export const verifyRestaurant = async (req, res) => {
         // Steps 2 & 3: TinyFish searches and fetches
         const { text } = await searchAndFetch(searchQuery);
 
-        // Step 4: Groq cleans the data
+        // Step 4: Gemini cleans the data
         const schema = {
             restaurantName: "",
             exists: true,
@@ -125,7 +125,7 @@ export const getStayPrice = async (req, res) => {
             return res.status(400).json({ error: "stayName and location are required" });
         }
 
-        // Step 1: Groq generates the search query
+        // Step 1: Gemini generates the search query
         const searchQuery = await generateSearchQuery({
             type: `${stayType || 'hotel'} room price per night`,
             name: stayName,
@@ -135,7 +135,7 @@ export const getStayPrice = async (req, res) => {
         // Steps 2 & 3: TinyFish searches and fetches
         const { text } = await searchAndFetch(searchQuery);
 
-        // Step 4: Groq cleans the data
+        // Step 4: Gemini cleans the data
         const schema = {
             stayName: "",
             currentPrice: "",
@@ -196,21 +196,19 @@ export const searchStays = async (req, res) => {
 
         // Create the promise for the actual work
         const fetchPromise = (async () => {
-            // Step 1: Hardcoded search query template (no Groq tokens used here)
+            // Step 1: Hardcoded search query template (no AI tokens used here)
             const searchQuery = generateStaySearchQuery(location, stayType);
 
             // Steps 2 & 3: TinyFish searches and fetches TOP 2 results in parallel
             const { text } = await searchAndFetchMultiple(searchQuery);
 
-            // Step 4: Groq cleans the data into up to 5 structured stay options
+            // Step 4: Gemini cleans the data into up to 5 structured stay options
             const schema = {
                 stays: [
                     { name: "", pricePerNight: 0, rating: "", maxCapacity: 0, highlight: "" }
                 ]
             };
 
-            // Use the new dedicated API key for cleaning, or fallback to main key if it's missing
-            const apiKey = process.env.GROQ_PROMPT_CLEANING_KEY || process.env.GROQ_API_KEY;
             const result = await cleanWebDataWithKey(
                 text,
                 schema,
@@ -219,8 +217,7 @@ CRITICAL RULES FOR PRICES:
 1. If the scraped price is in USD ($), you MUST convert it to INR by multiplying by 96.
 2. If the number is suspiciously low (e.g., under 300), assume it was USD and multiply it by 96. 
 3. If a real hotel is found but its price is missing in the text, estimate a highly realistic INR price based on its star rating, location, and the user's ${stayType} preference.
-4. If ${stayType} is 'budget', ensure prices are generally under 2500 INR. If ${stayType} is 'hostel', ensure prices are under 1000 INR. Ignore luxury hotels if the user wants budget.`,
-                apiKey
+4. If ${stayType} is 'budget', ensure prices are generally under 2500 INR. If ${stayType} is 'hostel', ensure prices are under 1000 INR. Ignore luxury hotels if the user wants budget.`
             );
 
             // Ensure we have an array of stays

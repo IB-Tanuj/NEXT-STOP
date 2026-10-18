@@ -56,7 +56,15 @@ CREATE TABLE IF NOT EXISTS cache_itineraries (
 );
 ALTER TABLE cache_itineraries DISABLE ROW LEVEL SECURITY;
 
--- 8. cache_flixbus
+-- 8. cache_spot_info
+CREATE TABLE IF NOT EXISTS cache_spot_info (
+    id TEXT PRIMARY KEY,
+    value JSONB NOT NULL,
+    expires_at BIGINT NOT NULL
+);
+ALTER TABLE cache_spot_info DISABLE ROW LEVEL SECURITY;
+
+-- 9. cache_flixbus
 CREATE TABLE IF NOT EXISTS cache_flixbus (
     id TEXT PRIMARY KEY,
     value JSONB NOT NULL,

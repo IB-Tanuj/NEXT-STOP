@@ -16,7 +16,9 @@ This document tracks the technical issues and bugs we have encountered during de
 - **Fix**: Start using booking.com api .
 
 
-### 4. 
+### 4. Groq API Deprecation & Removal
+- **Issue**: Groq API became unusable and legacy keys/comments remained after migrating AI pipelines to Google Gemini (`@google/genai`).
+- **Fix**: Removed all Groq API keys from `.env` and `.env.example`, deleted legacy `test-groq.js`, and updated all service controllers and documentation to reference Gemini.
 
 ---
 *Note: Add new errors and their solutions here as they occur to maintain a knowledge base for the project.*

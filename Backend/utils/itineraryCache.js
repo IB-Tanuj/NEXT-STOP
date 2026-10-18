@@ -4,7 +4,7 @@
  * 
  * Cache keys are budget-bucketed composite strings so that small
  * budget changes (e.g. switching a ₹200 cheaper hotel) don't bust
- * the cache and waste Groq tokens.
+ * the cache and waste Gemini tokens.
  */
 
 import { AsyncCache } from './cache.js';

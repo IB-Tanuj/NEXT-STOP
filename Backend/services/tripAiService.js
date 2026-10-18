@@ -1,28 +1,71 @@
-import { GoogleGenAI } from '@google/genai';
 import { buildCacheKey, bucketize, get as cacheGet, set as cacheSet } from '../utils/itineraryCache.js';
 import { saveGeminiResult, getGeminiResult } from '../utils/geminiLogger.js';
 import { validateItinerary, validateSummary } from './tripAiValidation.js';
-
-const getGeminiClient = () => {
-    if (!process.env.GEMINI_EXTRA) throw new Error('GEMINI_EXTRA is not defined.');
-    return new GoogleGenAI({ apiKey: process.env.GEMINI_EXTRA, httpOptions: { timeout: 90000 } });
-};
+import { createGeminiClient, getGeminiModel, getGeminiApiKeys } from './geminiConfig.js';
+import { parseGeminiJson } from './geminiResponse.js';
 
 const askGemini = async (prompt, maxOutputTokens) => {
-    const response = await getGeminiClient().models.generateContent({
-        model: 'gemini-3.6-flash',
-        contents: prompt,
-        config: {
-            temperature: 0.7,
-            maxOutputTokens,
-            systemInstruction: 'Return ONLY valid JSON. Do not include markdown or explanations.',
-        },
-    });
-    return JSON.parse((response.text || '').replace(/```json|```/g, '').trim());
+    const keys = getGeminiApiKeys();
+    if (!keys.length) {
+        throw new Error('No Gemini API key configured. Set GEMINI_EXTRA or GEMINI_KEY.');
+    }
+    const primaryModel = getGeminiModel();
+    const candidateModels = [primaryModel, 'gemini-3.6-flash', 'gemini-flash-latest']
+        .filter((m, i, arr) => Boolean(m) && arr.indexOf(m) === i);
+
+    let lastError = null;
+
+    for (const model of candidateModels) {
+        for (const apiKey of keys) {
+            try {
+                const response = await createGeminiClient(apiKey).models.generateContent({
+                    model,
+                    contents: prompt,
+                    config: {
+                        temperature: 0.7,
+                        maxOutputTokens,
+                        responseMimeType: 'application/json',
+                        systemInstruction: 'Return ONLY valid JSON. Do not include markdown or explanations.',
+                    },
+                });
+                return parseGeminiJson(response.text);
+            } catch (err) {
+                lastError = err;
+                console.warn(`[TripAI] Gemini attempt failed (model=${model}, key=${apiKey.slice(0, 10)}...): ${err.message}`);
+            }
+        }
+    }
+
+    throw lastError || new Error('All Gemini generation attempts failed.');
 };
 
-export const generateSummaryData = async ({ location, days, budget, stayType, transport }) => {
-    const cacheKey = `trip_plan:${location.toLowerCase()}`;
+export const generateSummaryData = async ({
+    location,
+    days,
+    budget,
+    stayType,
+    transport,
+    selectedActivities,
+    selectedFestivals,
+}) => {
+    const selectedActivityNames = (selectedActivities || [])
+        .map(activity => typeof activity === 'string' ? activity : activity?.name)
+        .filter(Boolean)
+        .sort();
+    const selectedFestivalNames = (selectedFestivals || [])
+        .map(festival => typeof festival === 'string' ? festival : festival?.name)
+        .filter(Boolean)
+        .sort();
+    const cacheKey = [
+        'trip_plan:v2',
+        location.toLowerCase().trim(),
+        days || 3,
+        bucketize(Number(budget) || 0),
+        stayType || 'budget',
+        transport || 'train',
+        selectedActivityNames.join('+') || 'none',
+        selectedFestivalNames.join('+') || 'none',
+    ].map(value => encodeURIComponent(String(value))).join(':');
     const cached = await getGeminiResult(cacheKey);
     if (cached?.output_result) {
         try { return { data: validateSummary(cached.output_result), cacheStatus: 'HIT' }; }
@@ -31,6 +74,12 @@ export const generateSummaryData = async ({ location, days, budget, stayType, tr
 
     const prompt = `Generate a JSON trip plan for:
 Location: ${location}
+Duration: ${days || 3} days
+Budget: ₹${bucketize(Number(budget) || 0)}
+Stay type: ${stayType || 'budget'}
+Transport: ${transport || 'train'}
+Selected activities: ${selectedActivityNames.join(', ') || 'none specified'}
+Selected festivals: ${selectedFestivalNames.join(', ') || 'none specified'}
 
 RULES:
 1. Return ONLY raw JSON. No markdown formatting, no text before or after.
@@ -54,7 +103,7 @@ JSON SCHEMA:
 };
 
 export const generateItineraryData = async (inputs) => {
-    const { location, days, budget, stayType, transport, selectedActivities } = inputs;
+    const { location, days, budget, stayType, transport, selectedActivities, selectedFestivals } = inputs;
     const cacheKey = buildCacheKey(inputs);
     const cached = await cacheGet(cacheKey);
     if (cached) {
@@ -62,7 +111,8 @@ export const generateItineraryData = async (inputs) => {
         catch { /* Retry incomplete cached output instead of marking it ready. */ }
     }
 
-    const activities = (selectedActivities || []).map(activity => typeof activity === 'string' ? activity : activity.name).join(', ');
+    const activities = (selectedActivities || []).map(activity => typeof activity === 'string' ? activity : activity?.name).filter(Boolean).join(', ');
+    const festivals = (selectedFestivals || []).map(festival => typeof festival === 'string' ? festival : festival?.name).filter(Boolean).join(', ');
     const month = new Date().toLocaleString('en-IN', { month: 'long', timeZone: 'Asia/Kolkata' });
     const prompt = `You are a travel planning expert for India. Generate ONLY a detailed day-by-day itinerary for:
 Location: ${location}
@@ -72,6 +122,7 @@ Stay type: ${stayType || 'budget'}
 Transport: ${transport || 'train'}
 Travel Month: ${month}. Only suggest places and activities appropriate for this month/season.
 Selected activities: ${activities || 'none specified'}
+Selected festivals: ${festivals || 'none specified'}
 
 Return ONLY raw JSON with this schema:
 {"itinerary": [{"day": 1, "title": "Day title", "morning": "Morning plan", "afternoon": "Afternoon plan", "evening": "Evening plan", "estimatedCost": 500}]}`;

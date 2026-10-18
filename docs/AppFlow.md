@@ -21,7 +21,7 @@
 
 ## Today planning desk
 
-Today appears immediately before Explore for authenticated users. It shows the plans created in the current `05:30 AM IST → next-day 05:30 AM IST` planning window and the remaining AI planning credits.
+Today appears immediately before Explore for authenticated users. It shows the plans created in the current `05:30 AM IST → next-day 05:30 AM IST` planning window, the remaining AI planning credits, and a Previous Plans section for older Today records.
 
 Each card supports:
 
@@ -29,5 +29,6 @@ Each card supports:
 2. **Save** — atomically creates the Saved Trip and wallets; repeated saves show `Already saved`.
 3. **Rename** — updates the Today card title without changing its stored trip inputs.
 
-The stable client plan ID makes a repeated create request idempotent. AI summary and itinerary generation share the credit claimed when the Today card is created. A server-recorded failed section can be retried for free. Share is intentionally deferred.
+Previous Plans cards support the same View, Save, and Rename actions, so a user can recover an unsaved trip from an earlier planning day.
 
+The stable client plan ID makes a repeated create request idempotent. AI summary and itinerary generation share the credit claimed when the Today card is created. A server-recorded failed section can be retried for free. Share is intentionally deferred.

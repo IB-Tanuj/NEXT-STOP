@@ -1,20 +1,22 @@
 import supabase from '../config/supabase.js';
+import { escapeIlikePattern, getUsernameValidationError } from '../utils/usernameSearch.js';
 
 // Send a friend request by Username
 export const sendFriendRequest = async (req, res) => {
     try {
         const userId = req.user.id;
         const { targetUsername } = req.body;
+        const validationError = getUsernameValidationError(targetUsername, 'Target Username');
 
-        if (!targetUsername) {
-            return res.status(400).json({ error: 'Target Username is required' });
+        if (validationError) {
+            return res.status(400).json({ error: validationError });
         }
 
         // Find user by Username (case-insensitive)
         const { data: targetUser, error: searchError } = await supabase
             .from('profiles')
             .select('id, username')
-            .ilike('username', targetUsername)
+            .ilike('username', escapeIlikePattern(targetUsername))
             .single();
 
         if (searchError || !targetUser) {

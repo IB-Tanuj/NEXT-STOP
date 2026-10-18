@@ -35,19 +35,34 @@ function getSeasonInfo(now) {
   return { current, next }
 }
 
+function getNextSeasonStart(now, seasonName) {
+  const target = SEASONS.find((season) => season.name.toLowerCase() === seasonName?.toLowerCase())
+  if (!target) return null
+
+  const year = now.getFullYear()
+  const currentYearStart = seasonStart(year, target)
+  const targetStart = currentYearStart > now
+    ? currentYearStart
+    : seasonStart(year + 1, target)
+
+  return { s: target, at: targetStart }
+}
+
 function pad(n) {
   return String(n).padStart(2, "0")
 }
 
-const useSeasonTimer = () => {
+const useSeasonTimer = ({ targetSeason } = {}) => {
   const [time, setTime] = useState({ days: "00", hours: "00", mins: "00", secs: "00" })
   const [seasonInfo, setSeasonInfo] = useState(() => {
-    const info = getSeasonInfo(new Date())
+    const now = new Date()
+    const info = getSeasonInfo(now)
+    const target = getNextSeasonStart(now, targetSeason) || info.next
     return {
       currentEmoji: info.current.s.emoji,
       currentName: info.current.s.name,
-      nextName: info.next.s.name,
-      nextEmoji: info.next.s.emoji,
+      nextName: target.s.name,
+      nextEmoji: target.s.emoji,
     }
   })
 
@@ -55,7 +70,8 @@ const useSeasonTimer = () => {
     const update = () => {
       const now = new Date()
       const { current, next } = getSeasonInfo(now)
-      const diff = Math.max(0, next.at - now)
+      const target = getNextSeasonStart(now, targetSeason) || next
+      const diff = Math.max(0, target.at - now)
 
       setTime({
         days: pad(Math.floor(diff / 86400000)),
@@ -67,21 +83,21 @@ const useSeasonTimer = () => {
       setSeasonInfo({
         currentEmoji: current.s.emoji,
         currentName: current.s.name,
-        nextName: next.s.name,
-        nextEmoji: next.s.emoji,
+        nextName: target.s.name,
+        nextEmoji: target.s.emoji,
       })
     }
 
     update()
     const id = setInterval(update, 1000)
     return () => clearInterval(id)
-  }, [])
+  }, [targetSeason])
 
   return {
     timerCard: (
       <div className="timer-card" role="timer" aria-live="polite">
         <p className="timer-label">
-          Season shifts to <span id="nextSeasonName">{seasonInfo.nextName} {seasonInfo.nextEmoji}</span> in
+          {targetSeason ? "Monsoon returns in" : <>Season shifts to <span id="nextSeasonName">{seasonInfo.nextName} {seasonInfo.nextEmoji}</span> in</>}
         </p>
         <div className="timer-grid">
           <div className="time-box"><span>{time.days}</span><small>days</small></div>
@@ -92,7 +108,11 @@ const useSeasonTimer = () => {
           <span className="colon">:</span>
           <div className="time-box"><span>{time.secs}</span><small>seconds</small></div>
         </div>
-        <p className="timer-note">Catch the {seasonInfo.currentName.toLowerCase()} vibe before the timer hits zero.</p>
+        <p className="timer-note">
+          {targetSeason
+            ? `Plan your next monsoon escape before ${seasonInfo.nextName} arrives.`
+            : `Catch the ${seasonInfo.currentName.toLowerCase()} vibe before the timer hits zero.`}
+        </p>
       </div>
     ),
     seasonBadge: `${seasonInfo.currentEmoji} ${seasonInfo.currentName}`,

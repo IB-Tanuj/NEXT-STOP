@@ -20,7 +20,7 @@ Today · 4/5  → one credit used
 Today · 3/5  → two credits used
 ```
 
-The Today area is intended to be a temporary planning desk for trips created during the current daily window. Saved Trips remains the permanent trip library.
+The Today area is a planning desk for trips created during the current daily window, with a Previous Plans section for retained records from earlier windows. Saved Trips remains the permanent trip library.
 
 Each Today card should provide:
 
@@ -45,8 +45,8 @@ The backend/database must own this time calculation using `Asia/Kolkata`. The br
 At reset time:
 
 - the available credit count returns to `5/5`;
-- Today lists only plans in the new planning window;
-- old unsaved records remain retained by the database unless a later cleanup policy is introduced;
+- Today lists current-window plans first, while Previous Plans exposes retained records from earlier windows;
+- unsaved records older than seven days are automatically cleaned up;
 - Saved Trips are not removed.
 
 ### Failed AI generation recovery
@@ -163,6 +163,7 @@ The responses include quota headers and Today plan state. A failed provider/vali
 Added handlers for:
 
 - reading the current Today list and quota;
+- reading prior Today plans from earlier planning windows;
 - creating an idempotent Today plan;
 - reading one owner-scoped Today plan;
 - renaming a plan;
@@ -176,6 +177,7 @@ Added authenticated routes:
 ```text
 GET    /api/today-plans
 POST   /api/today-plans
+GET    /api/today-plans/history
 GET    /api/today-plans/:id
 GET    /api/today-plans/saved-trip/:id
 PATCH  /api/today-plans/:id
@@ -202,6 +204,7 @@ Registered:
 Added authenticated client functions for:
 
 - loading Today state;
+- loading Previous Plans history;
 - creating/updating a plan;
 - renaming a plan;
 - saving a plan;
@@ -259,6 +262,7 @@ Added the initial sidebar UI structure for:
 - quota count and five-segment meter;
 - 05:30 AM IST countdown;
 - Today plan list;
+- Previous Plans list for older planning windows;
 - empty state;
 - View, Save, and Rename buttons;
 - already-saved state;

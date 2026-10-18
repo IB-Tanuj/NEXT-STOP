@@ -1,4 +1,5 @@
 import supabase from '../config/supabase.js';
+import { escapeIlikePattern, getUsernameValidationError } from '../utils/usernameSearch.js';
 
 // Get current user's profile
 export const getProfile = async (req, res) => {
@@ -29,15 +30,16 @@ export const searchByUsername = async (req, res) => {
         const { username } = req.params;
         const limit = parseInt(req.query.limit) || 10;
         const offset = parseInt(req.query.offset) || 0;
+        const validationError = getUsernameValidationError(username);
 
-        if (!username) {
-            return res.status(400).json({ error: 'Username is required' });
+        if (validationError) {
+            return res.status(400).json({ error: validationError });
         }
 
         const { data, error } = await supabase
             .from('profiles')
             .select('id, username, full_name, avatar_url, bio, tags')
-            .ilike('username', `%${username}%`)
+            .ilike('username', `%${escapeIlikePattern(username)}%`)
             .range(offset, offset + limit - 1)
             .order('username', { ascending: true });
 

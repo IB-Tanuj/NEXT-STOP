@@ -1,17 +1,12 @@
-import { GoogleGenAI } from '@google/genai';
 import { saveGeminiResult } from '../utils/geminiLogger.js';
-
-const GEMINI_MODEL = "gemini-3.6-flash";
+import { createGeminiClient, getGeminiModel } from './geminiConfig.js';
+import { parseGeminiJson } from './geminiResponse.js';
 
 /**
  * Helper: get or create a shared Gemini client using GEMINI_EXTRA key.
  */
 function getGeminiClient() {
-    const apiKey = process.env.GEMINI_EXTRA;
-    if (!apiKey) {
-        throw new Error("GEMINI_EXTRA is not defined in environment variables.");
-    }
-    return new GoogleGenAI({ apiKey });
+    return createGeminiClient();
 }
 
 /**
@@ -24,7 +19,7 @@ export async function generateSearchQuery({ type, name, location }) {
     const prompt = `Generate a single Google search query to find the current ${type} for "${name}" in ${location}, India. Return ONLY the search query string. Nothing else. No quotes.`;
 
     const response = await ai.models.generateContent({
-        model: GEMINI_MODEL,
+        model: getGeminiModel(),
         contents: prompt,
         config: {
             temperature: 0.3,
@@ -83,12 +78,11 @@ export async function cleanWebData(rawText, outputSchema, extractionGoal) {
 
 /**
  * Step 4 (with custom key): Cleaner using Gemini.
- * The apiKey parameter is kept for backward compatibility but ignored —
- * all calls now use GEMINI_EXTRA via getGeminiClient().
+ * The apiKey parameter is kept for backward compatibility and can select a
+ * dedicated key for high-volume cleanup requests.
  */
-export async function cleanWebDataWithKey(rawText, outputSchema, extractionGoal, _apiKey) {
-    void _apiKey;
-    const ai = getGeminiClient();
+export async function cleanWebDataWithKey(rawText, outputSchema, extractionGoal, apiKey) {
+    const ai = apiKey ? createGeminiClient(apiKey) : getGeminiClient();
 
     // Truncate raw text to 10000 chars to save tokens while keeping enough data for top 5 hotels
     const truncated = rawText.substring(0, 10000);
@@ -109,21 +103,18 @@ Web content:
 ${truncated}`;
 
     const response = await ai.models.generateContent({
-        model: GEMINI_MODEL,
+        model: getGeminiModel(),
         contents: prompt,
         config: {
             temperature: 0.2,
             maxOutputTokens: 800,
+            responseMimeType: "application/json",
             systemInstruction: "Return ONLY valid JSON. Never include URLs or links. Never invent data that is not in the provided text. No markdown.",
         },
     });
 
-    const text = response.text.trim();
-    // Remove markdown code blocks if present
-    const clean = text.replace(/```json|```/g, "").trim();
-
     try {
-        const parsed = JSON.parse(clean);
+        const parsed = parseGeminiJson(response.text);
 
         // Permanently save to gemini_results
         saveGeminiResult('web_cleaning', extractionGoal, parsed, null, { promptLength: prompt.length });
@@ -132,7 +123,7 @@ ${truncated}`;
     } catch (err) {
         console.error("❌ Gemini returned invalid JSON:");
         console.error("--- RAW TEXT ---");
-        console.error(text);
+        console.error(response.text);
         console.error("----------------");
         throw new Error("Gemini returned invalid JSON. Try searching again.", { cause: err });
     }

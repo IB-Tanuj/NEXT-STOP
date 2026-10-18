@@ -6,6 +6,7 @@ import SeasonTimer from "./Landing/SeasonTimer"
 import FeatureCarousel from "./Landing/FeatureCarousel"
 import ScrollableDestinationGrid from "./Landing/ScrollableDestinationGrid"
 import LandingAuthDrawer from "./Landing/LandingAuthDrawer"
+import SeasonNavButtons from "./Landing/SeasonNavButtons"
 import "./Landing/LandingStyles.css" // Keep original styles for base structure
 
 const NewLandingPage = () => {
@@ -36,19 +37,19 @@ const NewLandingPage = () => {
       setAuthSuccessMessage('✓ Email confirmed successfully! Enter your password to log in.')
       setIsAuthOpen(true)
        try { localStorage.removeItem('nextstop_signup_email') } catch (error) { console.debug('Could not clear signup email', error) }
-      window.history.replaceState({}, '', '/')
+      window.history.replaceState({}, '', location.pathname)
     } else if (params.get('auth') === 'login') {
       setAuthMode('login')
       setPrefillEmail(emailParam)
       setAuthSuccessMessage('')
       setIsAuthOpen(true)
-      window.history.replaceState({}, '', '/')
+      window.history.replaceState({}, '', location.pathname)
     } else if (params.get('auth') === 'signup') {
       setAuthMode('signup')
       setPrefillEmail('')
       setAuthSuccessMessage('')
       setIsAuthOpen(true)
-      window.history.replaceState({}, '', '/')
+      window.history.replaceState({}, '', location.pathname)
     }
   }, [location.search])
 
@@ -59,7 +60,7 @@ const NewLandingPage = () => {
     setIsAuthOpen(true)
   }
 
-  const { timerCard, seasonBadge, seasonEmoji, seasonName } = SeasonTimer()
+  const { timerCard, seasonEmoji, seasonName } = SeasonTimer()
 
   // Parallax background scroll tracking
   useEffect(() => {
@@ -185,27 +186,6 @@ const NewLandingPage = () => {
         initialSuccessMessage={authSuccessMessage}
       />
 
-      {/* Switch to Classic View Toggle */}
-      <button 
-        onClick={() => navigate("/classic")} 
-        style={{
-            position: 'fixed',
-            top: '80px',
-            right: '20px',
-            zIndex: 100,
-            padding: '8px 16px',
-            background: 'rgba(253, 224, 71, 0.1)',
-            backdropFilter: 'blur(5px)',
-            border: '1px solid rgba(253, 224, 71, 0.4)',
-            color: '#fde047',
-            borderRadius: '20px',
-            cursor: 'pointer',
-            transition: 'background 0.3s'
-        }}
-      >
-        Classic View
-      </button>
-
       {/* ── HERO ── */}
       <section className="hero" id="home" style={{ position: 'relative', zIndex: 10 }}>
         <header className="topbar">
@@ -214,7 +194,7 @@ const NewLandingPage = () => {
             <span className="brand-name">NEXT·STOP</span>
           </a>
           <nav className="topbar-right">
-            <span className="season-badge" style={{ border: '1px solid #fde047', color: '#fde047' }}>{seasonBadge}</span>
+            <SeasonNavButtons currentSeason="sharad" />
             <button className="btn btn-ghost" type="button" onClick={() => openAuth('login')} style={{ color: '#f8fafc' }}>Login</button>
             <button className="btn btn-solid" type="button" onClick={() => openAuth('signup')} style={{ background: '#fde047', color: '#1e1b4b' }}>Sign Up</button>
           </nav>

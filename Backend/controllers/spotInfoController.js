@@ -1,5 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { AsyncCache } from '../utils/cache.js';
+import { getGeminiApiKeys, getGeminiModel } from '../services/geminiConfig.js';
+import { parseGeminiJson } from '../services/geminiResponse.js';
 
 // Cache for 40 days
 const CACHE_TTL = 90 * 24 * 60 * 60 * 1000; // 90 days (3 months)
@@ -41,12 +43,7 @@ export const getSpotInfoBatch = async (req, res) => {
         // 3. Call Gemini for the missing spots in chunks
         console.log(`[Spot Info Batch] Calling Gemini for missing spots: ${missingSpots.join(', ')}`);
 
-        const apiKeys = [
-            process.env.GEMINI_KEY_1,
-            process.env.GEMINI_KEY_2,
-            process.env.GEMINI_KEY_3,
-            process.env.GEMINI_KEY
-        ].filter(Boolean);
+        const apiKeys = getGeminiApiKeys();
 
         if (apiKeys.length === 0) {
             return res.status(500).json({ error: "GEMINI API keys missing" });
@@ -84,19 +81,14 @@ Format:
 
             const response = await Promise.race([
                 ai.models.generateContent({
-                    model: 'gemini-3.6-flash',
+                    model: getGeminiModel(),
                     contents: prompt,
-                    config: { temperature: 0.2 }
+                    config: { temperature: 0.2, responseMimeType: 'application/json' }
                 }),
                 new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_ERROR')), 15000))
             ]);
 
-            const text = response.text || "";
-            const clean = text.replace(/```json|```/g, "").trim();
-
-            if (!clean) throw new Error("Gemini returned an empty response.");
-
-            return JSON.parse(clean);
+            return parseGeminiJson(response.text);
         };
 
         const chunkPromises = chunks.map((chunkSpots, index) => {

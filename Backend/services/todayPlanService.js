@@ -18,6 +18,12 @@ export const callPlanRpc = async (client, name, params) => {
     return data;
 };
 
+export const getTodayPlanHistory = async (client, userId) => {
+    const result = await callPlanRpc(client, 'get_today_trip_history', { p_user_id: userId });
+    if (!Array.isArray(result.plans)) throw new Error('Invalid planning database response.');
+    return result.plans.map(publicPlan);
+};
+
 export const getOwnedTodayPlan = async (client, userId, planId) => {
     if (!isUuid(planId)) throw apiError(400, 'INVALID_PLAN', 'A valid trip plan is required.');
     const { data, error } = await client.from('today_trip_plans').select('*').eq('id', planId).eq('user_id', userId).maybeSingle();

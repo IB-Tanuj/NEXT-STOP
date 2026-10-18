@@ -8,7 +8,7 @@ const SeatMapUI = ({ tripId }) => {
   const [bookingMessage, setBookingMessage] = useState(null);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/flixbus/seatmap/${encodeURIComponent(tripId)}?availableSeats=15`)
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/flixbus/seatmap/${encodeURIComponent(tripId)}?availableSeats=15`)
       .then(res => res.json())
       .then(data => { setSeatData(data); setLoading(false); })
       .catch(() => setLoading(false));
@@ -17,7 +17,7 @@ const SeatMapUI = ({ tripId }) => {
   const handleBook = async () => {
     if (!selectedSeat) return;
     try {
-      const res = await fetch('http://localhost:5000/api/flixbus/book', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/flixbus/book`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tripId, seatNumber: selectedSeat, passengerGender })

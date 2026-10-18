@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { containsUsernameWhitespace } from '../../utils/usernameUtils';
 import ViewProfileModal from './ViewProfileModal';
 import './ProfileTab.css'; // Reuse existing styles
 
@@ -24,7 +25,14 @@ const SearchFriendsModal = ({ onClose }) => {
     const LIMIT = 10;
 
     const performSearch = async (currentOffset, append = false) => {
-        if (!searchUsername.trim()) return;
+        if (!searchUsername) {
+            setError('Enter a username to search.');
+            return;
+        }
+        if (containsUsernameWhitespace(searchUsername)) {
+            setError('Spaces are not allowed in usernames.');
+            return;
+        }
         
         setLoading(true);
         if (!append) {
@@ -33,7 +41,7 @@ const SearchFriendsModal = ({ onClose }) => {
         }
 
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/user/search/${encodeURIComponent(searchUsername.trim())}?limit=${LIMIT}&offset=${currentOffset}`, {
+            const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/user/search/${encodeURIComponent(searchUsername)}?limit=${LIMIT}&offset=${currentOffset}`, {
                 headers: {
                     'Authorization': `Bearer ${session?.access_token || ''}`
                 }
@@ -115,8 +123,16 @@ const SearchFriendsModal = ({ onClose }) => {
                         <input
                             type="text"
                             value={searchUsername}
-                            onChange={(e) => setSearchUsername(e.target.value)}
-                            placeholder="Search by username..."
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (containsUsernameWhitespace(value)) {
+                                    setError('Spaces are not allowed in usernames.');
+                                    return;
+                                }
+                                setSearchUsername(value);
+                                setError('');
+                            }}
+                            placeholder="Search by username (no spaces)..."
                             style={{ 
                                 width: '100%', 
                                 padding: '12px 14px', 
@@ -125,6 +141,8 @@ const SearchFriendsModal = ({ onClose }) => {
                                 color: '#fff', 
                                 borderRadius: '8px',
                             }}
+                            pattern="\S+"
+                            title="Spaces are not allowed in usernames."
                             required
                         />
                     </div>

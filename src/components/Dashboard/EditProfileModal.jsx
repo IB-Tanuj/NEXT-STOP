@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import supabase from '../../config/supabase';
+import { removeUsernameWhitespace } from '../../utils/usernameUtils';
 import './ProfileTab.css';
 
 const AVAILABLE_TAGS = [
@@ -36,8 +37,8 @@ const EditProfileModal = ({ profile, user, onClose, onSave }) => {
         const { name, value } = e.target;
         
         if (name === 'username') {
-            // Only allow alphanumeric characters and underscores, and convert to lowercase
-            const formattedValue = value.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+            // Preserve uppercase letters and symbols; spaces are not valid in usernames.
+            const formattedValue = removeUsernameWhitespace(value);
             setFormData(prev => ({ ...prev, [name]: formattedValue }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
@@ -145,12 +146,12 @@ const EditProfileModal = ({ profile, user, onClose, onSave }) => {
                                 name="username" 
                                 value={formData.username} 
                                 onChange={handleChange}
-                                placeholder="johndoe"
+                                placeholder="Sky!Walker_2"
                                 style={{ paddingLeft: '30px' }}
                             />
                         </div>
                         <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-                            Your unique username. Friends can use this to send you friend requests.
+                            Uppercase letters and symbols are allowed. Spaces are not. Friends can use this username to send you friend requests.
                         </p>
                     </div>
                     
