@@ -198,6 +198,20 @@ const DevAdminPage = ({ theme, setLocationTheme }) => {
         </div>
 
         <button 
+          type="button" 
+          id="btn-preview-prefs"
+          onClick={() => {
+            setLocationTheme(formData.locationKey)
+            setShowPrefs(true)
+          }}
+          style={{
+            background: `${theme.primary}22`, color: theme.primary, padding: "14px", borderRadius: "8px",
+            border: `2px solid ${theme.primary}`, fontWeight: "bold", fontSize: "15px", cursor: "pointer"
+          }}>
+          PREVIEW TRIP PREFERENCES (TRAIN STATIONS) 🚉
+        </button>
+
+        <button 
           type="submit" 
           style={{
             background: theme.primary, color: "white", padding: "15px", borderRadius: "8px",
