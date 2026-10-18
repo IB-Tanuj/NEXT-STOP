@@ -55,16 +55,26 @@ const TripPreferences = ({ location, theme, planData, onBack }) => {
 
   useEffect(() => {
     if (transport === "train") {
+      let stations = []
       if (planData?.originCoords) {
-        setAvailableStations(getNearbyStations(planData.originCoords.lat, planData.originCoords.lng));
+        stations = getNearbyStations(planData.originCoords.lat, planData.originCoords.lng)
       } else {
-        setAvailableStations(getStationsByCity(planData?.originCity));
+        stations = getStationsByCity(planData?.originCity)
+      }
+      setAvailableStations(stations)
+      if (stations.length > 0) {
+        setSelectedStation(prev => (prev && stations.some(s => s.code === prev.code) ? prev : stations[0]))
       }
     } else if (transport === "flight") {
+      let airports = []
       if (planData?.originCoords) {
-        setAvailableAirports(getNearbyAirports(planData.originCoords.lat, planData.originCoords.lng));
+        airports = getNearbyAirports(planData.originCoords.lat, planData.originCoords.lng)
       } else {
-        setAvailableAirports(getAirportsByCity(planData?.originCity));
+        airports = getAirportsByCity(planData?.originCity)
+      }
+      setAvailableAirports(airports)
+      if (airports.length > 0) {
+        setSelectedAirport(prev => (prev && airports.some(a => a.code === prev.code) ? prev : airports[0]))
       }
     }
   }, [transport, planData]);
@@ -73,8 +83,8 @@ const TripPreferences = ({ location, theme, planData, onBack }) => {
     if (!days || isNaN(days) || Number(days) < 1) return false
     if (!transport) return false
     if (!stayType) return false
-    if (transport === "train" && !selectedStation) return false
-    if (transport === "flight" && !selectedAirport) return false
+    if (transport === "train" && availableStations.length > 0 && !selectedStation) return false
+    if (transport === "flight" && availableAirports.length > 0 && !selectedAirport) return false
     return true
   }
 
