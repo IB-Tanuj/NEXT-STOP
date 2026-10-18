@@ -1,11 +1,13 @@
 import { useState } from "react"
 import { locationData } from "../data/locationData"
 import BudgetResult from "./BudgetResult"
+import TripPreferences from "./TripPreferences"
 import { useNavigate } from "react-router-dom"
 
 const DevAdminPage = ({ theme, setLocationTheme }) => {
   const navigate = useNavigate()
   const [showResult, setShowResult] = useState(false)
+  const [showPrefs, setShowPrefs] = useState(false)
   const [mockApi, setMockApi] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -42,6 +44,27 @@ const DevAdminPage = ({ theme, setLocationTheme }) => {
     }
     
     setShowResult(true)
+  }
+
+  if (showPrefs) {
+    const locObj = locationData[formData.locationKey] || locationData.goa
+    return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 3000, background: theme.bg, overflowY: "auto" }}>
+        <TripPreferences
+          location={locObj}
+          theme={theme}
+          planData={{
+            leavingFrom: formData.leavingFrom,
+            originCity: "Delhi",
+            originCoords: { lat: 28.6139, lng: 77.2090 },
+            budget: formData.budget,
+            budgetType: formData.budgetType,
+            groupSize: formData.groupSize
+          }}
+          onBack={() => setShowPrefs(false)}
+        />
+      </div>
+    )
   }
 
   if (showResult) {
