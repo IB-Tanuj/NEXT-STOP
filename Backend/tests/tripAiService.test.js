@@ -21,29 +21,25 @@ test('itinerary validation rejects incomplete day entries', () => {
     assert.throws(() => validateItinerary({ itinerary: [{ ...day, evening: '' }] }), /incomplete/);
 });
 
-test('askAi falls back when Dahl API fails or is invalid', async () => {
-    const origKey = process.env.DAHL_API_KEY;
-    const origUrl = process.env.DAHL_API_URL;
-    const origGeminiExtra = process.env.GEMINI_EXTRA;
+test('askAi falls back to Gemini when Dahl API fails', async () => {
+    const keys = ['DAHL_API_KEY', 'DAHL_API_URL', 'GEMINI_EXTRA', 'GEMINI_KEY', 'GEMINI_KEY_1', 'GEMINI_KEY_2', 'GEMINI_KEY_3'];
+    const backup = Object.fromEntries(keys.map(k => [k, process.env[k]]));
 
     try {
-        // Point Dahl to an invalid endpoint that will fail
+        // Point Dahl to an invalid endpoint that will immediately fail
         process.env.DAHL_API_KEY = 'invalid_key';
         process.env.DAHL_API_URL = 'http://127.0.0.1:1/invalid';
-        delete process.env.GEMINI_EXTRA;
-        delete process.env.GEMINI_KEY;
+        keys.filter(k => k.startsWith('GEMINI')).forEach(k => delete process.env[k]);
 
-        // When both Dahl and Gemini fail (no Gemini key in this test), the error thrown will be Gemini's
+        // When Dahl fails and all Gemini keys are missing, askGemini's 'No Gemini API key configured' is thrown
         await assert.rejects(
             async () => { await askAi('test', 10); },
             /No Gemini API key configured/
         );
     } finally {
-        if (origKey !== undefined) process.env.DAHL_API_KEY = origKey;
-        else delete process.env.DAHL_API_KEY;
-        if (origUrl !== undefined) process.env.DAHL_API_URL = origUrl;
-        else delete process.env.DAHL_API_URL;
-        if (origGeminiExtra !== undefined) process.env.GEMINI_EXTRA = origGeminiExtra;
-        else delete process.env.GEMINI_EXTRA;
+        keys.forEach(k => {
+            if (backup[k] !== undefined) process.env[k] = backup[k];
+            else delete process.env[k];
+        });
     }
 });
