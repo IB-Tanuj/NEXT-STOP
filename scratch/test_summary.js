@@ -48,15 +48,14 @@ JSON SCHEMA:
 
   const json = await res.json();
   const content = json.choices[0].message.content;
-  console.log('Raw output preview:', content.slice(0, 200));
-
-  const parsed = parseGeminiJson(content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim());
+  import('fs').then(fs => fs.writeFileSync('scratch/raw_summary.txt', content));
+  console.log('Saved raw content, length:', content.length);
+  const withoutThink = content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  console.log('Without think length:', withoutThink.length);
+  console.log('Without think text:', withoutThink);
+  const parsed = parseGeminiJson(withoutThink);
   const validated = validateSummary(parsed);
-  console.log('Validated summary successfully:');
-  console.log('Activities count:', validated.activities.length);
-  console.log('Festivals count:', validated.festivals.length);
-  console.log('Food recommendations count:', validated.foodRecommendations.length);
-  console.log('Local emergency count:', validated.localEmergency.length);
+  console.log('Validated summary successfully!');
 }
 
 testSummary().catch(console.error);
