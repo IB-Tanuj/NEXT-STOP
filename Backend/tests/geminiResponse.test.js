@@ -23,6 +23,7 @@ test('Gemini JSON parsing accepts fenced and explanatory responses', () => {
         activities: [{ name: 'Rafting' }],
     });
     assert.deepEqual(parseGeminiJson('Here is the result:\n{"ok":true}\nThanks!'), { ok: true });
+    assert.deepEqual(parseGeminiJson('<think>Analyzing user preferences...</think>\n{"ok":true}'), { ok: true });
 });
 
 test('Gemini JSON parsing rejects empty or invalid responses', () => {
