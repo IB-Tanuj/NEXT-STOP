@@ -40,37 +40,55 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const [spotRefreshToken, setSpotRefreshToken] = useState(0)
   const [removedSpots, setRemovedSpots] = useState([])
   const [expandedSpots, setExpandedSpots] = useState({}) // Tracks which spots are expanded
+  const [spotError, setSpotError] = useState(null)
 
   const activeActivities = preferences.activities?.filter(a => !removedSpots.includes(a)) || []
 
   useEffect(() => {
     const controller = new AbortController()
     const fetchAllSpots = async () => {
-    if (!preferences.activities?.length) {
-      setSpotLoading(false)
-      return
-    }
-    setSpotLoading(true)
-    
-    try {
-      const res = await fetch('/api/spots/info-batch', {
-        method: 'POST',
-        signal: controller.signal,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ spots: preferences.activities, locationName: location?.name })
-      })
-      
-      if (res.ok) {
-        const data = await res.json()
-        if (!controller.signal.aborted) setSpotInfos(data)
-      } else {
-        console.error("Batch spot fetch failed:", res.status)
+      if (!preferences.activities?.length) {
+        setSpotLoading(false)
+        return
       }
-    } catch (err) {
-      if (err.name !== 'AbortError') console.error("Failed to fetch spot info batch", err)
-    }
+      setSpotLoading(true)
+      setSpotError(null)
+      
+      try {
+        const res = await fetch('/api/spots/info-batch', {
+          method: 'POST',
+          signal: controller.signal,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ spots: preferences.activities, locationName: location?.name })
+        })
+        
+        if (res.ok) {
+          const data = await res.json()
+          if (!controller.signal.aborted) {
+            setSpotInfos(data)
+            setSpotError(null)
+            const failedSpots = Object.entries(data).filter(([_, v]) => v?.error)
+            if (failedSpots.length > 0) {
+              console.warn(`[Spot Info] ${failedSpots.length} spot(s) could not be loaded:`, failedSpots.map(([k, v]) => `${k} (${v.reason || 'error'})`))
+            }
+          }
+        } else {
+          const errData = await res.json().catch(() => ({}))
+          console.error(`[Spot Info] Batch fetch failed (${res.status}):`, errData)
+          if (!controller.signal.aborted) {
+            setSpotError(res.status)
+          }
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error("[Spot Info] Exception fetching spot batch:", err)
+          if (!controller.signal.aborted) {
+            setSpotError(500)
+          }
+        }
+      }
 
-    if (!controller.signal.aborted) setSpotLoading(false)
+      if (!controller.signal.aborted) setSpotLoading(false)
     }
     fetchAllSpots()
     return () => controller.abort()
@@ -812,7 +830,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
 
         <EntryTicketsCard 
           theme={theme} activeActivities={activeActivities} removedSpots={removedSpots} setRemovedSpots={setRemovedSpots}
-          spotLoading={spotLoading} spotInfos={spotInfos} preferences={preferences}
+          spotLoading={spotLoading} spotError={spotError} spotInfos={spotInfos} preferences={preferences}
           entryBreakdown={entryBreakdown} totalEntryCost={totalEntryCost}
           expandedSpots={expandedSpots} setExpandedSpots={setExpandedSpots}
           isGroup={isGroup} groupSize={groupSize} retryFetchSpots={() => setSpotRefreshToken(value => value + 1)}
