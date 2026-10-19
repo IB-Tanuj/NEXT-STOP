@@ -163,7 +163,7 @@ JSON SCHEMA:
   "localEmergency": [{"label": "", "number": ""}]
 }`;
 
-    const data = validateSummary(await askGemini(prompt, 2000));
+    const data = validateSummary(await askAi(prompt, 2000));
     saveGeminiResult('trip_plan', prompt, data, null, { location, days, budget, stayType, transport }, cacheKey);
     return { data, cacheStatus: 'MISS' };
 };
@@ -193,7 +193,7 @@ Selected festivals: ${festivals || 'none specified'}
 Return ONLY raw JSON with this schema:
 {"itinerary": [{"day": 1, "title": "Day title", "morning": "Morning plan", "afternoon": "Afternoon plan", "evening": "Evening plan", "estimatedCost": 500}]}`;
 
-    const data = validateItinerary(await askGemini(prompt, 3000));
+    const data = validateItinerary(await askAi(prompt, 3000));
     cacheSet(cacheKey, data);
     return { data, cacheStatus: 'MISS' };
 };
