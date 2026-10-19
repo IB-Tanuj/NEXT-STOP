@@ -45,6 +45,7 @@ export const parseGeminiJson = (responseText) => {
 
     const text = responseText
         .trim()
+        .replace(/<think>[\s\S]*?<\/think>/gi, '')
         .replace(/^```(?:json)?\s*/i, '')
         .replace(/\s*```$/i, '')
         .trim();

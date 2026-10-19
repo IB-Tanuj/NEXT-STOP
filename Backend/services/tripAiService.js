@@ -2,9 +2,63 @@ import { buildCacheKey, bucketize, get as cacheGet, set as cacheSet } from '../u
 import { saveGeminiResult, getGeminiResult } from '../utils/geminiLogger.js';
 import { validateItinerary, validateSummary } from './tripAiValidation.js';
 import { createGeminiClient, getGeminiModel, getGeminiApiKeys } from './geminiConfig.js';
+import { getDahlApiKey, getDahlApiUrl, getDahlModel, isDahlConfigured } from './dahlConfig.js';
 import { parseGeminiJson } from './geminiResponse.js';
 
-const askGemini = async (prompt, maxOutputTokens) => {
+export const askDahl = async (prompt, maxOutputTokens, timeoutMs = 90000) => {
+    const apiKey = getDahlApiKey();
+    if (!apiKey) {
+        throw new Error('No Dahl API key configured. Set DAHL_API_KEY.');
+    }
+    const apiUrl = getDahlApiUrl();
+    const model = getDahlModel();
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model,
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'Return ONLY valid JSON. Do not include markdown or explanations.',
+                    },
+                    {
+                        role: 'user',
+                        content: prompt,
+                    },
+                ],
+                temperature: 0.7,
+                max_tokens: maxOutputTokens,
+            }),
+            signal: controller.signal,
+        });
+
+        if (!response.ok) {
+            const errBody = await response.text().catch(() => '');
+            throw new Error(`Dahl API returned HTTP ${response.status}: ${errBody || response.statusText}`);
+        }
+
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content;
+        if (!content) {
+            throw new Error('Dahl API returned an empty completion.');
+        }
+
+        return parseGeminiJson(content);
+    } finally {
+        clearTimeout(timer);
+    }
+};
+
+export const askGemini = async (prompt, maxOutputTokens) => {
     const keys = getGeminiApiKeys();
     if (!keys.length) {
         throw new Error('No Gemini API key configured. Set GEMINI_EXTRA or GEMINI_KEY.');
@@ -37,6 +91,18 @@ const askGemini = async (prompt, maxOutputTokens) => {
     }
 
     throw lastError || new Error('All Gemini generation attempts failed.');
+};
+
+export const askAi = async (prompt, maxOutputTokens) => {
+    if (isDahlConfigured()) {
+        try {
+            return await askDahl(prompt, maxOutputTokens);
+        } catch (dahlError) {
+            console.warn(`[TripAI] Dahl generation attempt failed: ${dahlError.message}. Falling back to Gemini...`);
+        }
+    }
+
+    return await askGemini(prompt, maxOutputTokens);
 };
 
 export const generateSummaryData = async ({
