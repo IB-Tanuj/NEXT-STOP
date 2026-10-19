@@ -13,17 +13,38 @@ export const ItineraryView = memo(({ theme, locationName, days, budget, stayType
     onItineraryLoadedRef.current = onItineraryLoaded
   }, [onItineraryLoaded])
 
+  // Derive stable cache key from primitives/sorted values
+  const cacheKey = buildItineraryCacheKey({
+    location: locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals
+  })
+
+  const lastFetchedKeyRef = useRef(initialItinerary?.length ? cacheKey : null)
+
+  // Sync if initialItinerary arrives from parent
+  useEffect(() => {
+    if (initialItinerary?.length) {
+      setItineraryData({ itinerary: initialItinerary })
+      setLoading(false)
+      lastFetchedKeyRef.current = cacheKey
+    }
+  }, [initialItinerary, cacheKey])
+
   useEffect(() => {
     let cancelled = false
     if (!autoGenerate) {
       return undefined
     }
 
+    // Skip if already fetched or loaded for this exact cache key and not explicitly retrying
+    if (itineraryData?.itinerary?.length && lastFetchedKeyRef.current === cacheKey && retryAttempt === 0) {
+      return undefined
+    }
+
     const fetchItinerary = async () => {
-      // ── Build cache key ──
-      const cacheKey = buildItineraryCacheKey({
-        location: locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals
-      })
+      if (lastFetchedKeyRef.current === cacheKey && itineraryData?.itinerary?.length && retryAttempt === 0) {
+        return
+      }
+
       console.log(`[Itinerary Cache] Frontend key: ${cacheKey}`)
 
       // A persisted Today/Saved plan must go through the backend so its
@@ -37,6 +58,7 @@ export const ItineraryView = memo(({ theme, locationName, days, budget, stayType
             const parsed = JSON.parse(sessionCached)
             if (!cancelled) {
               setItineraryData(parsed)
+              lastFetchedKeyRef.current = cacheKey
               if (onItineraryLoadedRef.current) onItineraryLoadedRef.current(parsed)
               setLoading(false)
             }
@@ -65,6 +87,7 @@ export const ItineraryView = memo(({ theme, locationName, days, budget, stayType
         )
         if (!cancelled) {
           setItineraryData(result.data)
+          lastFetchedKeyRef.current = cacheKey
           if (onItineraryLoadedRef.current) onItineraryLoadedRef.current(result.data, result.plan)
           console.log(`[Itinerary Cache] Backend responded with X-Cache: ${result.cacheStatus}`)
 
@@ -98,7 +121,7 @@ export const ItineraryView = memo(({ theme, locationName, days, budget, stayType
       cancelled = true
       clearTimeout(timeoutId)
     }
-  }, [locationName, days, budget, stayType, transport, selectedActivities, selectedFestivals, todayPlanId, savedTripId, retryAttempt, autoGenerate])
+  }, [cacheKey, todayPlanId, savedTripId, retryAttempt, autoGenerate])
 
   return (
     <div style={{
@@ -123,7 +146,7 @@ export const ItineraryView = memo(({ theme, locationName, days, budget, stayType
             <div style={{ color: "#ff6b6b", fontSize: "15px", fontWeight: "800", marginBottom: "8px" }}>⚠️ {error}</div>
             <div style={{ color: theme.text, fontSize: "13px", fontWeight: "500", opacity: 0.9 }}>You can retry this generation. If the system failed, the retry is free.</div>
             <button
-              onClick={() => { setError(""); setLoading(true); setRetryAttempt(attempt => attempt + 1) }}
+              onClick={() => { setError(""); setLoading(true); lastFetchedKeyRef.current = null; setRetryAttempt(attempt => attempt + 1) }}
               style={{ marginTop: "14px", border: "1px solid #ff6b6b", background: "transparent", color: "#ff8b8b", borderRadius: "8px", padding: "8px 14px", fontWeight: "800", cursor: "pointer" }}
             >
               Try again
