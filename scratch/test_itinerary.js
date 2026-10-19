@@ -44,8 +44,12 @@ Return ONLY raw JSON with this schema:
     console.log('\n--- Raw Model Output ---');
     console.log(content);
 
-    // Test JSON parsing and validation matching the website's validation
-    const cleaned = content.trim().replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+    // Clean off reasoning/thinking tags and markdown backticks if present
+    const cleaned = content
+      .replace(/<think>[\s\S]*?<\/think>/gi, '')
+      .replace(/^```json\s*/i, '')
+      .replace(/```$/i, '')
+      .trim();
     const parsed = JSON.parse(cleaned);
 
     console.log('\n--- Successfully Parsed JSON ---');
