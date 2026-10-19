@@ -42,7 +42,7 @@ JSON SCHEMA:
         { role: 'system', content: 'Return ONLY valid JSON. Do not include markdown or explanations.' },
         { role: 'user', content: prompt }
       ],
-      temperature: 0.3
+      temperature: 0.7
     })
   });
 
