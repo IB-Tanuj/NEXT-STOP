@@ -43,7 +43,7 @@ const FEATURES = [
     id: "friend-requests",
     icon: "👥",
     accentIcon: "💌",
-    title: "Friend Requests",
+    title: "Friends",
     tagline: "Travel Together, Create Memories Forever",
     description:
       "Connect with fellow travelers and friends. Send requests, plan group trips, split budgets, and share live itineraries. Travel is better together — and now your crew is always one invite away.",
@@ -53,10 +53,10 @@ const FEATURES = [
       "Split costs automatically",
       "Real-time trip sync with friends",
     ],
-    gradient: "linear-gradient(135deg, #8b5cf6, #a78bfa, #c4b5fd)",
-    glowColor: "rgba(139, 92, 246, 0.35)",
-    accentColor: "#8b5cf6",
-    bgPattern: "radial-gradient(circle at 30% 70%, rgba(139, 92, 246, 0.08) 0%, transparent 50%), radial-gradient(circle at 70% 30%, rgba(196, 181, 253, 0.06) 0%, transparent 50%)",
+    gradient: "linear-gradient(135deg, #d946ef, #f0abfc, #e879f9)",
+    glowColor: "rgba(217, 70, 239, 0.4)",
+    accentColor: "#d946ef",
+    bgPattern: "radial-gradient(circle at 30% 70%, rgba(217, 70, 239, 0.1) 0%, transparent 50%), radial-gradient(circle at 70% 30%, rgba(240, 171, 252, 0.08) 0%, transparent 50%)",
   },
 ]
 
