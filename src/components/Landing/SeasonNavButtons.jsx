@@ -34,10 +34,10 @@ const SeasonNavButtons = ({ currentSeason }) => {
         className={`season-nav-btn season-btn-monsoon ${isMonsoon ? 'active' : ''}`}
         onClick={handleMonsoonClick}
         aria-current={isMonsoon ? 'page' : undefined}
-        title={isMonsoon ? 'Currently viewing Monsoon page' : 'Shift to Monsoon page'}
+        title={isMonsoon ? 'Currently viewing Varsha page' : 'Shift to Varsha page'}
       >
         <span className="season-btn-icon" aria-hidden="true">🌧️</span>
-        <span className="season-btn-label">Monsoon</span>
+        <span className="season-btn-label">Varsha</span>
         {isMonsoon && <span className="season-btn-dot" aria-hidden="true" />}
       </button>
 
