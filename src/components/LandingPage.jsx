@@ -7,6 +7,7 @@ import FeatureCarousel from "./Landing/FeatureCarousel"
 import DestinationGrid from "./Landing/DestinationGrid"
 import LandingAuthDrawer from "./Landing/LandingAuthDrawer"
 import SeasonNavButtons from "./Landing/SeasonNavButtons"
+import FeaturesShowcase from "./Landing/FeaturesShowcase"
 import "./Landing/LandingStyles.css"
 import { getSeasonKey } from "../themes"
 
@@ -215,7 +216,14 @@ const LandingPage = () => {
       </section>
 
       {/* ── FEATURES CAROUSEL ── */}
-      <FeatureCarousel />
+      <div style={{ position: 'relative', zIndex: 10 }}>
+        <FeatureCarousel />
+      </div>
+
+      {/* ── SOCIAL & SMART FEATURES SHOWCASE ── */}
+      <div style={{ position: 'relative', zIndex: 10 }}>
+        <FeaturesShowcase />
+      </div>
 
       {/* ── DESTINATIONS ── */}
       <DestinationGrid seasonKey={seasonKey} />
