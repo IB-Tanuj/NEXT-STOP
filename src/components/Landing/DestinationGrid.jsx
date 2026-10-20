@@ -42,7 +42,7 @@ const SEASON_DESTINATIONS = {
 }
 
 const SEASON_COPY = {
-  varsha: { eyebrow: "Monsoon Edit · Varsha 🌧️", heading: "Where the rain wants you right now", sub: "Four stops that peak between July and September — priced live, guided deeply." },
+  varsha: { eyebrow: "Varsha Edit 🌧️", heading: "Where the rain wants you right now", sub: "Four stops that peak between July and September — priced live, guided deeply." },
   grishma: { eyebrow: "Summer Edit · Grishma ☀️", heading: "Cool escapes from the Indian heat", sub: "Hill stations and high passes to beat the scorching plains." },
   sharad: { eyebrow: "Autumn Edit · Sharad 🍁", heading: "Golden light, golden journeys", sub: "Four spots that glow when the monsoon retreats and autumn arrives." },
   hemant: { eyebrow: "Winter Edit · Hemant ❄️", heading: "Where winter is kindest", sub: "From snow-peaked north to sun-warmed south — pick your December." },
