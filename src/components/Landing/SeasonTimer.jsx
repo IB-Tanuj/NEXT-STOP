@@ -97,7 +97,7 @@ const useSeasonTimer = ({ targetSeason } = {}) => {
     timerCard: (
       <div className="timer-card" role="timer" aria-live="polite">
         <p className="timer-label">
-          {targetSeason ? "Monsoon returns in" : <>Season shifts to <span id="nextSeasonName">{seasonInfo.nextName} {seasonInfo.nextEmoji}</span> in</>}
+          {targetSeason ? `${targetSeason} returns in` : <>Season shifts to <span id="nextSeasonName">{seasonInfo.nextName} {seasonInfo.nextEmoji}</span> in</>}
         </p>
         <div className="timer-grid">
           <div className="time-box"><span>{time.days}</span><small>days</small></div>
@@ -110,7 +110,7 @@ const useSeasonTimer = ({ targetSeason } = {}) => {
         </div>
         <p className="timer-note">
           {targetSeason
-            ? `Plan your next monsoon escape before ${seasonInfo.nextName} arrives.`
+            ? `Plan your next ${targetSeason.toLowerCase()} escape before ${seasonInfo.nextName} arrives.`
             : `Catch the ${seasonInfo.currentName.toLowerCase()} vibe before the timer hits zero.`}
         </p>
       </div>

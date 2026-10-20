@@ -185,12 +185,8 @@ const LandingPage = () => {
 
         <main className="hero-content">
           <p className="season-line">
-            <span>{seasonEmoji}</span> It's <strong>{seasonName}</strong> — {seasonDescriptions[seasonKey] || seasonDescriptions.varsha}
+            <span>🌧️</span> <strong>Varsha</strong> will come back with lots of new stops
           </p>
-
-          <div className="monsoon-timer">
-            {timerCard}
-          </div>
 
           <h1 className="logo">NEXT<span className="logo-dash">–</span>STOP</h1>
           <p className="tagline">Every stop, every stay, every fare — live. One itinerary built around you.</p>
@@ -201,13 +197,17 @@ const LandingPage = () => {
             permits, rules and expert tips. Then watch it all become a personal itinerary.
           </p>
 
-          <div className="hero-actions">
+          <div className="hero-actions" style={{ marginTop: '40px' }}>
             <button className="btn btn-solid btn-lg" type="button" onClick={() => openAuth('signup')}>
               Start Planning
             </button>
             <a className="btn btn-outline btn-lg" href="#destinations">
-              Explore {seasonName} Picks
+              Explore Varsha Picks
             </a>
+          </div>
+
+          <div style={{ marginTop: '50px' }}>
+            {timerCard}
           </div>
 
         </main>
@@ -226,7 +226,7 @@ const LandingPage = () => {
       </div>
 
       {/* ── DESTINATIONS ── */}
-      <DestinationGrid seasonKey={seasonKey} />
+      <DestinationGrid seasonKey="varsha" />
 
       {/* ── FOOTER ── */}
       <footer className="footer">
