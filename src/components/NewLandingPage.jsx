@@ -7,6 +7,7 @@ import FeatureCarousel from "./Landing/FeatureCarousel"
 import ScrollableDestinationGrid from "./Landing/ScrollableDestinationGrid"
 import LandingAuthDrawer from "./Landing/LandingAuthDrawer"
 import SeasonNavButtons from "./Landing/SeasonNavButtons"
+import FeaturesShowcase from "./Landing/FeaturesShowcase"
 import "./Landing/LandingStyles.css" // Keep original styles for base structure
 
 const NewLandingPage = () => {
@@ -234,6 +235,11 @@ const NewLandingPage = () => {
       {/* ── FEATURES CAROUSEL ── */}
       <div style={{ position: 'relative', zIndex: 10 }}>
         <FeatureCarousel />
+      </div>
+
+      {/* ── SOCIAL & SMART FEATURES SHOWCASE ── */}
+      <div style={{ position: 'relative', zIndex: 10 }}>
+        <FeaturesShowcase />
       </div>
 
       {/* ── DESTINATIONS (Scrollable) ── */}
