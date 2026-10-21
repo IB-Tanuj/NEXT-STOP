@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
+import { useLocation } from "react-router-dom"
 import FallingLeaves from "./Landing/FallingLeaves"
 import LandingAudioV2 from "./Landing/LandingAudioV2"
 import SeasonTimer from "./Landing/SeasonTimer"
@@ -11,7 +11,6 @@ import FeaturesShowcase from "./Landing/FeaturesShowcase"
 import "./Landing/LandingStyles.css" // Keep original styles for base structure
 
 const NewLandingPage = () => {
-  const navigate = useNavigate()
   const location = useLocation()
   const wrapperRef = useRef(null)
   const bgRef = useRef(null)
@@ -52,7 +51,7 @@ const NewLandingPage = () => {
       setIsAuthOpen(true)
       window.history.replaceState({}, '', location.pathname)
     }
-  }, [location.search])
+  }, [location.search, location.pathname])
 
   const openAuth = (mode) => {
     setAuthMode(mode)

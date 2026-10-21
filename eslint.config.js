@@ -7,6 +7,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 export default defineConfig([
   globalIgnores([
     'dist',
+    'deployment_unused_backup/**',
     'docs/oldspotinfoController.js',
     'scratch/**',
     'Backend/scratch.js',
