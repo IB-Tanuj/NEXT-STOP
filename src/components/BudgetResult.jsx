@@ -67,7 +67,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
           if (!controller.signal.aborted) {
             setSpotInfos(data)
             setSpotError(null)
-            const failedSpots = Object.entries(data).filter(([_, v]) => v?.error)
+            const failedSpots = Object.entries(data).filter(([, v]) => v?.error)
             if (failedSpots.length > 0) {
               console.warn(`[Spot Info] ${failedSpots.length} spot(s) could not be loaded:`, failedSpots.map(([k, v]) => `${k} (${v.reason || 'error'})`))
             }

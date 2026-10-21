@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
+import { useLocation } from "react-router-dom"
 import RainCanvas from "./Landing/RainCanvas"
 import RainAudio from "./Landing/RainAudio"
 import SeasonTimer from "./Landing/SeasonTimer"
@@ -9,17 +9,14 @@ import LandingAuthDrawer from "./Landing/LandingAuthDrawer"
 import SeasonNavButtons from "./Landing/SeasonNavButtons"
 import FeaturesShowcase from "./Landing/FeaturesShowcase"
 import "./Landing/LandingStyles.css"
-import { getSeasonKey } from "../themes"
 
 const LandingPage = () => {
-  const navigate = useNavigate()
   const location = useLocation()
   const bgRef = useRef(null)
   const wrapperRef = useRef(null)
   const rafRef = useRef(null)
   const bgYRef = useRef(0)
   const pageStartRef = useRef(performance.now())
-  const seasonKey = getSeasonKey()
 
   // Drawer state
   const [isAuthOpen, setIsAuthOpen] = useState(false)
@@ -54,7 +51,7 @@ const LandingPage = () => {
       setIsAuthOpen(true)
       window.history.replaceState({}, '', location.pathname)
     }
-  }, [location.search])
+  }, [location.search, location.pathname])
 
   const openAuth = (mode) => {
     setAuthMode(mode)
@@ -66,7 +63,7 @@ const LandingPage = () => {
   // Always show rain on the classic monsoon page
   const showRain = true
 
-  const { timerCard, seasonEmoji, seasonName } = SeasonTimer({ targetSeason: "Varsha" })
+  const { timerCard } = SeasonTimer({ targetSeason: "Varsha" })
 
   // Parallax background scroll tracking
   useEffect(() => {
@@ -136,15 +133,6 @@ const LandingPage = () => {
     return () => observer.disconnect()
   }, [])
 
-  // Season-specific description text
-  const seasonDescriptions = {
-    varsha: "It's the land's lushest season. Travel while it pours.",
-    grishma: "The sun blazes — find your escape to cooler ground.",
-    sharad: "Golden light, clear skies — the best season to explore.",
-    hemant: "Cold air, warm hearts — India's winter awaits.",
-    shishir: "Dew-kissed mornings and crisp trails before spring.",
-    vasant: "Flowers bloom across the land — spring is here.",
-  }
 
   return (
     <div className="landing-page" ref={wrapperRef} style={{ position: 'relative', zIndex: 0 }}>
