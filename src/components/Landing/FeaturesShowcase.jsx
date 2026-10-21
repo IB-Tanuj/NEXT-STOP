@@ -78,41 +78,6 @@ const FloatingParticle = ({ delay, size, x, y, color, duration }) => (
   />
 )
 
-/* ── Animated counter ── */
-const AnimCounter = ({ end, suffix = "", color }) => {
-  const [val, setVal] = useState(0)
-  const ref = useRef(null)
-  const started = useRef(false)
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
-          started.current = true
-          let start = 0
-          const step = Math.ceil(end / 40)
-          const id = setInterval(() => {
-            start += step
-            if (start >= end) {
-              start = end
-              clearInterval(id)
-            }
-            setVal(start)
-          }, 30)
-        }
-      },
-      { threshold: 0.3 }
-    )
-    if (ref.current) observer.observe(ref.current)
-    return () => observer.disconnect()
-  }, [end])
-
-  return (
-    <span ref={ref} style={{ fontWeight: 800, fontSize: "1.6rem", color, fontVariantNumeric: "tabular-nums" }}>
-      {val.toLocaleString()}{suffix}
-    </span>
-  )
-}
 
 /* ── Single Feature Card ── */
 const FeatureCard = ({ feature, index, isVisible }) => {
