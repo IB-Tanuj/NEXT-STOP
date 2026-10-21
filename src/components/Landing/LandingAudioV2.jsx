@@ -23,7 +23,7 @@ const LandingAudioV2 = () => {
 
         return () => {
             audio.removeEventListener('timeupdate', handleTimeUpdate);
-            try { audio.pause(); } catch (err) { /* ignore */ }
+            try { audio.pause(); } catch { /* ignore */ }
         };
     }, []);
 
