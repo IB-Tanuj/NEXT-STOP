@@ -121,7 +121,21 @@ export const ItineraryView = memo(({ theme, locationName, days, budget, stayType
       cancelled = true
       clearTimeout(timeoutId)
     }
-  }, [cacheKey, todayPlanId, savedTripId, retryAttempt, autoGenerate])
+  }, [
+    autoGenerate,
+    budget,
+    cacheKey,
+    days,
+    itineraryData?.itinerary?.length,
+    locationName,
+    retryAttempt,
+    savedTripId,
+    selectedActivities,
+    selectedFestivals,
+    stayType,
+    todayPlanId,
+    transport,
+  ])
 
   return (
     <div style={{

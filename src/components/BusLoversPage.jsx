@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import SeatMapUI from './SeatMapUI';
+import { authFetch } from '../utils/apiFetch';
 
 const BACKEND = `${import.meta.env.VITE_API_URL || ''}/api/flixbus`;
 const EUR_TO_INR = 92; // Approximate conversion
@@ -41,7 +42,7 @@ const BusLoversPage = ({ theme, onClose }) => {
 
   // ─── Fetch all cities on mount ───
   useEffect(() => {
-    fetch(`${BACKEND}/cities`)
+    authFetch(`${BACKEND}/cities`)
       .then(r => r.json())
       .then(data => setAllCities(Array.isArray(data) ? data : []))
       .catch(() => {});
@@ -84,7 +85,7 @@ const BusLoversPage = ({ theme, onClose }) => {
     // Fetch reachable cities
     setReachableLoading(true);
     try {
-      const res = await fetch(`${BACKEND}/reachable/${encodeURIComponent(city.name)}`);
+      const res = await authFetch(`${BACKEND}/reachable/${encodeURIComponent(city.name)}`);
       const data = await res.json();
       setReachableCities(Array.isArray(data) ? data : []);
     } catch {
@@ -116,7 +117,7 @@ const BusLoversPage = ({ theme, onClose }) => {
     setNoTripsThisMonth(false);
 
     try {
-      const response = await fetch(`${BACKEND}/search`, {
+      const response = await authFetch(`${BACKEND}/search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ from: selectedOrigin.name, to: selectedDest.name, date: searchDate })
@@ -146,7 +147,7 @@ const BusLoversPage = ({ theme, onClose }) => {
     setNoTripsThisMonth(false);
 
     try {
-      const response = await fetch(`${BACKEND}/search-month`, {
+      const response = await authFetch(`${BACKEND}/search-month`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ from: selectedOrigin.name, to: selectedDest.name, date })

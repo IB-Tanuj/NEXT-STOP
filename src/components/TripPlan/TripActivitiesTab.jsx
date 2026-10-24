@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { useState } from "react"
 import { card, sectionLabel, comingSoon, ShimmerSkeleton } from "./SharedUI"
+import { authFetch } from "../../utils/apiFetch"
 
 export const TripActivitiesTab = memo(({ theme, locationName, aiLoading, aiData }) => {
   const [liveData, setLiveData] = useState({}) // { "activity_ScubaDiving": { loading, data, error } }
@@ -19,7 +20,7 @@ export const TripActivitiesTab = memo(({ theme, locationName, aiLoading, aiData 
         restaurant: { restaurantName: name, location: locationName },
         stay: { stayName: name, location: locationName, ...extraBody },
       }
-      const response = await fetch(endpoints[type], {
+      const response = await authFetch(endpoints[type], {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bodyKeys[type]),

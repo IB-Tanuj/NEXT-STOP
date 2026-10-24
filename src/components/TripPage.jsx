@@ -5,6 +5,7 @@ import L from "leaflet"
 import PlanningPage from "./PlanningPage"
 import { locationData } from "../data/locationData"
 import { fetchImagesWithCache, getCachedImages } from "../utils/imageCache"
+import { authFetch } from "../utils/apiFetch"
 
 export { locationData }
 
@@ -180,7 +181,7 @@ const TripPage = ({ location, theme, onBack }) => {
     // Fetch Best Time data
     const fetchBestTime = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/best-time/${locKey}`);
+         const res = await authFetch(`${import.meta.env.VITE_API_URL || ''}/api/best-time/${locKey}`);
         if (res.ok) {
           const data = await res.json();
           setBestTimeData(data);

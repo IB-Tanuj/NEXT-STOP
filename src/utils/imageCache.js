@@ -1,3 +1,5 @@
+import { authFetch } from "./apiFetch"
+
 const CACHE_KEY = "trip_images_cache"
 
 export const getCachedImages = (query) => {
@@ -27,7 +29,7 @@ export const fetchImagesWithCache = async (query, limit = 4) => {
   }
   
   // 2. Fetch from API if not cached
-  const res = await fetch(`/api/images/search?q=${encodeURIComponent(query)}&limit=${limit}`)
+  const res = await authFetch(`/api/images/search?q=${encodeURIComponent(query)}&limit=${limit}`)
   if (!res.ok) throw new Error("Image search failed")
   
   const data = await res.json()

@@ -15,6 +15,8 @@ import savedTripRoutes from "./routes/savedTripRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import friendRoutes from "./routes/friendRoutes.js";
 import todayPlanRoutes from "./routes/todayPlanRoutes.js";
+import { requireAuth } from "./middleware/authMiddleware.js";
+import { enforcePlanningQuota } from "./middleware/tripQuotaMiddleware.js";
 
 dotenv.config();
 
@@ -23,17 +25,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/trains", trainRoutes);
 app.use("/api/trip", tripRoutes);
 app.use("/api/today-plans", todayPlanRoutes);
-app.use("/api/live", liveDataRoutes);
-app.use("/api/flixbus", flixbusRoutes);
-app.use("/api/flights", flightRoutes);
-app.use("/api/vehicle", vehicleRoutes);
-app.use("/api/images", imageRoutes);
-app.use("/api/hotels", hotelRoutes);
-app.use("/api/best-time", bestTimeRoutes);
-app.use("/api/spots", spotInfoRoutes);
+const planningProtection = [requireAuth, enforcePlanningQuota];
+app.use("/api/trains", ...planningProtection, trainRoutes);
+app.use("/api/live", ...planningProtection, liveDataRoutes);
+app.use("/api/flixbus", ...planningProtection, flixbusRoutes);
+app.use("/api/flights", ...planningProtection, flightRoutes);
+app.use("/api/vehicle", ...planningProtection, vehicleRoutes);
+app.use("/api/images", ...planningProtection, imageRoutes);
+app.use("/api/hotels", ...planningProtection, hotelRoutes);
+app.use("/api/best-time", ...planningProtection, bestTimeRoutes);
+app.use("/api/spots", ...planningProtection, spotInfoRoutes);
 app.use("/api/saved-trips", savedTripRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/friends", friendRoutes);

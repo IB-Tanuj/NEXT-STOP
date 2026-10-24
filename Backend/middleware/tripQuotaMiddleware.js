@@ -1,8 +1,7 @@
 import supabase from '../config/supabase.js';
 import {
-    claimTripGenerationSlot,
+    getCurrentTripQuota,
     TRIP_QUOTA_LIMIT,
-    TRIP_QUOTA_WINDOW_HOURS,
 } from '../utils/tripQuota.js';
 
 const setQuotaHeaders = (res, quota) => {
@@ -14,29 +13,33 @@ const setQuotaHeaders = (res, quota) => {
 };
 
 /**
- * Reserves a planning slot before any cache lookup or provider call.
- * A cached result therefore cannot be used to bypass the per-user allowance.
+ * Check the current planning quota before a provider/data request.
+ *
+ * This middleware is intentionally read-only. Creating a Today plan is the
+ * operation that consumes one of the five daily credits; hotel, transport,
+ * spot, and live-price lookups only verify that the user still has access.
  */
-export const enforceTripQuota = async (req, res, next) => {
+export const createPlanningQuotaMiddleware = (supabaseClient) => async (req, res, next) => {
     try {
-        const quota = await claimTripGenerationSlot({
-            supabaseClient: supabase,
+        const quota = await getCurrentTripQuota({
+            supabaseClient,
             userId: req.user.id,
         });
 
         setQuotaHeaders(res, quota);
 
-        if (!quota.allowed) {
+        if (quota.remaining <= 0) {
             return res.status(429).json({
                 error: 'TRIP_QUOTA_EXCEEDED',
-                message: `You have used all ${TRIP_QUOTA_LIMIT} trip plans for the last ${TRIP_QUOTA_WINDOW_HOURS} hours.`,
+                message: `You have used all ${TRIP_QUOTA_LIMIT} trip-planning credits for today's planning window. New planning features unlock at 5:30 AM IST.`,
                 remaining: quota.remaining,
                 resetAt: quota.resetAt,
+                quota,
             });
         }
 
         req.tripQuota = quota;
-        next();
+        return next();
     } catch (error) {
         console.error('Trip quota check failed:', error.message);
         return res.status(503).json({
@@ -45,3 +48,8 @@ export const enforceTripQuota = async (req, res, next) => {
         });
     }
 };
+
+export const enforcePlanningQuota = createPlanningQuotaMiddleware(supabase);
+
+// Keep the old export name available for any external route integrations.
+export const enforceTripQuota = enforcePlanningQuota;

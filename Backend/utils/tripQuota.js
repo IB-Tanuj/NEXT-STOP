@@ -1,6 +1,37 @@
 export const TRIP_QUOTA_LIMIT = 5;
 export const TRIP_QUOTA_WINDOW_HOURS = 24;
 
+const normalizeQuotaResponse = (data) => {
+    const result = Array.isArray(data) ? data[0] : data;
+    if (!result || typeof result !== 'object' || result.remaining === undefined) {
+        throw new Error('Trip quota function returned an invalid response.');
+    }
+
+    return {
+        limit: Number(result.limit) || TRIP_QUOTA_LIMIT,
+        remaining: Math.max(0, Number(result.remaining) || 0),
+        resetAt: result.resetAt || result.reset_at || null,
+    };
+};
+
+/**
+ * Read the user's current planning quota without consuming a credit.
+ *
+ * This is used by data-search endpoints so they can be blocked after the
+ * user's five daily plans are used without charging a credit per API call.
+ */
+export const getCurrentTripQuota = async ({ supabaseClient, userId }) => {
+    const { data, error } = await supabaseClient.rpc('get_today_trip_state', {
+        p_user_id: userId,
+    });
+
+    if (error) {
+        throw error;
+    }
+
+    return normalizeQuotaResponse(data);
+};
+
 /**
  * Atomically claim one planning slot for a user.
  *

@@ -59,7 +59,8 @@ Run these files in the Supabase SQL editor in order:
 3. `Backend/database/setup_wallet_transactions.sql`
 4. `Backend/database/setup_caches.sql`
 5. `Backend/database/setup_gemini_results.sql`
-6. The remaining feature migrations required by the feature you are testing, such as `setup_today_trip_plans.sql`, `setup_friendships.sql`, and `setup_flixbus.sql`.
+6. `Backend/database/setup_today_trip_plans.sql` for the five-credit planning window and its quota RPCs.
+7. The remaining feature migrations required by the feature you are testing, such as `setup_friendships.sql` and `setup_flixbus.sql`.
 
 For Today plan retention and Saved Trip limits, run these after the base Today and Saved Trips setup:
 
@@ -82,6 +83,8 @@ The local API includes routes for:
 - Flixbus seat maps and booking flows.
 
 Protected routes require `Authorization: Bearer <Supabase access token>`.
+
+Trip-planning data routes (hotel, transport, spot, image, best-time, live-data, and Flixbus searches) also check the current Today planning quota. They return `429 TRIP_QUOTA_EXCEEDED` after the user's five credits are used; these checks are read-only and do not consume an additional credit. Creating a Today plan is the operation that consumes one credit.
 
 ## Tests and quality checks
 

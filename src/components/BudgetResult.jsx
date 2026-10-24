@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { useNotification } from "../context/NotificationContext"
 import { createClientPlanId, createTodayPlan, updateTodayPlan, saveTodayPlan } from "../utils/todayPlanUtils"
+import { authFetch } from "../utils/apiFetch"
 
 const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const navigate = useNavigate()
@@ -23,6 +24,8 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const [isSavedLocally, setIsSavedLocally] = useState(false)
   const [localAiData, setLocalAiData] = useState(null)
   const [todayPlan, setTodayPlan] = useState(null)
+  const [planningAccess, setPlanningAccess] = useState(false)
+  const [planningQuotaError, setPlanningQuotaError] = useState("")
   const [todayPlanId] = useState(createClientPlanId)
   const todayPlanRequestRef = useRef(null)
   const syncTodayPlanRef = useRef(null)
@@ -47,6 +50,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   useEffect(() => {
     const controller = new AbortController()
     const fetchAllSpots = async () => {
+      if (!planningAccess) return
       if (!preferences.activities?.length) {
         setSpotLoading(false)
         return
@@ -55,7 +59,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
       setSpotError(null)
       
       try {
-        const res = await fetch('/api/spots/info-batch', {
+        const res = await authFetch('/api/spots/info-batch', {
           method: 'POST',
           signal: controller.signal,
           headers: { 'Content-Type': 'application/json' },
@@ -92,7 +96,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     }
     fetchAllSpots()
     return () => controller.abort()
-  }, [preferences.activities, location?.name, spotRefreshToken])
+  }, [preferences.activities, location?.name, spotRefreshToken, planningAccess])
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -134,6 +138,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   }
 
   useEffect(() => {
+    if (!planningAccess) return
     if (fromStation && preferences.transport === "train") {
       setTrainLoading(true)
       setTrainError(null)
@@ -146,7 +151,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
         return
       }
 
-      fetch(`/api/trains/search?from=${fromStation}&to=${toStation}`)
+      authFetch(`/api/trains/search?from=${fromStation}&to=${toStation}`)
         .then(res => {
           if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
           return res.json()
@@ -161,7 +166,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
         })
         .finally(() => setTrainLoading(false))
     }
-  }, [fromStation, toStation, preferences.transport])
+  }, [fromStation, toStation, preferences.transport, planningAccess])
 
   // ── Live flight data from API ────────────────────────
   const [liveFlightData, setLiveFlightData] = useState(null)
@@ -169,11 +174,12 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const [, setFlightError] = useState(null)
 
   useEffect(() => {
+    if (!planningAccess) return
     if (preferences.transport === "flight") {
       setFlightLoading(true)
       setFlightError(null)
       const originParam = fromAirport || "DEL"
-      fetch(`/api/flights/search?from=${originParam}&destination=${locationKey}`)
+      authFetch(`/api/flights/search?from=${originParam}&destination=${locationKey}`)
         .then(res => {
           if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
           return res.json()
@@ -188,7 +194,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
         })
         .finally(() => setFlightLoading(false))
     }
-  }, [locationKey, fromAirport, preferences.transport])
+  }, [locationKey, fromAirport, preferences.transport, planningAccess])
 
   // Tie internal overlay state to browser history
   useEffect(() => {
@@ -226,11 +232,12 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const [, setVehicleError] = useState(null)
 
   useEffect(() => {
+    if (!planningAccess) return
     if (preferences.transport === "personal") {
       setVehicleLoading(true)
       setVehicleError(null)
       
-      fetch(`/api/vehicle/calculate?distanceKm=${calculatedDist}&vehicleType=${vehicleType}&fuelType=${fuelType}&passengerCount=${groupSize}`)
+      authFetch(`/api/vehicle/calculate?distanceKm=${calculatedDist}&vehicleType=${vehicleType}&fuelType=${fuelType}&passengerCount=${groupSize}`)
         .then(res => res.json())
         .then(data => {
           if (data.error) throw new Error(data.error)
@@ -242,7 +249,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
         })
         .finally(() => setVehicleLoading(false))
     }
-  }, [preferences.transport, vehicleType, fuelType, groupSize, calculatedDist])
+  }, [preferences.transport, vehicleType, fuelType, groupSize, calculatedDist, planningAccess])
 
   // ── Stay (Booking.com via RapidAPI, TinyFish fallback) ────
   const [stayOptions, setStayOptions] = useState([])
@@ -254,6 +261,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
   const [roomOption, setRoomOption] = useState("separate")
 
   useEffect(() => {
+    if (!planningAccess) return
     if (!locationKey || !preferences.stayType) return
     const controller = new AbortController()
 
@@ -277,7 +285,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
         setStayLoading(false)
         
         // Directly trigger the fallback fetch logic since the normal fetch chain won't run
-        fetch('/api/live/search-stays', {
+        authFetch('/api/live/search-stays', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -310,7 +318,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
       return
     }
 
-    fetch(`/api/hotels/search?${params.toString()}`, { signal: controller.signal })
+    authFetch(`/api/hotels/search?${params.toString()}`, { signal: controller.signal })
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()
@@ -383,7 +391,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
 
         // Fallback to TinyFish if hotel API fails
         console.warn("Hotel API failed, trying TinyFish fallback:", err.message)
-        fetch('/api/live/search-stays', {
+        authFetch('/api/live/search-stays', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ location: location?.name, stayType: preferences.stayType }),
@@ -423,6 +431,7 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
     calculatedDist,
     groupSize,
     isGroup,
+    planningAccess,
   ])
 
   // If there's an error, selectedStay is undefined, so it gracefully falls back to manualPrice
@@ -707,9 +716,15 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
       })
     ).then(plan => {
       setTodayPlan(plan)
+      setPlanningAccess(true)
+      setPlanningQuotaError("")
       return plan
     }).catch(error => {
       console.error("Today plan sync failed:", error)
+      if (error.code === "TRIP_QUOTA_EXCEEDED") {
+        setPlanningAccess(false)
+        setPlanningQuotaError(error.message)
+      }
       showAlert(error.message || "Your Today plan could not be synced. You can continue planning and retry shortly.", "error")
       return null
     }).finally(() => {
@@ -795,6 +810,20 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
 
       <div style={{ width: "100%", maxWidth: "620px", display: "flex", flexDirection: "column", gap: "16px" }}>
 
+        {planningQuotaError && (
+          <div style={{
+            background: "#ff6b6b22",
+            border: "1px solid #ff6b6b",
+            borderRadius: "12px",
+            padding: "14px 18px",
+            color: "#ffb3b3",
+            fontSize: "13px",
+            textAlign: "center",
+          }}>
+            ⚠️ {planningQuotaError}
+          </div>
+        )}
+
         <BudgetStatus foodBuffer={foodBuffer} theme={theme} />
         
         <StayCard 
@@ -844,12 +873,15 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
         <div style={{ display: "flex", gap: "12px", marginTop: "8px", flexDirection: "column" }}>
           <button
             onClick={handleOpenTripPlan}
+            disabled={!planningAccess}
             style={{
               background: theme.primary, border: "none", padding: "18px",
               borderRadius: "50px", color: "#fff", fontWeight: "800",
-              fontSize: "16px", cursor: "pointer", letterSpacing: "2px",
+              fontSize: "16px", letterSpacing: "2px",
               boxShadow: `0 8px 32px ${theme.primary}66`,
               transition: "transform 0.2s ease",
+              opacity: planningAccess ? 1 : 0.55,
+              cursor: planningAccess ? "pointer" : "not-allowed",
             }}
             onMouseEnter={e => e.currentTarget.style.transform = "scale(1.02)"}
             onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
