@@ -12,7 +12,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: path.resolve(projectRoot, 'index.html'),
-        'promo/next-stop-video-ad-v2': path.resolve(projectRoot, 'promo/next-stop-video-ad-v2.html'),
       },
     },
   },

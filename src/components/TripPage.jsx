@@ -240,7 +240,7 @@ const TripPage = ({ location, theme, onBack }) => {
   }
 
   return (
-    <div style={{
+    <div className="trip-page-root" style={{
       minHeight: "100vh",
       background: theme.heroGradient,
       transition: "background 0.8s ease",
@@ -249,13 +249,13 @@ const TripPage = ({ location, theme, onBack }) => {
 
       {/* MAP SECTION */}
       {mapVisible && (
-        <div style={{
+        <div className="trip-map-shell" style={{
           position: "fixed",
           inset: 0,
           zIndex: 10,
         }}>
           {/* Map Header */}
-          <div style={{
+          <div className="trip-map-header" style={{
             position: "absolute",
             top: 0,
             left: 0,
@@ -372,8 +372,8 @@ const TripPage = ({ location, theme, onBack }) => {
 
           </MapContainer>
           {/* Image Popup Overlay */}
-          {activeSpot && (
-            <div style={{
+           {activeSpot && (
+             <div className="trip-spot-popup" style={{
               position: "fixed",
               bottom: "100px",
               left: "50%",
@@ -683,7 +683,7 @@ const TripPage = ({ location, theme, onBack }) => {
           })()}
 
           {/* Continue Button */}
-          <div style={{
+          <div className="trip-continue-wrap" style={{
             position: "fixed",
             bottom: "40px",
             left: "50%",
@@ -722,7 +722,7 @@ const TripPage = ({ location, theme, onBack }) => {
         }
 
         return (
-          <div style={{
+          <div className="trip-best-time" style={{
             minHeight: "100vh",
             display: "flex",
             flexDirection: "column",
@@ -733,7 +733,7 @@ const TripPage = ({ location, theme, onBack }) => {
           }}>
 
             {/* Back to map */}
-            <div
+            <div className="trip-back-link"
               onClick={() => { setShowBestTime(false); setMapVisible(true) }}
               style={{
                 position: "absolute",
@@ -760,7 +760,7 @@ const TripPage = ({ location, theme, onBack }) => {
               {data ? (
                 <>
                   {/* Summary Card */}
-                  <div style={{
+                     <div className="trip-month-grid" style={{
                     background: theme.card,
                     borderRadius: "16px",
                     padding: "20px 24px",
@@ -783,7 +783,7 @@ const TripPage = ({ location, theme, onBack }) => {
                   </div>
 
                   {/* Month Grid */}
-                  <div style={{
+          <div className="trip-questions" style={{
                     background: theme.card,
                     borderRadius: "16px",
                     padding: "20px 24px",
@@ -918,7 +918,7 @@ const TripPage = ({ location, theme, onBack }) => {
 
       {/* QUESTIONS SECTION */}
       {questionsVisible && (
-        <div style={{
+        <div className="trip-questions" style={{
           minHeight: "100vh",
           display: "flex",
           flexDirection: "column",
@@ -928,7 +928,7 @@ const TripPage = ({ location, theme, onBack }) => {
           animation: "fadeIn 0.8s ease",
         }}>
 
-          <div
+          <div className="trip-back-link"
             onClick={() => { setQuestionsVisible(false); setMapVisible(true) }}
             style={{
               position: "absolute",
@@ -998,7 +998,7 @@ const TripPage = ({ location, theme, onBack }) => {
 
           {/* Suggestions */}
           <div style={{ width: "100%", maxWidth: "600px" }}>
-            <div style={{
+             <div style={{
               color: theme.subtext,
               fontSize: "13px",
               marginBottom: "16px",
@@ -1006,7 +1006,7 @@ const TripPage = ({ location, theme, onBack }) => {
             }}>
               POPULAR IN {loc.name.toUpperCase()}
             </div>
-            <div style={{
+             <div className="trip-suggestions-grid" style={{
               display: "grid",
               gridTemplateColumns: "repeat(2, 1fr)",
               gap: "12px",

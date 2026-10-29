@@ -21,25 +21,36 @@ test('itinerary validation rejects incomplete day entries', () => {
     assert.throws(() => validateItinerary({ itinerary: [{ ...day, evening: '' }] }), /incomplete/);
 });
 
-test('askAi falls back to Gemini when Dahl API fails', async () => {
-    const keys = ['DAHL_API_KEY', 'DAHL_API_URL', 'GEMINI_EXTRA', 'GEMINI_KEY', 'GEMINI_KEY_1', 'GEMINI_KEY_2', 'GEMINI_KEY_3'];
-    const backup = Object.fromEntries(keys.map(k => [k, process.env[k]]));
+test('askAi uses Gemini first and does not call Dahl after Gemini succeeds', async () => {
+    const calls = [];
+    const result = await askAi('test', 10, {
+        gemini: async () => {
+            calls.push('gemini');
+            return { provider: 'gemini' };
+        },
+        dahl: async () => {
+            calls.push('dahl');
+            return { provider: 'dahl' };
+        },
+    });
 
-    try {
-        // Point Dahl to an invalid endpoint that will immediately fail
-        process.env.DAHL_API_KEY = 'invalid_key';
-        process.env.DAHL_API_URL = 'http://127.0.0.1:1/invalid';
-        keys.filter(k => k.startsWith('GEMINI')).forEach(k => delete process.env[k]);
+    assert.deepEqual(result, { provider: 'gemini' });
+    assert.deepEqual(calls, ['gemini']);
+});
 
-        // When Dahl fails and all Gemini keys are missing, askGemini's 'No Gemini API key configured' is thrown
-        await assert.rejects(
-            async () => { await askAi('test', 10); },
-            /No Gemini API key configured/
-        );
-    } finally {
-        keys.forEach(k => {
-            if (backup[k] !== undefined) process.env[k] = backup[k];
-            else delete process.env[k];
-        });
-    }
+test('askAi falls back to Dahl only when Gemini fails', async () => {
+    const calls = [];
+    const result = await askAi('test', 10, {
+        gemini: async () => {
+            calls.push('gemini');
+            throw new Error('Gemini unavailable');
+        },
+        dahl: async () => {
+            calls.push('dahl');
+            return { provider: 'dahl' };
+        },
+    });
+
+    assert.deepEqual(result, { provider: 'dahl' });
+    assert.deepEqual(calls, ['gemini', 'dahl']);
 });

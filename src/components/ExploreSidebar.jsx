@@ -40,7 +40,7 @@ const ExploreSidebar = ({ theme, isOpen, onClose, onLocationSelect }) => {
       )}
 
       {/* Sidebar */}
-      <div style={{
+      <div className="explore-sidebar" style={{
         position: "fixed",
         top: 0,
         left: 0,

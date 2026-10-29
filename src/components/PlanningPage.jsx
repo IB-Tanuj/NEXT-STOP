@@ -138,7 +138,7 @@ const PlanningPage = ({ location, theme, choice, onBack }) => {
   };
 
   return (
-    <div style={{
+    <div className="planning-page" style={{
       minHeight: "100vh",
       background: theme.heroGradient,
       display: "flex",

@@ -354,7 +354,7 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
   const suggestions = ["Goa", "Manali", "Jaipur", "Kerala", "Varanasi", "Udaipur", "Rishikesh", "Mumbai"]
 
   return (
-    <div style={{
+    <div className="hero-root" style={{
       minHeight: "100vh",
       backgroundImage: theme.heroGradient,
       display: "flex",
@@ -466,6 +466,7 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
 
         {/* Search Bar */}
         <form
+          className="hero-search-form"
           ref={formRef}
           onSubmit={handleSearch}
           style={{
@@ -485,6 +486,7 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
           }}
         >
           <input
+            className="hero-search-input"
             ref={inputRef}
             id="hero-search"
             type="text"
@@ -539,6 +541,7 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
             }}
           />
           <button
+            className="hero-search-submit"
             type="submit"
             style={{
               padding: "18px 32px",
@@ -563,6 +566,7 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
         {/* ── Autocomplete Dropdown ── */}
         {showAutocomplete && autocompleteItems.length > 0 && (
           <div
+            className="hero-autocomplete"
             ref={autocompleteRef}
             style={{
               position: "relative",
@@ -605,7 +609,7 @@ const Hero = ({ theme, setLocationTheme, onExplore, isMobile }) => {
               >
                 <span style={{ fontSize: "20px", flexShrink: 0 }}>{item.emoji}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{
+           <div className="hero-state-results" style={{
                     color: theme.text,
                     fontSize: "14px",
                     fontWeight: "600",

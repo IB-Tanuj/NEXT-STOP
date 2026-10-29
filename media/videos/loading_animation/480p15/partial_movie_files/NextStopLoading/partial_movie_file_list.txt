@@ -1,9 +1,0 @@
-# This file records the segment order used by Manim.
-file 'file:/mnt/c/Users/91928/trip-website/media/videos/loading_animation/480p15/partial_movie_files/NextStopLoading/uncached_00000.mp4'
-file 'file:/mnt/c/Users/91928/trip-website/media/videos/loading_animation/480p15/partial_movie_files/NextStopLoading/uncached_00001.mp4'
-file 'file:/mnt/c/Users/91928/trip-website/media/videos/loading_animation/480p15/partial_movie_files/NextStopLoading/uncached_00002.mp4'
-file 'file:/mnt/c/Users/91928/trip-website/media/videos/loading_animation/480p15/partial_movie_files/NextStopLoading/uncached_00003.mp4'
-file 'file:/mnt/c/Users/91928/trip-website/media/videos/loading_animation/480p15/partial_movie_files/NextStopLoading/uncached_00004.mp4'
-file 'file:/mnt/c/Users/91928/trip-website/media/videos/loading_animation/480p15/partial_movie_files/NextStopLoading/uncached_00005.mp4'
-file 'file:/mnt/c/Users/91928/trip-website/media/videos/loading_animation/480p15/partial_movie_files/NextStopLoading/uncached_00006.mp4'
-file 'file:/mnt/c/Users/91928/trip-website/media/videos/loading_animation/480p15/partial_movie_files/NextStopLoading/uncached_00007.mp4'

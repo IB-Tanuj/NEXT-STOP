@@ -143,14 +143,6 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
       setTrainLoading(true)
       setTrainError(null)
       
-      if (sessionStorage.getItem('DEV_MOCK_API') === 'true') {
-        setTimeout(() => {
-          setTrainError("Mock API Mode Enabled - Using Fallback Data")
-          setTrainLoading(false)
-        }, 500)
-        return
-      }
-
       authFetch(`/api/trains/search?from=${fromStation}&to=${toStation}`)
         .then(res => {
           if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
@@ -278,45 +270,6 @@ const BudgetResult = ({ location, theme, planData, preferences, onBack }) => {
       adults: String(isGroup ? groupSize : 2),
     })
     if (calculatedDist) params.set('distanceKms', String(calculatedDist))
-
-    if (sessionStorage.getItem('DEV_MOCK_API') === 'true') {
-      setTimeout(() => {
-        setStayError("Mock API Mode Enabled - Trying TinyFish fallback")
-        setStayLoading(false)
-        
-        // Directly trigger the fallback fetch logic since the normal fetch chain won't run
-        authFetch('/api/live/search-stays', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            location: location?.name || locationKey,
-            days: preferences.days,
-            budgetType: preferences.budgetType,
-            groupSize: isGroup ? groupSize : 1
-          }),
-          signal: controller.signal
-        })
-        .then(r => r.json())
-        .then(tinyData => {
-          if (tinyData?.stays) {
-            setStayOptions(tinyData.stays.map(s => ({
-              ...s,
-              pricePerNight: Math.round(Number(s.totalCost) / Number(preferences.days)),
-              maxCapacity: groupSize,
-            })))
-            setSelectedStayIndex(0)
-            setStayError(null)
-          } else {
-            throw new Error("TinyFish mock failed")
-          }
-        })
-        .catch(err => {
-          if (err.name !== "AbortError") setStayError(err.message)
-        })
-
-      }, 500)
-      return
-    }
 
     authFetch(`/api/hotels/search?${params.toString()}`, { signal: controller.signal })
       .then(res => {

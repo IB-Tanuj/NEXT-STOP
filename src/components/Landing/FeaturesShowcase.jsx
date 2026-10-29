@@ -86,6 +86,7 @@ const FeatureCard = ({ feature, index, isVisible }) => {
 
   return (
     <div
+      className="home-feature-card"
       style={{
         display: "flex",
         flexDirection: isEven ? "row" : "row-reverse",
@@ -115,6 +116,7 @@ const FeatureCard = ({ feature, index, isVisible }) => {
     >
       {/* Animated border glow on hover */}
       <div
+        className="home-feature-visual"
         style={{
           position: "absolute",
           inset: -1,
@@ -212,7 +214,7 @@ const FeatureCard = ({ feature, index, isVisible }) => {
       </div>
 
       {/* Right/Left: Content */}
-      <div style={{ flex: "1 1 340px", position: "relative", zIndex: 1 }}>
+      <div className="home-feature-content" style={{ flex: "1 1 340px", position: "relative", zIndex: 1 }}>
         <h3
           style={{
             fontSize: "clamp(1.5rem, 3.5vw, 2.2rem)",
@@ -253,7 +255,7 @@ const FeatureCard = ({ feature, index, isVisible }) => {
         </p>
 
         {/* Highlights grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 16px" }}>
+        <div className="home-feature-highlights" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 16px" }}>
           {feature.highlights.map((h, i) => (
             <div
               key={i}
@@ -318,6 +320,7 @@ const FeaturesShowcase = () => {
   return (
     <section
       id="social-features"
+      className="home-showcase-section"
       style={{
         position: "relative",
         padding: "clamp(60px, 10vh, 120px) clamp(16px, 4vw, 60px) clamp(30px, 5vh, 50px)",

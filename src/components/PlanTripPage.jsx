@@ -51,7 +51,7 @@ const steps = [
 
 const PlanTripPage = ({ theme, onClose, onStartPlanning }) => {
   return (
-    <div style={{
+    <div className="plan-trip-overlay" style={{
       position: "fixed",
       inset: 0,
       zIndex: 500,
@@ -61,7 +61,7 @@ const PlanTripPage = ({ theme, onClose, onStartPlanning }) => {
     }}>
 
       {/* Header */}
-      <div style={{
+      <div className="plan-trip-header" style={{
         position: "sticky",
         top: 0,
         background: `${theme.bg}ee`,
@@ -81,7 +81,7 @@ const PlanTripPage = ({ theme, onClose, onStartPlanning }) => {
         </div>
       </div>
 
-      <div style={{ maxWidth: "720px", margin: "0 auto", padding: "60px 20px" }}>
+      <div className="plan-trip-content" style={{ maxWidth: "720px", margin: "0 auto", padding: "60px 20px" }}>
 
         {/* Hero */}
         <div style={{ textAlign: "center", marginBottom: "80px" }}>

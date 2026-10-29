@@ -93,16 +93,26 @@ export const askGemini = async (prompt, maxOutputTokens) => {
     throw lastError || new Error('All Gemini generation attempts failed.');
 };
 
-export const askAi = async (prompt, maxOutputTokens) => {
-    if (isDahlConfigured()) {
-        try {
-            return await askDahl(prompt, maxOutputTokens);
-        } catch (dahlError) {
-            console.warn(`[TripAI] Dahl generation attempt failed: ${dahlError.message}. Falling back to Gemini...`);
-        }
-    }
+export const askAi = async (prompt, maxOutputTokens, providers = {}) => {
+    const gemini = providers.gemini || askGemini;
+    const dahl = providers.dahl || askDahl;
+    const dahlAvailable = providers.dahl ? true : isDahlConfigured();
 
-    return await askGemini(prompt, maxOutputTokens);
+    try {
+        return await gemini(prompt, maxOutputTokens);
+    } catch (geminiError) {
+        console.warn(`[TripAI] Gemini generation attempt failed: ${geminiError.message}. Falling back to Dahl...`);
+
+        if (dahlAvailable) {
+            try {
+                return await dahl(prompt, maxOutputTokens);
+            } catch (dahlError) {
+                console.warn(`[TripAI] Dahl fallback generation failed: ${dahlError.message}`);
+            }
+        }
+
+        throw geminiError;
+    }
 };
 
 export const generateSummaryData = async ({

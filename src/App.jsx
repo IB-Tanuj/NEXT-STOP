@@ -2,11 +2,11 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react"
 import { Routes, Route, useNavigate, useParams, Navigate } from "react-router-dom"
 import { useTheme } from "./hooks/useTheme"
-import Navbar from "./components/Navbar"
-import Hero from "./components/Hero"
+const Navbar = lazy(() => import("./components/Navbar"))
+const Hero = lazy(() => import("./components/Hero"))
 const TripPage = lazy(() => import("./components/TripPage"))
-import SeasonSection from "./components/SeasonSection"
-import LocationSpotlight from "./components/LocationSpotlight"
+const SeasonSection = lazy(() => import("./components/SeasonSection"))
+const LocationSpotlight = lazy(() => import("./components/LocationSpotlight"))
 import { locationData } from "./data/locationData"
 import useScreenSize from "./hooks/useScreenSize"
 const AboutPage = lazy(() => import("./components/AboutPage"))
@@ -14,17 +14,15 @@ const ExploreSidebar = lazy(() => import("./components/ExploreSidebar"))
 const BudgetPage = lazy(() => import("./components/BudgetPage"))
 const PlanTripPage = lazy(() => import("./components/PlanTripPage"))
 const BusLoversPage = lazy(() => import("./components/BusLoversPage"))
-const DevAdminPage = lazy(() => import("./components/DevAdminPage"))
 const LegalPage = lazy(() => import("./components/LegalPage"))
-const ProductAdPage = lazy(() => import("./components/ProductAdPage"))
 
 import { allIndiaLocations } from "./data/allLocations"
 const LandingPage = lazy(() => import("./components/LandingPage"))
 const NewLandingPage = lazy(() => import("./components/NewLandingPage"))
 import { useAuth } from "./context/AuthContext"
-import PersonalDashboard from "./components/Dashboard/PersonalDashboard"
+const PersonalDashboard = lazy(() => import("./components/Dashboard/PersonalDashboard"))
 import { NotificationProvider } from "./context/NotificationContext"
-import TodaySidebar from "./components/TodaySidebar"
+const TodaySidebar = lazy(() => import("./components/TodaySidebar"))
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -256,14 +254,9 @@ function App() {
       }}>
       <Suspense fallback={<FallbackSpinner theme={theme} />}>
         <Routes>
-          <Route path="/dev" element={<DevAdminPage theme={theme} setLocationTheme={setLocationTheme} />} />
-
           {/* Legal Pages */}
           <Route path="/privacy" element={<LegalPage type="privacy" />} />
           <Route path="/terms" element={<LegalPage type="terms" />} />
-
-          {/* Product ad / UI showcase */}
-          <Route path="/ad" element={<ProductAdPage />} />
 
           {/* Sharad Landing Page */}
           <Route path="/" element={<NewLandingPage />} />
@@ -315,6 +308,12 @@ function App() {
                     locationData={locationData}
                   />
                 )}
+                <TodaySidebar
+                  theme={theme}
+                  isOpen={showToday}
+                  onClose={() => setShowToday(false)}
+                  onStateChange={handleTodayStateChange}
+                />
               </>
             </ProtectedRoute>
           } />
@@ -349,12 +348,6 @@ function App() {
           }}
         />
       </Suspense>
-      <TodaySidebar
-        theme={theme}
-        isOpen={showToday}
-        onClose={() => setShowToday(false)}
-        onStateChange={handleTodayStateChange}
-      />
       {showBudget && (
         <Suspense fallback={null}>
           <BudgetPage theme={theme} onClose={() => setShowBudget(false)} onLocationSelect={(locationKey) => { setShowBudget(false); handleThemeOnly(locationKey); handleExplore(locationKey); }} />

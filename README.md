@@ -36,8 +36,9 @@ cp .env.example .env
 | --- | --- |
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only Supabase service-role key |
-| `GEMINI_EXTRA` | AI generation and live-data cleanup |
+| `GEMINI_EXTRA` | Primary AI generation and live-data cleanup key |
 | `GEMINI_KEY` / `GEMINI_KEY_1`…`GEMINI_KEY_3` | Optional spot-information key rotation |
+| `DAHL_API_KEY` / `DAHL_API_URL` / `DAHL_MODEL` | Fallback AI generation provider when Gemini fails |
 | RapidAPI/TinyFish variables | Optional live transport and hotel providers |
 
 ### Frontend

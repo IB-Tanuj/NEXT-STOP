@@ -67,42 +67,53 @@ const NewLandingPage = () => {
     const bgImg = bgRef.current
     if (!bgImg) return
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    const INTRO_MS = 1300
-    pageStartRef.current = performance.now()
-
-    const tick = (now) => {
-      const safeNow = typeof now === 'number' && !isNaN(now) ? now : performance.now()
-      
-      const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
-      const scrollY = typeof window.scrollY === 'number' ? window.scrollY : 0
-      const p = Math.min(1, scrollY / maxScroll)
-      
-      const imgHeight = typeof bgImg.offsetHeight === 'number' ? bgImg.offsetHeight : 0
-      const maxY = Math.max(0, imgHeight - window.innerHeight)
-      const targetY = -p * maxY || 0
-
-      if (reduceMotion) {
-        bgYRef.current = targetY
-        const y = isNaN(bgYRef.current) ? 0 : bgYRef.current
-        bgImg.style.transform = `translate3d(0, ${y.toFixed(2)}px, 0)`
-      } else {
-        const currentY = isNaN(bgYRef.current) ? 0 : bgYRef.current
-        bgYRef.current = currentY + (targetY - currentY) * 0.09
-        
-        const t = Math.min(1, Math.max(0, (safeNow - pageStartRef.current) / INTRO_MS))
-        const ease = 1 - Math.pow(1 - t, 3)
-        const scale = 1.34 - 0.34 * ease
-        
-        const finalY = isNaN(bgYRef.current) ? 0 : bgYRef.current
-        const finalScale = isNaN(scale) ? 1 : scale
-        
-        bgImg.style.transform = `translate3d(0, ${finalY.toFixed(2)}px, 0) scale(${finalScale.toFixed(4)})`
-      }
-      rafRef.current = requestAnimationFrame(tick)
+    const isSmallScreen = window.matchMedia("(max-width: 768px)").matches
+    if (reduceMotion || isSmallScreen) {
+      bgImg.style.transform = "translate3d(0, 0, 0) scale(1)"
+      return undefined
     }
 
-    rafRef.current = requestAnimationFrame(tick)
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+    const INTRO_MS = 1300
+    pageStartRef.current = performance.now()
+    let frameId = null
+    let targetY = 0
+    let currentY = 0
+
+    const requestFrame = () => {
+      if (frameId === null) frameId = requestAnimationFrame(tick)
+    }
+
+    const updateTarget = () => {
+      const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
+      const scrollY = typeof window.scrollY === 'number' ? window.scrollY : 0
+      const progress = Math.min(1, Math.max(0, scrollY / maxScroll))
+      const imgHeight = typeof bgImg.offsetHeight === 'number' ? bgImg.offsetHeight : 0
+      const maxY = Math.max(0, imgHeight - window.innerHeight)
+      targetY = -progress * maxY
+      requestFrame()
+    }
+
+    const tick = (now) => {
+      frameId = null
+      const safeNow = typeof now === 'number' && !isNaN(now) ? now : performance.now()
+      currentY += (targetY - currentY) * 0.09
+      const t = Math.min(1, Math.max(0, (safeNow - pageStartRef.current) / INTRO_MS))
+      const ease = 1 - Math.pow(1 - t, 3)
+      const scale = 1.34 - 0.34 * ease
+      bgYRef.current = Number.isFinite(currentY) ? currentY : 0
+      bgImg.style.transform = `translate3d(0, ${bgYRef.current.toFixed(2)}px, 0) scale(${scale.toFixed(4)})`
+      if (t < 1 || Math.abs(targetY - currentY) > 0.1) requestFrame()
+    }
+
+    window.addEventListener("scroll", updateTarget, { passive: true })
+    window.addEventListener("resize", updateTarget, { passive: true })
+    updateTarget()
+    return () => {
+      window.removeEventListener("scroll", updateTarget)
+      window.removeEventListener("resize", updateTarget)
+      if (frameId !== null) cancelAnimationFrame(frameId)
+      rafRef.current = null
+    }
   }, [])
 
   // Scroll-reveal observer

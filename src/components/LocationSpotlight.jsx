@@ -66,7 +66,7 @@ const LocationSpotlight = ({ theme, activeLocation, locationData }) => {
 
   return (
     <>
-      <div style={{
+      <div className="location-spotlight" style={{
         width: "100%",
         padding: "80px 20px",
         display: "flex",
@@ -77,7 +77,7 @@ const LocationSpotlight = ({ theme, activeLocation, locationData }) => {
         transform: visible ? "translateY(0)" : "translateY(20px)",
         transition: "opacity 0.6s ease, transform 0.6s ease",
       }}>
-        <div style={{
+        <div className="location-spotlight-grid" style={{
           color: theme.primary, fontSize: "13px",
           letterSpacing: "4px", fontWeight: "700",
           marginBottom: "12px", textTransform: "uppercase",
@@ -221,6 +221,7 @@ const LocationSpotlight = ({ theme, activeLocation, locationData }) => {
       {/* Fullscreen Lightbox */}
       {lightboxIndex !== null && lightboxImages.length > 0 && (
         <div
+          className="location-lightbox"
           onClick={() => setLightboxIndex(null)}
           style={{
             position: "fixed", inset: 0, zIndex: 5000,

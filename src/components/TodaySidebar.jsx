@@ -143,7 +143,7 @@ const TodaySidebar = ({ theme, isOpen, onClose, onStateChange }) => {
   return (
     <>
       {isOpen && <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} />}
-      <aside style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: "420px", maxWidth: "94vw", background: theme.bg, borderRight: `1px solid ${theme.primary}44`, zIndex: 350, transform: isOpen ? "translateX(0)" : "translateX(-100%)", transition: "transform 0.35s ease", overflowY: "auto", fontFamily: "'Segoe UI', sans-serif" }}>
+      <aside className="today-sidebar" style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: "420px", maxWidth: "94vw", background: theme.bg, borderRight: `1px solid ${theme.primary}44`, zIndex: 350, transform: isOpen ? "translateX(0)" : "translateX(-100%)", transition: "transform 0.35s ease", overflowY: "auto", fontFamily: "'Segoe UI', sans-serif" }}>
         <div style={{ padding: "24px 20px 16px", borderBottom: `1px solid ${theme.primary}22`, position: "sticky", top: 0, background: `${theme.bg}f2`, backdropFilter: "blur(14px)", zIndex: 2 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
